@@ -100,6 +100,7 @@ enum  sqltype_t
     SQL_SMALLINT,   /* SMALLINT */
     SQL_INT,        /* INTEGER */
     SQL_FLOAT,      /* FLOAT */
+    SQL_LONG,       /* LONG */
     SQL_CHAR,       /* CHAR */           // A single char, could have been a smallint
     SQL_FIXCHAR,    /* FIXCHAR */        // Fixed size string
     SQL_VARCHAR,    /* VARCHAR */        // Variable size string
@@ -229,6 +230,7 @@ struct field_value_t
 	char         _char;     /* CHAR */
 	int          _int;      /* INT */
 	double       _float;    /* FLOAT */
+	long long    _long;     /* LONG */
 	timestamp_t* _time;     /* TIME or DATE */
 	char*        _string;   /* FIXCHAR, VARCHAR, NUMERIC */
     }   _value;   
@@ -338,6 +340,7 @@ struct field_value_t
     void   set_bit_value(const bool data);
     void   set_smallint_value(const short data);
     void   set_float_value(const double data);
+    void   set_long_value(const long long data);
     void   set_decimal_value(const decimal data);
     void   set_time_value(const time_t data);
     void   set_tstamp_value(const timestamp_t& data);
@@ -353,6 +356,7 @@ struct field_value_t
     char         get_char_value() const;
     void         get_string_value(char* string, const uint bufsize) const;
     double       get_float_value() const;
+    long long    get_long_value() const;
     decimal      get_decimal_value() const;
     time_t       get_time_value() const;
     timestamp_t& get_tstamp_value() const;
@@ -414,6 +418,9 @@ inline void field_desc_t::setup(sqltype_t type,
     case SQL_FLOAT:
         _size = sizeof(double);
         break;
+    case SQL_LONG:
+        _size = sizeof(long long);
+        break;
     case SQL_TIME:
         _size = sizeof(timestamp_t);
         break;    
@@ -463,8 +470,12 @@ inline const char* field_desc_t::_set_keydesc()
     case SQL_INT:       
         sprintf(_keydesc, "i%d", _size); break;
 
-    case SQL_FLOAT:     sprintf(_keydesc, "f%d", _size); break;
-    case SQL_VARCHAR:   sprintf(_keydesc, "b*%d", _size); break;
+    case SQL_FLOAT:     
+    case SQL_LONG:     
+        sprintf(_keydesc, "f%d", _size); break;
+    
+    case SQL_VARCHAR:   
+        sprintf(_keydesc, "b*%d", _size); break;
 
     case SQL_TIME:
     case SQL_FIXCHAR:
@@ -518,6 +529,9 @@ inline void field_value_t::setup(field_desc_t* pfd)
         break;
     case SQL_FLOAT:
         _max_size = sizeof(double);
+        break;    
+    case SQL_LONG:
+        _max_size = sizeof(long long);
         break;    
     case SQL_TIME:
         sz = sizeof(timestamp_t);
@@ -595,6 +609,9 @@ inline void field_value_t::reset()
     case SQL_FLOAT:
         _value._float = 0;
         break;    
+    case SQL_LONG:
+        _value._long = 0;
+        break;    
     case SQL_TIME:
     case SQL_VARCHAR:
     case SQL_FIXCHAR:
@@ -664,6 +681,7 @@ inline void field_value_t::set_value(const void* data,
     case SQL_CHAR:
     case SQL_INT:
     case SQL_FLOAT:
+    case SQL_LONG:
 	memcpy(&_value, data, _max_size); 
         break;
     case SQL_TIME:
@@ -714,6 +732,9 @@ inline void field_value_t::set_min_value()
     case SQL_FLOAT:
 	_value._float = MIN_FLOAT;
 	break;
+    case SQL_LONG:
+	_value._long = MIN_FLOAT;
+	break;
     case SQL_VARCHAR:
     case SQL_FIXCHAR:
     case SQL_NUMERIC:
@@ -748,6 +769,9 @@ inline void field_value_t::set_max_value()
 	break;
     case SQL_FLOAT:
 	_value._float = MAX_FLOAT;
+	break;
+    case SQL_LONG:
+	_value._long = MAX_FLOAT;
 	break;
     case SQL_VARCHAR:
     case SQL_FIXCHAR:
@@ -794,6 +818,9 @@ inline bool field_value_t::copy_value(void* data) const
         break;
     case SQL_FLOAT:
         memcpy(data, &_value._float, _max_size);
+        break;
+    case SQL_LONG:
+        memcpy(data, &_value._long, _max_size);
         break;
     case SQL_TIME:
         memcpy(data, _value._time, _real_size);
@@ -860,6 +887,14 @@ inline void field_value_t::set_float_value(const double data)
     assert (_pfield_desc->type() == SQL_FLOAT);
     _null_flag = false;
     _value._float = data;
+}
+
+inline void field_value_t::set_long_value(const long long data)
+{ 
+    assert (_pfield_desc);
+    assert (_pfield_desc->type() == SQL_LONG);
+    _null_flag = false;
+    _value._long = data;
 }
 
 inline void field_value_t::set_decimal_value(const decimal data)
@@ -991,6 +1026,13 @@ inline double field_value_t::get_float_value() const
     assert (_pfield_desc);
     assert (_pfield_desc->type() == SQL_FLOAT);
     return (_value._float);
+}
+
+inline long long field_value_t::get_long_value() const
+{
+    assert (_pfield_desc);
+    assert (_pfield_desc->type() == SQL_LONG);
+    return (_value._long);
 }
 
 inline decimal field_value_t::get_decimal_value() const

@@ -60,6 +60,9 @@ void  field_desc_t::print_desc(ostream & os)
     case SQL_FLOAT:
 	os << "Type: FLOAT \t size: " << sizeof(double) << endl;
 	break;
+    case SQL_LONG:
+	os << "Type: LONG \t size: " << sizeof(long long) << endl;
+	break;
     case SQL_TIME:
 	os << "Type: TIMESTAMP \t size: " << timestamp_t::size() << endl;
 	break;
@@ -126,6 +129,7 @@ bool field_value_t::load_value_from_file(ifstream & is,
     case SQL_CHAR:      _value._char = atoi(string); break;
     case SQL_INT:       _value._int = atoi(string); break;
     case SQL_FLOAT:     _value._float = atof(string); break;
+    case SQL_LONG:     _value._float = atol(string); break;
     case SQL_TIME:      break;
     case SQL_VARCHAR:   {
         if (string[0] == '\"') string[strlen(string)-1] = '\0';
@@ -179,6 +183,9 @@ void  field_value_t::print_value(ostream & os)
 	break;
     case SQL_FLOAT:
 	os << _value._float;
+	break;
+    case SQL_LONG:
+	os << _value._long;
 	break;
     case SQL_TIME:
         char mstr[32];
@@ -242,6 +249,9 @@ int field_value_t::get_debug_str(char* &buf)
 	break;
     case SQL_FLOAT:
         sprintf(buf, "SQL_FLOAT:    \t%.2f", _value._float);
+	break;
+    case SQL_LONG:
+        sprintf(buf, "SQL_LONG:    \t%lld", _value._long);
 	break;
     case SQL_TIME:
         char mstr[32];

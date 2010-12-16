@@ -764,11 +764,9 @@ int table_man_t::format_key(index_desc_t* pindex,
     // 1. calculate the key size
     int isz = key_size(pindex, ptuple);
     assert (isz);
-
     
     // 2. allocate buffer space, if necessary
     arep.set(isz);
-
 
     // 3. write the buffer
     offset_t offset = 0;
