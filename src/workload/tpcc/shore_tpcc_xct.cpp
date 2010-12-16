@@ -393,7 +393,7 @@ w_rc_t ShoreTPCCEnv::xct_populate_baseline(const int /* xct_id */,
 	    }
 	}
 
-        // Should do the commit here, called by the loaded
+        // Should do the commit here, called by the loader
 	e = _pssm->commit_xct();
 	if(e.is_error()) { goto done; }	
     }
