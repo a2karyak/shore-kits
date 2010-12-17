@@ -256,6 +256,50 @@ WL_SSB_QPIPE = \
    $(SW)/ssb/qpipe/qpipe_qcustomer.cpp \
    $(SW)/ssb/qpipe/qpipe_qlineorder.cpp 
 
+WL_TPCE_SHORE = \
+   $(SW)/tpce/tpce_input.cpp \
+   $(SW)/tpce/shore_tpce_schema.cpp \
+   $(SW)/tpce/shore_tpce_schema_man.cpp \
+   $(SW)/tpce/shore_tpce_env.cpp \
+   $(SW)/tpce/shore_tpce_xct.cpp \
+   $(SW)/tpce/shore_tpce_client.cpp
+
+WL_TPCE_SHORE_EGEN = \
+   $(SW)/tpce/egen/DateTime.cpp \
+   $(SW)/tpce/egen/error.cpp \
+   $(SW)/tpce/egen/Random.cpp \
+   $(SW)/tpce/egen/Money.cpp \
+   $(SW)/tpce/egen/EGenVersion.cpp \
+   $(SW)/tpce/egen/locking.cpp \
+   $(SW)/tpce/egen/threading.cpp \
+   $(SW)/tpce/egen/BaseLogger.cpp \
+   $(SW)/tpce/egen/EGenLogFormatterTab.cpp \
+   $(SW)/tpce/egen/EGenLoader.cpp \
+   $(SW)/tpce/egen/MEE.cpp \
+   $(SW)/tpce/egen/MEEPriceBoard.cpp \
+   $(SW)/tpce/egen/MEESecurity.cpp \
+   $(SW)/tpce/egen/MEETickerTape.cpp \
+   $(SW)/tpce/egen/MEETradingFloor.cpp \
+   $(SW)/tpce/egen/WheelTime.cpp \
+   $(SW)/tpce/egen/AddressTable.cpp \
+   $(SW)/tpce/egen/CustomerSelection.cpp \
+   $(SW)/tpce/egen/CustomerTable.cpp \
+   $(SW)/tpce/egen/InputFlatFilesStructure.cpp \
+   $(SW)/tpce/egen/Person.cpp \
+   $(SW)/tpce/egen/ReadRowFunctions.cpp \
+   $(SW)/tpce/egen/TradeGen.cpp \
+   $(SW)/tpce/egen/FlatFileLoader.cpp \
+   $(SW)/tpce/egen/CE.cpp \
+   $(SW)/tpce/egen/CETxnInputGenerator.cpp \
+   $(SW)/tpce/egen/CETxnMixGenerator.cpp \
+   $(SW)/tpce/egen/DM.cpp \
+   $(SW)/tpce/egen/EGenGenerateAndLoad.cpp \
+   $(SW)/tpce/egen/EGenValidate.cpp \
+   $(SW)/tpce/egen/strutil.cpp \
+   $(SW)/tpce/egen/progressmeter.cpp \
+   $(SW)/tpce/egen/progressmeterinterface.cpp \
+   $(SW)/tpce/egen/bucketsimulator.cpp
+
 
 lib_libworkload_a_SOURCES = \
    $(WL_SG_TPCC_SHORE) \
@@ -263,7 +307,10 @@ lib_libworkload_a_SOURCES = \
    $(WL_TM1_SHORE) \
    $(WL_TPCB_SHORE) \
    $(WL_TPCH_DBGEN_SHORE) \
-   $(WL_TPCH_SHORE)
+   $(WL_TPCH_SHORE) \
+   $(WL_TPCE_SHORE_EGEN)
+
+#   $(WL_TPCE_SHORE)
 
 if USE_QPIPE
 lib_libworkload_a_SOURCES += $(WL_TPCH_QPIPE)
