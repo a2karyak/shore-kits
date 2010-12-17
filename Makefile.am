@@ -2,7 +2,7 @@
 
 # Shore related 
 SHORE_SRC = $(SHORE_HOME)/src
-SHORE_CXXFLAGS = -DSOLARIS2 -DSTHREAD_CORE_PTHREAD -DARCH_LP64 -DNO_FASTNEW -DW_LARGEFILE -D_POSIX_PTHREAD_SEMANTICS
+SHORE_CXXFLAGS = -DSOLARIS2 -DSTHREAD_CORE_PTHREAD -DARCH_LP64 -DNO_FASTNEW -DW_LARGEFILE -D_POSIX_PTHREAD_SEMANTICS -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS -w
 
 SHORE_INCLUDES = -I$(SHORE_SRC)/fc -I$(SHORE_SRC)/sm -I$(SHORE_SRC)/common -I$(SHORE_SRC)/sthread -I$(SHORE_SRC)/../config $(SHORE_CXXFLAGS)
 
@@ -135,6 +135,7 @@ SM_SHORE = \
    $(SMS)/shore_row.cpp \
    $(SMS)/shore_index.cpp \
    $(SMS)/shore_sort_buf.cpp \
+   $(SMS)/shore_asc_sort_buf.cpp \
    $(SMS)/shore_reqs.cpp \
    $(SMS)/shore_flusher.cpp \
    $(SMS)/shore_env.cpp \
