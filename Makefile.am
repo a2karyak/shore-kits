@@ -308,9 +308,9 @@ lib_libworkload_a_SOURCES = \
    $(WL_TPCB_SHORE) \
    $(WL_TPCH_DBGEN_SHORE) \
    $(WL_TPCH_SHORE) \
-   $(WL_TPCE_SHORE_EGEN)
+   $(WL_TPCE_SHORE_EGEN) \
+   $(WL_TPCE_SHORE)
 
-#   $(WL_TPCE_SHORE)
 
 if USE_QPIPE
 lib_libworkload_a_SOURCES += $(WL_TPCH_QPIPE)
