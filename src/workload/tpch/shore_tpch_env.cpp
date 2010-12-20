@@ -195,7 +195,7 @@ void ShoreTPCHEnv::table_creator_t::work()
 #endif
     e = _env->xct_populate_baseline(0, in);
 
-    CHECK_XCT_RETURN(e,log_space_needed,retrybaseline);
+    CHECK_XCT_RETURN(e,log_space_needed,retrybaseline,_env);
     
     W_COERCE(_env->db()->begin_xct());
     W_COERCE(_env->_post_init_impl());
@@ -231,7 +231,7 @@ void ShoreTPCHEnv::table_builder_t::work()
 #endif
 	e = _env->xct_populate_some_parts(tid, in);
 
-        CHECK_XCT_RETURN(e,log_space_needed,retrypart);
+        CHECK_XCT_RETURN(e,log_space_needed,retrypart,_env);
 
 	long nval = atomic_add_64_nv(&part_completed,tid);
 	if (nval % PART_COUNT == 0) {
@@ -264,7 +264,7 @@ void ShoreTPCHEnv::table_builder_t::work()
 #endif
 	e = _env->xct_populate_some_custs(tid, in);
 
-        CHECK_XCT_RETURN(e,log_space_needed,retrycust);
+        CHECK_XCT_RETURN(e,log_space_needed,retrycust,_env);
 
 	long nval = atomic_add_64_nv(&cust_completed,tid);
 	if (nval % PART_COUNT == 0) {

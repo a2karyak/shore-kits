@@ -183,7 +183,7 @@ void ShoreSSBEnv::table_creator_t::work()
 #endif
     e = _env->xct_populate_baseline(0, in);
 
-    CHECK_XCT_RETURN(e,log_space_needed,retrybaseline);
+    CHECK_XCT_RETURN(e,log_space_needed,retrybaseline,_env);
     
     W_COERCE(_env->db()->begin_xct());
     W_COERCE(_env->_post_init_impl());
@@ -220,7 +220,7 @@ void ShoreSSBEnv::table_builder_t::work()
 #endif
         e = _env->xct_populate_some_lineorders(oid, in);
 
-        CHECK_XCT_RETURN(e,log_space_needed,retrypart);
+        CHECK_XCT_RETURN(e,log_space_needed,retrypart,_env);
 
 	long nval = atomic_add_64_nv(&lo_completed,oid);
 

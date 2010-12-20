@@ -316,7 +316,7 @@ void ShoreTPCBEnv::table_builder_t::work()
 	}
 #endif
 	e = _env->xct_populate_db(a_id, in);
-        CHECK_XCT_RETURN(e,log_space_needed,retry);
+        CHECK_XCT_RETURN(e,log_space_needed,retry,_env);
 
         if ((i % (branchesPerRound*TPCB_ACCOUNTS_PER_BRANCH)) == 0) {
             atomic_add_int(&iBranchesLoaded, branchesPerRound);
@@ -536,6 +536,7 @@ int ShoreTPCBEnv::dump()
 //             ptable_man = *table_man_iter;
 //             ptable_man->print_table(this->_pssm);
 //         }
+
     return (0);
 }
 
@@ -574,7 +575,6 @@ int ShoreTPCBEnv::post_init()
         else {
             TRACE( TRACE_ALWAYS, "-> Done\n");
             rc = db()->commit_xct();
-            return (rc.err_num());
         }
     }
     return (0);

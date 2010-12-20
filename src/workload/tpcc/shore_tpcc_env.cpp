@@ -209,7 +209,7 @@ void ShoreTPCCEnv::table_builder_t::work()
 #endif
 	e = _env->xct_populate_one_unit(tid, in);
 
-        CHECK_XCT_RETURN(e,log_space_needed,retry);
+        CHECK_XCT_RETURN(e,log_space_needed,retry,_env);
 
 	long nval = atomic_inc_64_nv(&units_completed);
         long sofar = nval / UNIT_PER_WH;

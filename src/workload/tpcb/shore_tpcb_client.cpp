@@ -65,15 +65,15 @@ int baseline_tpcb_client_t::load_sup_xct(mapSupTrxs& stmap)
     stmap.clear();
 
     // Baseline TPC-B trxs
-    stmap[XCT_TPCB_ACCT_UPDATE]    = "TPCB-AccountUpdate";
+    stmap[XCT_TPCB_ACCT_UPDATE]          = "TPCB-AccountUpdate";
 
-    stmap[XCT_TPCB_MBENCH_INSERT_ONLY]    = "TPCB-MbenchInsertOnly";
-    stmap[XCT_TPCB_MBENCH_DELETE_ONLY]    = "TPCB-MbenchDeleteOnly";
+    stmap[XCT_TPCB_MBENCH_INSERT_ONLY]   = "TPCB-MbenchInsertOnly";
+    stmap[XCT_TPCB_MBENCH_DELETE_ONLY]   = "TPCB-MbenchDeleteOnly";
     stmap[XCT_TPCB_MBENCH_PROBE_ONLY]    = "TPCB-MbenchProbeOnly";
-    stmap[XCT_TPCB_MBENCH_INSERT_DELETE]    = "TPCB-MbenchInsertDelete";
-    stmap[XCT_TPCB_MBENCH_INSERT_PROBE]    = "TPCB-MbenchInsertProbe";
-    stmap[XCT_TPCB_MBENCH_DELETE_PROBE]    = "TPCB-MbenchDeleteProbe";
-    stmap[XCT_TPCB_MBENCH_MIX]    = "TPCB-MbenchMix";
+    stmap[XCT_TPCB_MBENCH_INSERT_DELETE] = "TPCB-MbenchInsertDelete";
+    stmap[XCT_TPCB_MBENCH_INSERT_PROBE]  = "TPCB-MbenchInsertProbe";
+    stmap[XCT_TPCB_MBENCH_DELETE_PROBE]  = "TPCB-MbenchDeleteProbe";
+    stmap[XCT_TPCB_MBENCH_MIX]           = "TPCB-MbenchMix";
 
     return (stmap.size());
 }

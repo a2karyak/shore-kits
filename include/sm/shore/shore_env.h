@@ -235,11 +235,11 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
 
 #ifdef USE_SHORE_6
 
-#define CHECK_XCT_RETURN(rc,needed_next_time,retry)			\
+#define CHECK_XCT_RETURN(rc,needed_next_time,retry,ENV)			\
     if (rc.is_error()) {						\
 	TRACE( TRACE_ALWAYS, "Error %x\n", rc.err_num());		\
-	long used = _env->db()->xct_log_space_needed();			\
-	W_COERCE(_env->db()->abort_xct());				\
+	long used = ENV->db()->xct_log_space_needed();			\
+	W_COERCE(ENV->db()->abort_xct());				\
 	switch(rc.err_num()) {						\
 	case smlevel_0::eDEADLOCK:					\
 	    goto retry;							\
@@ -258,11 +258,11 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
 
 #else
 
-#define CHECK_XCT_RETURN(rc,needed_next_time,retry)			\
+#define CHECK_XCT_RETURN(rc,needed_next_time,retry,ENV)			\
     if (rc.is_error()) {						\
 	TRACE( TRACE_ALWAYS, "Error %x\n", rc.err_num());		\
 	long used = 0;                                                  \
-	W_COERCE(_env->db()->abort_xct());				\
+	W_COERCE(ENV->db()->abort_xct());				\
 	switch(rc.err_num()) {						\
 	case smlevel_0::eDEADLOCK:					\
 	    goto retry;							\

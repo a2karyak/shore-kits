@@ -21,6 +21,14 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
+/** @file:   shore_tpce_schema.cpp
+ *
+ *  @brief:  Definition of the TM1 tables
+ *
+ *  @author: Ippokratis Pandis
+ *
+ */
+
 #include "workload/tm1/shore_tm1_schema_man.h"
 
 using namespace shore;
