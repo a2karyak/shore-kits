@@ -46,6 +46,9 @@
 #include "workload/ssb/shore_ssb_env.h"
 #include "workload/ssb/shore_ssb_client.h"
 
+#include "workload/tpce/shore_tpce_env.h"
+#include "workload/tpce/shore_tpce_client.h"
+
 #ifdef CFG_SIMICS
 #include "util/simics-magic-instruction.h"
 #endif
@@ -67,6 +70,7 @@ using namespace tm1;
 using namespace tpcb;
 using namespace tpch;
 using namespace ssb;
+using namespace tpce;
 
 
 //////////////////////////////
@@ -123,7 +127,7 @@ void initsysnamemap()
 
 
 // Value-definitions of the different Benchmarks
-enum BenchmarkValue { bmTPCC, bmTM1, bmTPCB, bmTPCH , bmSSB };
+enum BenchmarkValue { bmTPCC, bmTM1, bmTPCB, bmTPCH , bmSSB, bmTPCE };
 
 // Map to associate string with then enum values
 
@@ -135,7 +139,8 @@ void initbenchmarkmap()
     mBenchmarkValue["tm1"]   = bmTM1;
     mBenchmarkValue["tpcb"]  = bmTPCB;
     mBenchmarkValue["tpch"]  = bmTPCH;
-    mBenchmarkValue["ssb"]  = bmSSB;
+    mBenchmarkValue["ssb"]   = bmSSB;
+    mBenchmarkValue["tpce"]  = bmTPCE;
 }
 
 
@@ -505,6 +510,9 @@ typedef kit_t<baseline_tpch_client_t,ShoreTPCHEnv> baselineTPCHKit;
 typedef kit_t<baseline_ssb_client_t,ShoreSSBEnv> baselineSSBKit;
 #endif
 
+typedef kit_t<baseline_tpce_client_t,ShoreTPCEEnv> baselineTPCEKit;
+
+
 #ifdef CFG_DORA
 typedef kit_t<dora_tpcc_client_t,DoraTPCCEnv> doraTPCCKit;
 typedef kit_t<dora_tm1_client_t,DoraTM1Env> doraTM1Kit;
@@ -757,6 +765,27 @@ int main(int argc, char* argv[])
         }
     }
 #endif
+
+
+    // TPC-E
+    if (benchmarkname.compare("tpce")==0) {
+        switch (mSysnameValue[sysname]) {
+        case snBaseline:
+            kit = new baselineTPCEKit("(tpce-base) ",netmode,netport);
+            break;
+#ifdef CFG_DORA
+        case snDORA:
+            dbname += "dora) "; nameset=true;
+            assert (0); // TODO
+            //kit = new doraTPCEKit("(tpce-dora) ",netmode,netport);
+            break;
+#endif
+        default:
+            TRACE( TRACE_ALWAYS, "Not supported configurations. Exiting...\n");
+            return (5);
+        }
+    }
+
 
     assert (kit.get());
 
