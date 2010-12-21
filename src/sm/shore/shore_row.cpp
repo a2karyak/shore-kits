@@ -80,6 +80,7 @@ void rep_row_t::set(const uint nsz)
         // Using the trash stack
         assert (_pts);
         _dest = new(*_pts) char(nsz);
+        assert (_dest); // Failed to allocate such a big buffer
 
         if (tmp) {
             //            delete [] tmp;

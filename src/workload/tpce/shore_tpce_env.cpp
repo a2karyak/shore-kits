@@ -575,13 +575,12 @@ void ShoreTPCEEnv::checkpointer_t::work()
 	_env->set_measure(MST_MEASURE);
 	for(int i=0; i < 60 && !*loaded; i++) 
 	    ::sleep(1);
-	
-	//	_env->set_measure(MST_PAUSE);
-	
+		
         TRACE( TRACE_ALWAYS, "db checkpoint - start\n");
         _env->checkpoint();
         TRACE( TRACE_ALWAYS, "db checkpoint - end\n");
     }
+    _env->set_measure(MST_PAUSE);
 }
 
 

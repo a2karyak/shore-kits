@@ -400,8 +400,9 @@ market_feed_input_t create_market_feed_input(int sf, int specificIdx)
 { 
     
     market_feed_input_t amfi;
-    TMarketFeedTxnInput* input= MarketFeedInputBuffer->get();
-    
+    TMarketFeedTxnInput* input= MarketFeedInputBuffer->get();    
+
+    assert (input);    
     memcpy(amfi._status_submitted,input->StatusAndTradeType.status_submitted,5);
     memcpy(amfi._type_limit_buy,input->StatusAndTradeType.type_limit_buy,4);
     memcpy(amfi._type_limit_sell,input->StatusAndTradeType.type_limit_sell,4);
