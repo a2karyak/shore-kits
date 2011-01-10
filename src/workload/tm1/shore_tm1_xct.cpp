@@ -288,7 +288,7 @@ w_rc_t ShoreTM1Env::xct_populate_one(const int sub_id)
     assert (prcf);
 
     rep_row_t areprow(_psub_man->ts());
-    rep_row_t areprow_key(_psub_man->ts_key());
+    rep_row_t areprow_key(_psub_man->ts());
 
     // allocate space for the biggest of the 4 table representations
     areprow.set(_psub_desc->maxsize());

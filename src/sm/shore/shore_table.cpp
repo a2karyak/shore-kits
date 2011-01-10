@@ -1196,8 +1196,7 @@ w_rc_t table_man_t::relocate_records(vector<rid_t>&    old_rids,
 	atuple->setup(my_table_man->table());
 	int ksz;
 	bool found = false;
-	guard<ats_char_t> ts = new ats_char_t(my_table_man->table()->maxsize());
-	rep_row_t areprow(ts);
+	rep_row_t areprow(my_table_man->ts());
 	areprow.set(my_table_man->table()->maxsize());
 	atuple->_rep = &areprow;
 	int pnum;

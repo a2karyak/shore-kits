@@ -399,7 +399,7 @@ w_rc_t ShoreTPCBEnv::xct_populate_db(const int /* xct_id */,
     assert (prhist);
 
     rep_row_t areprow(_paccount_man->ts());
-    rep_row_t areprow_key(_paccount_man->ts_key());
+    rep_row_t areprow_key(_paccount_man->ts());
 
     // allocate space for the biggest of the 4 table representations
     areprow.set(_paccount_desc->maxsize());

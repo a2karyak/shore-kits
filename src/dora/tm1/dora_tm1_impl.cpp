@@ -1036,7 +1036,7 @@ w_rc_t ins_cf_icf_action::trx_exec()
     areprow.set(_penv->cf_desc()->maxsize()); 
     prcf->_rep = &areprow;
 
-    rep_row_t areprow_key(_penv->cf_man()->ts_key());
+    rep_row_t areprow_key(_penv->cf_man()->ts());
     areprow_key.set(_penv->cf_desc()->maxsize()); 
     prcf->_rep_key = &areprow_key;
 
@@ -1361,7 +1361,7 @@ w_rc_t i_cf_icfb_action::trx_exec()
     areprow.set(_penv->cf_desc()->maxsize()); 
     prcf->_rep = &areprow;
 
-    rep_row_t areprow_key(_penv->cf_man()->ts_key());
+    rep_row_t areprow_key(_penv->cf_man()->ts());
     areprow_key.set(_penv->cf_desc()->maxsize()); 
     prcf->_rep_key = &areprow_key;
 

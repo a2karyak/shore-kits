@@ -129,8 +129,6 @@ protected:
 
     TableDesc* _pspecifictable;
     pcache_link _pcache; /* pointer to a tuple cache */
-    guard<ats_char_t> _pts;   /* trash stack */
-    guard<ats_char_t> _pts_key;   /* trash stack for key */
     
 
 public:
@@ -141,21 +139,12 @@ public:
 
     table_man_impl(TableDesc* aTableDesc, 
                    bool construct_cache=true)
-        : table_man_t(aTableDesc),
+        : table_man_t(aTableDesc, construct_cache),
           _pspecifictable(aTableDesc)
     {
         assert (_ptable);
-
 	row_cache::tuple_factory::ptable() = aTableDesc;
-
-        // init tuple cache
-        if (construct_cache) {
-            // init trash stack            
-            _pts = new ats_char_t(_ptable->maxsize());
-	    _pts_key = new ats_char_t(_ptable->maxsize());
-        }
     }
-
 
 
     /* ------------------------------------------- */
@@ -188,14 +177,6 @@ public:
     w_rc_t check_index(ss_m* db, index_desc_t* pidx);
     w_rc_t scan_all_indexes(ss_m* db);
     w_rc_t scan_index(ss_m* db, index_desc_t* pidx);
-
-
-    /* ------------------------------ */
-    /* --- trash stack operations --- */
-    /* ------------------------------ */
-
-    ats_char_t* ts() { assert (_pts); return (_pts); }
-    ats_char_t* ts_key() { assert (_pts_key); return (_pts_key); }
 
 
     /* ------------------------------ */

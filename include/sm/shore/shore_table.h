@@ -280,13 +280,21 @@ protected:
 
     table_desc_t* _ptable;       /* pointer back to the table description */
 
+    guard<ats_char_t> _pts;   /* trash stack */
+
 public:
 
     typedef table_row_t table_tuple; 
 
-    table_man_t(table_desc_t* aTableDesc) 
+    table_man_t(table_desc_t* aTableDesc,
+		bool construct_cache=true) 
         : _ptable(aTableDesc)
     {
+	// init tuple cache
+        if (construct_cache) {
+            // init trash stack            
+            _pts = new ats_char_t(_ptable->maxsize());
+        }
     }
 
     virtual ~table_man_t() {}
@@ -298,6 +306,13 @@ public:
     table_desc_t* table() { return (_ptable); }
 
     int get_pnum(index_desc_t* pindex, table_tuple const* ptuple) const;
+
+
+    /* ------------------------------ */
+    /* --- trash stack operations --- */
+    /* ------------------------------ */
+
+    ats_char_t* ts() { assert (_pts); return (_pts); }
 
 
     /* ---------------------------- */
