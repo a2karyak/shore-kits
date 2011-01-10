@@ -1072,7 +1072,7 @@ w_rc_t table_man_t::add_tuple(ss_m* db,
         W_DO(index->find_fid(db, pnum));
 
         if (index->is_mr()) {
-            //RELOCATE_RECORD_CALLBACK_FUNC reloc_func = NULL;
+	    ss_m::RELOCATE_RECORD_CALLBACK_FUNC reloc_func = &relocate_records;
             el_filler ef;
             ef._el.put(vec_t(&(ptuple->_rid), sizeof(rid_t)));
             W_DO(db->create_mr_assoc(index->fid(pnum),
@@ -1080,7 +1080,7 @@ w_rc_t table_man_t::add_tuple(ss_m* db,
                                      ef,
                                      bIgnoreLocks,
                                      index->is_latchless(),
-                                     NULL, // reloc_func
+                                     reloc_func,
                                      (index->is_primary() ? primary_root : lpid_t::null)
                                      ));
         }
@@ -1174,35 +1174,67 @@ rc_t el_filler_part::fill_el(vec_t& el, const lpid_t& leaf)
  *
  *********************************************************************/
 
-w_rc_t relocate_records(const stid_t&      stid,     
-                        vector<rid_t>&    old_rids, 
-                        vector<rid_t>&    new_rids)
+w_rc_t table_man_t::relocate_records(vector<rid_t>&    old_rids, 
+				     vector<rid_t>&    new_rids)
 {
+    // TODO: pin: the stid you give is for the index not for the heap file
+    // but we need the heap file store id here, so if this works change this interface
+
+    assert(old_rids.size() == new_rids.size() && old_rids.size() > 0);
+
     typedef vector<rid_t>::iterator RIDIt;
 
     // Find the table_man_t object from the stid
-    table_man_t* my_table_man = table_man_t::stid_to_tableman[stid];
-    index_desc_t* pindex;
-    table_row_t atuple;
-    atuple.setup(my_table_man->table());
-
-    // Read each record into a table_tuple
-    RIDIt old_ridit = old_rids.begin();
+    RIDIt old_ridit = old_rids.begin(); 
     RIDIt new_ridit = new_rids.begin();
-    for (; ((old_ridit != old_rids.end()) && (new_ridit != new_rids.end())); 
-         old_ridit++,new_ridit++) {
-        
-        // Read record
-        my_table_man->read_tuple(&atuple,NL);
-        
-        // Update indexes       
-        pindex = my_table_man->table()->indexes();
-        while (pindex) {
-            // Remove old entry
-            assert(0); // TODO
+    table_man_t* my_table_man = table_man_t::stid_to_tableman[(*old_ridit).pid._stid];
+    
+    // if there is only one index there is nothing to update
+    if(my_table_man->table()->index_count() > 1) {
+        index_desc_t* pindex;
+	table_row_t* atuple = new table_row_t();
+	atuple->setup(my_table_man->table());
+	int ksz;
+	bool found = false;
+	guard<ats_char_t> ts = new ats_char_t(my_table_man->table()->maxsize());
+	rep_row_t areprow(ts);
+	areprow.set(my_table_man->table()->maxsize());
+	atuple->_rep = &areprow;
+	int pnum;
 
-            // Insert new
-        }
+	// Read each record into a table_tuple
+	for ( ;
+	      old_ridit != old_rids.end() && new_ridit != new_rids.end(); 
+	      old_ridit++,new_ridit++) {
+	    
+	    // Read record by using its new rid
+	    atuple->set_rid(*new_ridit);
+	    my_table_man->read_tuple(atuple);
+	    
+	    // Update the secondary indexes
+	    pindex = my_table_man->table()->indexes();
+	    while (pindex) {
+		if(!pindex->is_primary()) {
+		    found = false;
+		    pnum = my_table_man->get_pnum(pindex, atuple);
+		    W_DO(pindex->find_fid(my_table_man->table()->db(), pnum));
+		    // Update the old rid with the new one
+		    ksz = my_table_man->format_key(pindex, atuple, *atuple->_rep);
+		    assert (atuple->_rep->_dest);
+		    W_DO( ss_m::update_mr_assoc(pindex->fid(pnum),
+						vec_t(atuple->_rep->_dest, ksz),
+						vec_t(&(*old_ridit),sizeof(rid_t)),
+						vec_t(&(*new_ridit),sizeof(rid_t)),
+						found) );
+		    assert(found); 
+    		}
+		pindex = pindex->next();   
+	    }
+	}
+
+	// TODO: pin: try to do this with get_tuple in table_man_impl later
+	delete atuple;
+	atuple = NULL;
     }
     return (RCOK);
 }
@@ -1235,8 +1267,7 @@ w_rc_t table_man_t::add_plp_tuple(ss_m* db,
     int pnum = get_pnum(primary_index, ptuple);
     W_DO(primary_index->find_fid(db, pnum));
 
-#warning TODO Implement the relocation callback function
-    ss_m::RELOCATE_RECORD_CALLBACK_FUNC reloc_func = NULL;
+    ss_m::RELOCATE_RECORD_CALLBACK_FUNC reloc_func = &relocate_records;
     el_filler_part part_filler(sizeof(rid_t),db,this,ptuple,primary_index,bIgnoreLocks);
     W_DO(db->create_mr_assoc(primary_index->fid(pnum),
                              vec_t(ptuple->_rep_key->_dest, ksz), // VEC_T OF INDEX ENTRY
@@ -1271,7 +1302,7 @@ w_rc_t table_man_t::add_plp_tuple(ss_m* db,
                                      vec_t(ptuple->_rep_key->_dest, ksz),
                                      ef,
                                      bIgnoreLocks,
-                                     index->is_latchless(),
+                                     false, //index->is_latchless(),
                                      NULL, // No relocation
                                      lpid_t::null));
         }
@@ -1495,6 +1526,11 @@ w_rc_t table_man_t::read_tuple(table_tuple* ptuple,
     latch_mode_t heap_latch_mode = LATCH_EX;
     if (system_mode & ( PD_MRBT_LEAF | PD_MRBT_PART) ) {
         heap_latch_mode = LATCH_NL;
+	// pin: right now we don't have a case where mrbt_leaf & mrbt_part are used
+	//      without dora but i'm including the check here
+	if(system_mode & PD_NOLOCK) {
+	    //TODO: lock_mode = NL;
+	}
     }
 
     pin_i  pin;

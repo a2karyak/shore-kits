@@ -248,7 +248,10 @@ public:
         return (&(_desc[descidx]));
     }    
 
-
+    /* ---------- */
+    /* --- db --- */
+    /* ---------- */
+    ss_m* db() { return (_db); }
 
     /* ----------------- */
     /* --- debugging --- */
@@ -462,6 +465,23 @@ public:
 
     virtual w_rc_t print_table(ss_m* db)=0; /* print the table on screen */
 
+
+    /* ---------------------------------------------------------------
+     *
+     * @fn:    relocate_records
+     *
+     * @brief: The registered callback function, which is called when 
+     *         PLP-Leaf or PLP-Part moves records
+     *
+     * --------------------------------------------------------------- */
+    
+    static w_rc_t relocate_records(vector<rid_t>&    old_rids, 
+				   vector<rid_t>&    new_rids);
+
+
+
+
+
 }; // EOF: table_man_t
 
 
@@ -490,22 +510,6 @@ struct el_filler_part : public el_filler
     bool _bIgnoreLocks;
     rc_t fill_el(vec_t& el, const lpid_t& leaf);
 };
-
-
-/* ---------------------------------------------------------------
- *
- * @class: relocate_records
- *
- * @brief: The registered callback function, which is called when 
- *         PLP-Leaf moves records
- *
- * --------------------------------------------------------------- */
-
-w_rc_t relocate_records(const stid_t&      stid,     
-                        vector<rid_t>&    old_rids, 
-                        vector<rid_t>&    new_rids);
-
-
 
 
 /****************************************************************** 
