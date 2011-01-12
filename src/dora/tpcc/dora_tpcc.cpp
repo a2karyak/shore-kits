@@ -202,6 +202,7 @@ w_rc_t DoraTPCCEnv::update_partitioning()
     _pcustomer_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_cus);
     _pnew_order_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_nor);
     _porder_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_ord);
+    _porder_line_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_oli);    
     _phistory_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_his);
     _pstock_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_sto);
 

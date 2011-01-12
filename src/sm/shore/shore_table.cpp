@@ -1034,7 +1034,8 @@ w_rc_t table_man_t::add_tuple(ss_m* db,
     assert (ptuple->_rep);
     uint4_t system_mode = _ptable->get_pd();
 
-    if ((system_mode & (PD_MRBT_PART | PD_MRBT_LEAF)) && (_ptable->primary_idx()->is_latchless())) {
+    if ((system_mode & (PD_MRBT_PART | PD_MRBT_LEAF)) &&
+	(_ptable->primary_idx() && _ptable->primary_idx()->is_latchless())) {
         return (add_plp_tuple(db,ptuple,lock_mode,system_mode,primary_root));
     }
 

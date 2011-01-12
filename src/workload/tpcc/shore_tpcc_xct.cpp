@@ -337,6 +337,9 @@ w_rc_t ShoreTPCCEnv::xct_populate_baseline(const int /* xct_id */,
     prwh->_rep = &areprow;
     prdist->_rep = &areprow;
 
+    rep_row_t areprow_key(_pcustomer_man->ts());
+    prwh->_rep_key = &areprow_key;
+    prdist->_rep_key = &areprow_key;
     
     w_rc_t e = RCOK;
 
@@ -433,9 +436,11 @@ w_rc_t ShoreTPCCEnv::xct_populate_one_unit(const int /* xct_id */,
     assert (prol);
     
     rep_row_t areprow(_pcustomer_man->ts());
+    rep_row_t areprow_key(_pcustomer_man->ts());
 
     // allocate space for the biggest of the 8 table representations
-    areprow.set(_pcustomer_desc->maxsize()); 
+    areprow.set(_pcustomer_desc->maxsize());
+    areprow_key.set(_pcustomer_desc->maxsize()); 
 
     prcust->_rep = &areprow;
     prno->_rep = &areprow;
@@ -444,6 +449,14 @@ w_rc_t ShoreTPCCEnv::xct_populate_one_unit(const int /* xct_id */,
     prst->_rep = &areprow;
     prol->_rep = &areprow;
     pritem->_rep = &areprow;
+    
+    prcust->_rep_key = &areprow_key;
+    prno->_rep_key = &areprow_key;
+    prord->_rep_key = &areprow_key;
+    prhist->_rep_key = &areprow_key;
+    prst->_rep_key = &areprow_key;
+    prol->_rep_key = &areprow_key;
+    pritem->_rep_key = &areprow_key;
 
     int unit = pbuin._unit;
 

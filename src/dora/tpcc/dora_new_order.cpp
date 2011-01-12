@@ -592,6 +592,10 @@ w_rc_t ins_ord_nord_action::trx_exec()
     areprow.set(_penv->order_desc()->maxsize()); 
     prord->_rep = &areprow;
 
+    rep_row_t areprow_key(_penv->order_man()->ts());
+    areprow_key.set(_penv->order_desc()->maxsize()); 
+    prord->_rep_key = &areprow_key;
+
     w_rc_t e = RCOK;
 
     { // make gotos safe
@@ -654,6 +658,10 @@ w_rc_t ins_nord_nord_action::trx_exec()
     areprow.set(_penv->new_order_desc()->maxsize()); 
     prno->_rep = &areprow;
 
+    rep_row_t areprow_key(_penv->new_order_man()->ts());
+    areprow_key.set(_penv->new_order_desc()->maxsize()); 
+    prno->_rep_key = &areprow_key;
+
     w_rc_t e = RCOK;
 
     { // make gotos safe
@@ -710,6 +718,10 @@ w_rc_t ins_ol_nord_action::trx_exec()
     rep_row_t areprow(_penv->order_line_man()->ts());
     areprow.set(_penv->order_line_desc()->maxsize()); 
     prol->_rep = &areprow;
+
+    rep_row_t areprow_key(_penv->order_line_man()->ts());
+    areprow_key.set(_penv->order_line_desc()->maxsize()); 
+    prol->_rep_key = &areprow_key;
 
     w_rc_t e = RCOK;
 

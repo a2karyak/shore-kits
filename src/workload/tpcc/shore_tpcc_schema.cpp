@@ -219,7 +219,7 @@ order_t::order_t(const uint4_t& pd) :
 
     // create unique index o_index on (w_id, d_id, o_id)
     uint keys1[3] = {3, 2, 0}; // IDX { O_W_ID, O_D_ID, O_ID }
-    create_index_desc("O_IDX", 0, keys1, 3, pd);
+    create_primary_idx_desc("O_IDX", 0, keys1, 3, pd);
 
     // create unique index o_cust_index on (w_id, d_id, c_id, o_id)
     uint keys2[4] = {3, 2, 1, 0}; // IDX { O_W_ID, O_D_ID, O_C_ID, O_ID }
@@ -295,7 +295,7 @@ stock_t::stock_t(const uint4_t& pd) :
     _desc[16].setup(SQL_FIXCHAR,  "S_DATA", 50); 
 
     // create unique index s_index on (w_id, i_id)
-    uint keys[2] = { 0, 1 }; // IDX { S_W_ID, S_I_ID }
+    uint keys[2] = { 1, 0 }; // IDX { S_W_ID, S_I_ID }
     create_primary_idx_desc("S_IDX", 0, keys, 2, pd);
 }
 

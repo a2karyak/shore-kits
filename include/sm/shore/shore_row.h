@@ -184,6 +184,11 @@ struct table_row_t
 
     table_row_t();        
     table_row_t(table_desc_t* ptd)
+	: _ptable(NULL),
+	  _field_cnt(0), _is_setup(false), 
+	  _rid(rid_t::null), _pvalues(NULL), 
+	  _fixed_offset(0),_var_slot_offset(0),_var_offset(0),_null_count(0),
+	  _rep(NULL), _rep_key(NULL)
     {
         assert (ptd);
         setup(ptd);
