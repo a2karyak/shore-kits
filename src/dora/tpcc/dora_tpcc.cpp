@@ -292,6 +292,13 @@ int DoraTPCCEnv::conf()
     // (c) The number of distinct values/records for the routing field, which 
     //     depending on the table, the workload, and the scaling factor
 
+    // WARNING: pin: other than items table all the other tables are partitioned
+    //               according to whs id now so their record estimation should be
+    //               taken as whs table's record estimation otherwise the partitioning
+    //               is screwed when whs table record estimation is less than the
+    //               cpu_range (check tpcc-10 at dias2 for this bug). so now i omitted
+    //               the record estimation calculation for other tables
+
     // In TPC-C, each table has different routing fields. Hence, there is 
     // different recordEstimation per table.
     uint recordEstimation = get_sf(); // == # of Warehouses
@@ -300,42 +307,48 @@ int DoraTPCCEnv::conf()
     _parts_whs = std::min(recordEstimation,_parts_whs);
 
     // Districts 
-    recordEstimation = get_sf()*DISTRICTS_PER_WAREHOUSE;
+    //recordEstimation = get_sf()*DISTRICTS_PER_WAREHOUSE;
     double dis_PerCPU = ev->getVarDouble("dora-ratio-tpcc-dis",0);
     _parts_dis = ( dis_PerCPU>0 ? (_cpu_range * dis_PerCPU) : 1);
     _parts_dis = std::min(recordEstimation,_parts_dis);
 
     // Customers
-    recordEstimation = get_sf()*DISTRICTS_PER_WAREHOUSE*CUSTOMERS_PER_DISTRICT;
+    //recordEstimation = get_sf()*DISTRICTS_PER_WAREHOUSE*CUSTOMERS_PER_DISTRICT;
     double cus_PerCPU = ev->getVarDouble("dora-ratio-tpcc-cus",0);
     _parts_cus = ( cus_PerCPU>0 ? (_cpu_range * cus_PerCPU) : 1);
     _parts_cus = std::min(recordEstimation,_parts_cus);
 
     // NewOrders - Growing table. We use the number of Districts instead, because 
     //             its primary key prefix is W_ID,D_ID,...
-    recordEstimation = get_sf()*DISTRICTS_PER_WAREHOUSE*NU_ORDERS_PER_DISTRICT;
+    //recordEstimation = get_sf()*DISTRICTS_PER_WAREHOUSE*NU_ORDERS_PER_DISTRICT;
     double nor_PerCPU = ev->getVarDouble("dora-ratio-tpcc-nor",0);
     _parts_nor = ( nor_PerCPU>0 ? (_cpu_range * nor_PerCPU) : 1);
     _parts_nor = std::min(recordEstimation,_parts_nor);
 
     // Orders - Growing table, treating is similarly with NewOrders
-    recordEstimation = get_sf()*DISTRICTS_PER_WAREHOUSE;
+    // recordEstimation = get_sf()*DISTRICTS_PER_WAREHOUSE;
     double ord_PerCPU = ev->getVarDouble("dora-ratio-tpcc-ord",0);
     _parts_ord = ( ord_PerCPU>0 ? (_cpu_range * ord_PerCPU) : 1);
     _parts_ord = std::min(recordEstimation,_parts_ord);
 
     // OrderLines - Growing table, treating is similarly with NewOrders
-    recordEstimation = get_sf()*DISTRICTS_PER_WAREHOUSE;
+    //recordEstimation = get_sf()*DISTRICTS_PER_WAREHOUSE;
     double oli_PerCPU = ev->getVarDouble("dora-ratio-tpcc-oli",0);
     _parts_oli = ( oli_PerCPU>0 ? (_cpu_range * oli_PerCPU) : 1);
     _parts_oli = std::min(recordEstimation,_parts_oli);
 
     // History - No primary key, we use the Districts because it is a 
     //           quite flexible number (10 x #Warehouses)
-    recordEstimation = get_sf()*DISTRICTS_PER_WAREHOUSE;
+    //recordEstimation = get_sf()*DISTRICTS_PER_WAREHOUSE;
     double his_PerCPU = ev->getVarDouble("dora-ratio-tpcc-his",0);
     _parts_his = ( his_PerCPU>0 ? (_cpu_range * his_PerCPU) : 1);
     _parts_his = std::min(recordEstimation,_parts_his);
+
+    // Stocks
+    //recordEstimation = get_sf()*STOCK_PER_WAREHOUSE;
+    double sto_PerCPU = ev->getVarDouble("dora-ratio-tpcc-sto",0);
+    _parts_sto = ( whs_PerCPU>0 ? (_cpu_range * sto_PerCPU) : 1);
+    _parts_sto = std::min(recordEstimation,_parts_sto);
 
     // Item - Constant == 100K
     recordEstimation = ITEMS;
@@ -343,11 +356,6 @@ int DoraTPCCEnv::conf()
     _parts_ite = ( ite_PerCPU>0 ? (_cpu_range * ite_PerCPU) : 1);
     _parts_ite = std::min(recordEstimation,_parts_ite);
 
-    // Stocks
-    recordEstimation = get_sf()*STOCK_PER_WAREHOUSE;
-    double sto_PerCPU = ev->getVarDouble("dora-ratio-tpcc-sto",0);
-    _parts_sto = ( whs_PerCPU>0 ? (_cpu_range * sto_PerCPU) : 1);
-    _parts_sto = std::min(recordEstimation,_parts_sto);
 
     TRACE( TRACE_STATISTICS,"Total number of partitions (%d)\n",
            (_parts_whs+_parts_dis+_parts_cus+_parts_nor+
