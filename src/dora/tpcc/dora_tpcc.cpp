@@ -172,7 +172,7 @@ w_rc_t DoraTPCCEnv::update_partitioning()
     memcpy(minKey,&minKeyVal,sizeof(int));
 
     char* maxKey = (char*)malloc(sizeof(int));
-    memset(minKey,0,sizeof(int));
+    memset(maxKey,0,sizeof(int));
     memcpy(maxKey,&maxKeyVal,sizeof(int));
 
 
