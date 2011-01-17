@@ -79,7 +79,7 @@ w_rc_t mid1_del_rvp::_run()
     typedef partition_t<int>   irpImpl; 
 
     {
-        int wh = _din._wh_id-1;
+        int wh = _din._wh_id;
         irpImpl* my_ord_part = _ptpccenv->decide_part(_ptpccenv->ord(),wh);
         irpImpl* my_oline_part = _ptpccenv->decide_part(_ptpccenv->oli(),wh);
 
@@ -131,7 +131,7 @@ w_rc_t mid2_del_rvp::_run()
     typedef partition_t<int>   irpImpl; 
 
     {
-        int wh = _din._wh_id-1;
+        int wh = _din._wh_id;
         irpImpl* my_cust_part = _ptpccenv->decide_part(_ptpccenv->cus(),wh);
 
         TRACE( TRACE_TRX_FLOW, "Next phase (%d-%d)\n", _tid.get_lo(), _d_id);

@@ -67,7 +67,7 @@ w_rc_t midway_pay_rvp::_run()
     ins_hist_pay_action* ins_hist_pay = _ptpccenv->new_ins_hist_pay_action(_xct,_tid,frvp,_pin);
     ins_hist_pay->postset(_awh,_adist);
     typedef partition_t<int>   irpImpl; 
-    irpImpl* hist_part = _ptpccenv->decide_part(_ptpccenv->his(),_pin._home_wh_id-1);
+    irpImpl* hist_part = _ptpccenv->decide_part(_ptpccenv->his(),_pin._home_wh_id);
 
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());    
 

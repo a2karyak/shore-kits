@@ -82,7 +82,7 @@ w_rc_t mid1_ordst_rvp::_run()
     // 3b. Enqueue
 
     {        
-        int wh = _in._wh_id - 1;
+        int wh = _in._wh_id;
         irpImpl* my_ord_part = _penv->decide_part(_penv->ord(),wh);
 
         // ORD_PART_CS
@@ -124,7 +124,7 @@ w_rc_t mid2_ordst_rvp::_run()
     // 3b. Enqueue
 
     {        
-        int wh = _in._wh_id - 1;
+        int wh = _in._wh_id ;
         irpImpl* my_oli_part = _penv->decide_part(_penv->oli(),wh);
 
         // OLI_PART_CS

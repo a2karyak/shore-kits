@@ -78,7 +78,7 @@ w_rc_t mid1_stock_rvp::_run()
     typedef partition_t<int>   irpImpl; 
 
     {
-        irpImpl* ol_part = _penv->decide_part(_penv->oli(),_in._wh_id-1);
+        irpImpl* ol_part = _penv->decide_part(_penv->oli(),_in._wh_id);
 
         // OLI_PART_CS
         CRITICAL_SECTION(oli_part_cs, ol_part->_enqueue_lock);
@@ -114,7 +114,7 @@ w_rc_t mid2_stock_rvp::_run()
     typedef partition_t<int>   irpImpl; 
 
     { 
-        irpImpl* my_st_part = _penv->decide_part(_penv->sto(),_in._wh_id-1);
+        irpImpl* my_st_part = _penv->decide_part(_penv->sto(),_in._wh_id);
 
         // STO_PART_CS
         CRITICAL_SECTION(sto_part_cs, my_st_part->_enqueue_lock);
