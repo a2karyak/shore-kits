@@ -59,7 +59,11 @@
 #ifdef NEED_STDIO_H
 #include <stdio.h>
 #endif
- 
+
+#ifdef __SUNPRO_CC
+#include <stdio.h>
+#endif
+
 using namespace std;
 
 // TODO: reference additional headers your program requires here

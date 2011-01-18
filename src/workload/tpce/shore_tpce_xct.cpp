@@ -4760,32 +4760,36 @@ w_rc_t ShoreTPCEEnv::xct_trade_lookup(const int xct_id, trade_lookup_input_t& pt
           if (e.is_error()) { goto done; }
         */
     }
+
     {
         //ptlin.print();
 
-        double 	bid_price[ptlin._max_trades];
-        char	exec_name[ptlin._max_trades][50]; //49
-        bool	is_cash[ptlin._max_trades];
-        bool	is_market[ptlin._max_trades];
-        double	trade_price[ptlin._max_trades];
+        assert (0); // **** IP: need to check the 2-dimensional array
 
-        TIdent 	trade_list[ptlin._max_trades];
+        array_guard_t<double> bid_price = new double[ptlin._max_trades];
+        array_guard_t< char[50] > exec_name = new char[ptlin._max_trades][50]; //49
+        array_guard_t<bool> is_cash = new bool[ptlin._max_trades];
+        array_guard_t<bool> is_market = new bool[ptlin._max_trades];
+        array_guard_t<double> trade_price = new double[ptlin._max_trades];
 
-        double	settlement_amount[ptlin._max_trades];
-        myTime	settlement_cash_due_date[ptlin._max_trades];
-        char	settlement_cash_type[ptlin._max_trades][41]; //40
+        array_guard_t<TIdent> trade_list = new TIdent[ptlin._max_trades];
 
-        double	cash_transaction_amount[ptlin._max_trades];
-        myTime	cash_transaction_dts[ptlin._max_trades];
-        char	cash_transaction_name[ptlin._max_trades][101]; //100
+        array_guard_t<double> settlement_amount = new double[ptlin._max_trades];
+        array_guard_t<myTime> settlement_cash_due_date = new myTime[ptlin._max_trades];
+        array_guard_t< char[41] > settlement_cash_type = new char[ptlin._max_trades][41]; //40
 
-        myTime	trade_history_dts[ptlin._max_trades][3];
-        char	trade_history_status_id[ptlin._max_trades][3][5]; //4
+        array_guard_t<double> cash_transaction_amount = new double[ptlin._max_trades];
+        array_guard_t<myTime> cash_transaction_dts = new myTime[ptlin._max_trades];
+        array_guard_t< char[101] > cash_transaction_name = new char[ptlin._max_trades][101]; //100
 
-        TIdent 	acct_id[ptlin._max_trades];
-        int 	quantity[ptlin._max_trades];
-        char	trade_type[ptlin._max_trades][4]; //3
-        myTime	trade_dts[ptlin._max_trades];
+        array_guard_t< myTime[3] > trade_history_dts = new myTime[ptlin._max_trades][3];
+        array_guard_t< char[3][5] > trade_history_status_id = new char[ptlin._max_trades][3][5]; //4
+
+        array_guard_t<TIdent> acct_id = new TIdent[ptlin._max_trades];
+        array_guard_t<int> quantity = new int[ptlin._max_trades];
+        array_guard_t< char[4] > trade_type = new char[ptlin._max_trades][4]; //3
+        array_guard_t<myTime> trade_dts = new myTime[ptlin._max_trades];
+
         //BEGIN FRAME1
         int num_found = 0;
         if(ptlin._frame_to_execute == 1)
@@ -8396,11 +8400,11 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
            day_len = row_count
         */
 
-        myTime day_date[psdin._max_rows_to_return];
-        double day_close[psdin._max_rows_to_return];
-        double day_high[psdin._max_rows_to_return];
-        double day_low [psdin._max_rows_to_return];
-        int day_vol[psdin._max_rows_to_return];
+        array_guard_t<myTime> day_date = new myTime[psdin._max_rows_to_return];
+        array_guard_t<double> day_close = new double[psdin._max_rows_to_return];
+        array_guard_t<double> day_high = new double[psdin._max_rows_to_return];
+        array_guard_t<double> day_low = new double[psdin._max_rows_to_return];
+        array_guard_t<int> day_vol = new int[psdin._max_rows_to_return];
 
         guard< index_scan_iter_impl<daily_market_t> > dm_iter;
         {
@@ -9080,8 +9084,10 @@ w_rc_t ShoreTPCEEnv::xct_broker_volume(const int xct_id, broker_volume_input_t& 
         }
         //assert (tr_sorter.count()); //harness control
 
-        char broker_name[i][50]; //49
-        double volume[i];
+        assert (0); // **** IP: need to check the 2-dimensional array
+
+        array_guard_t< char[50] > broker_name = new char[i][50]; //49
+        array_guard_t<double> volume = new double[i];
 
         sort_iter_impl tr_list_sort_iter(_pssm, &tr_list, &tr_sorter);
         bool eof;
@@ -9169,26 +9175,29 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
         //ptuin.print();
         int num_found = 0;
         int num_updated = 0;
+
         if(ptuin._frame_to_execute == 1){
             int i;
             char ex_name[50]; //49
 
-            double 		bid_price[ptuin._max_trades];
-            char		exec_name[ptuin._max_trades][50]; //49
-            bool		is_cash[ptuin._max_trades];
-            bool		is_market[ptuin._max_trades];
-            double		trade_price[ptuin._max_trades];
+            assert (0); // **** IP: need to check the 2-dimensional array
 
-            double		settlement_amount[ptuin._max_trades];
-            myTime		settlement_cash_due_date[ptuin._max_trades];
-            char		settlement_cash_type[ptuin._max_trades][41]; //40
+            array_guard_t<double> bid_price = new double[ptuin._max_trades];
+            array_guard_t< char[50] > exec_name = new char[ptuin._max_trades][50]; //49
+            array_guard_t<bool> is_cash = new bool[ptuin._max_trades];
+            array_guard_t<bool>	is_market = new bool[ptuin._max_trades];
+            array_guard_t<double> trade_price = new double[ptuin._max_trades];
 
-            double		cash_transaction_amount[ptuin._max_trades];
-            myTime		cash_transaction_dts[ptuin._max_trades];
-            char		cash_transaction_name[ptuin._max_trades][101]; //100
+            array_guard_t<double> settlement_amount = new double[ptuin._max_trades];
+            array_guard_t<myTime> settlement_cash_due_date = new myTime[ptuin._max_trades];
+            array_guard_t< char[41] > settlement_cash_type = new char[ptuin._max_trades][41]; //40
 
-            myTime		trade_history_dts[ptuin._max_trades][3];
-            char		trade_history_status_id[ptuin._max_trades][3][5]; //4
+            array_guard_t<double> cash_transaction_amount = new double[ptuin._max_trades];
+            array_guard_t<myTime> cash_transaction_dts = new myTime[ptuin._max_trades];
+            array_guard_t< char[101] > cash_transaction_name = new char[ptuin._max_trades][101]; //100
+
+            array_guard_t< myTime[3] > trade_history_dts = new myTime[ptuin._max_trades][3];
+            array_guard_t< char[3][5] > trade_history_status_id = new char[ptuin._max_trades][3][5]; //4
 
             for(i = 0; i < ptuin._max_trades; i++){
                 if(num_updated < ptuin._max_updates){
@@ -9376,22 +9385,24 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
         else if(ptuin._frame_to_execute == 2){
             int i;
 
-            double 	bid_price[ptuin._max_trades];
-            char	exec_name[ptuin._max_trades][50]; //49
-            bool	is_cash[ptuin._max_trades];
-            TIdent	trade_list[ptuin._max_trades];
-            double	trade_price[ptuin._max_trades];
+            assert (0); // **** IP: need to check the 2-dimensional array
 
-            double	settlement_amount[ptuin._max_trades];
-            myTime	settlement_cash_due_date[ptuin._max_trades];
-            char	settlement_cash_type[ptuin._max_trades][41]; //40
+            array_guard_t<double> bid_price = new double[ptuin._max_trades];
+            array_guard_t< char[50] > exec_name = new char[ptuin._max_trades][50]; //49
+            array_guard_t<bool> is_cash = new bool[ptuin._max_trades];
+            array_guard_t<TIdent> trade_list = new TIdent[ptuin._max_trades];
+            array_guard_t<double> trade_price = new double[ptuin._max_trades];
 
-            double	cash_transaction_amount[ptuin._max_trades];
-            myTime	cash_transaction_dts[ptuin._max_trades];
-            char	cash_transaction_name[ptuin._max_trades][101]; //100
+            array_guard_t<double> settlement_amount = new double[ptuin._max_trades];
+            array_guard_t<myTime> settlement_cash_due_date = new myTime[ptuin._max_trades];
+            array_guard_t< char[41] > settlement_cash_type = new char[ptuin._max_trades][41]; //40
 
-            myTime	trade_history_dts[ptuin._max_trades][3];
-            char	trade_history_status_id[ptuin._max_trades][3][5]; //4
+            array_guard_t<double> cash_transaction_amount = new double[ptuin._max_trades];
+            array_guard_t<myTime> cash_transaction_dts = new myTime[ptuin._max_trades];
+            array_guard_t< char[101] > cash_transaction_name = new char[ptuin._max_trades][101]; //100
+
+            array_guard_t< myTime[3] > trade_history_dts = new myTime[ptuin._max_trades][3];
+            array_guard_t< char[3][5] > trade_history_status_id = new char[ptuin._max_trades][3][5]; //4
 
             /**
                select first max_trades rows
@@ -9596,29 +9607,32 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
             assert(num_updated == num_found && num_updated >= 0 && num_found <= ptuin._max_trades);
         }
         else if(ptuin._frame_to_execute == 3){
+
+            assert (0); // **** IP: need to check the 2-dimensional array
+
             int i;
-            TIdent 	acct_id[ptuin._max_trades];
-            char	exec_name[ptuin._max_trades][50]; //49
-            bool	is_cash[ptuin._max_trades];
-            double	price[ptuin._max_trades];
-            int	quantity[ptuin._max_trades];
-            char 	s_name[ptuin._max_trades][71]; //70
-            myTime	trade_dts[ptuin._max_trades];
-            TIdent	trade_list[ptuin._max_trades];
-            char	trade_type[ptuin._max_trades][4]; //3
-            char	type_name[ptuin._max_trades][13]; //12
+            array_guard_t<TIdent> acct_id = new TIdent[ptuin._max_trades];
+            array_guard_t< char[50] > exec_name = new char[ptuin._max_trades][50]; //49
+            array_guard_t<bool> is_cash = new bool[ptuin._max_trades];
+            array_guard_t<double> price = new double[ptuin._max_trades];
+            array_guard_t<int> quantity = new int[ptuin._max_trades];
+            array_guard_t< char[71] > s_name = new char[ptuin._max_trades][71]; //70
+            array_guard_t<myTime> trade_dts = new myTime[ptuin._max_trades];
+            array_guard_t<TIdent> trade_list = new TIdent[ptuin._max_trades];
+            array_guard_t< char[4] > trade_type = new char[ptuin._max_trades][4]; //3
+            array_guard_t< char[13] > type_name = new char[ptuin._max_trades][13]; //12
 
 
-            double	settlement_amount[ptuin._max_trades];
-            myTime	settlement_cash_due_date[ptuin._max_trades];
-            char	settlement_cash_type[ptuin._max_trades][41]; //40
+            array_guard_t<double> settlement_amount = new double[ptuin._max_trades];
+            array_guard_t<myTime> settlement_cash_due_date = new myTime[ptuin._max_trades];
+            array_guard_t< char[41] > settlement_cash_type = new char[ptuin._max_trades][41]; //40
 
-            double	cash_transaction_amount[ptuin._max_trades];
-            myTime	cash_transaction_dts[ptuin._max_trades];
-            char	cash_transaction_name[ptuin._max_trades][101]; //100
+            array_guard_t<double> cash_transaction_amount = new double[ptuin._max_trades];
+            array_guard_t<myTime> cash_transaction_dts = new myTime[ptuin._max_trades];
+            array_guard_t< char[101] > cash_transaction_name = new char[ptuin._max_trades][101]; //100
 
-            myTime	trade_history_dts[ptuin._max_trades][3];
-            char	trade_history_status_id[ptuin._max_trades][3][5]; //4
+            array_guard_t< myTime[3] > trade_history_dts = new myTime[ptuin._max_trades][3];
+            array_guard_t< char[3][5] > trade_history_status_id = new char[ptuin._max_trades][3][5]; //4
 
             /**
                select first max_trades rows
@@ -9690,6 +9704,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
                 e = t_iter->next(_pssm, eof, *prtrade);
                 if (e.is_error()) { goto done; }
             }
+
             for(i = 0; i < num_found; i++) {
                 /**
                    select

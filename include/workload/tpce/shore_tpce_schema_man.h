@@ -314,7 +314,7 @@ public:
 				customer_taxrate_tuple* ptuple,
 				rep_row_t &replow,
 				rep_row_t &rephigh,
-				TIdent cust_id,
+				const TIdent cust_id,
 				lock_mode_t alm = SH,
                                 bool need_tuple = true);
 				

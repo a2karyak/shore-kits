@@ -1620,7 +1620,7 @@ PHOLDING_ROW CGenerateAndLoad::getHoldingRow()
 //HOLDING_HISTORY
 PHOLDING_HISTORY_ROW CGenerateAndLoad::getHoldingHistoryRow(int i)
 {
-	pTradeGen->GetHoldingHistoryRow(i);
+  return (PHOLDING_HISTORY_ROW)pTradeGen->GetHoldingHistoryRow(i);
 }
 
 int CGenerateAndLoad::getHoldingHistoryRowCount()
