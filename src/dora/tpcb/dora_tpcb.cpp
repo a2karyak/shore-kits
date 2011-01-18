@@ -271,7 +271,7 @@ int DoraTPCBEnv::conf()
 
     // History - uses the number of Tellers because it is quite 
     //           flexible to partitioning (10 x #Branches)
-    recordEstimation = get_sf()*TPCB_ACCOUNTS_PER_BRANCH;
+    recordEstimation = get_sf()*TPCB_TELLERS_PER_BRANCH;
     double hi_PerCPU = ev->getVarDouble("dora-ratio-tpcb-hi",1);
     _parts_hi = ( hi_PerCPU>0 ? ceil(_cpu_range * hi_PerCPU) : 1);
 
