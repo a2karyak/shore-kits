@@ -9085,6 +9085,7 @@ w_rc_t ShoreTPCEEnv::xct_broker_volume(const int xct_id, broker_volume_input_t& 
         }
         //assert (tr_sorter.count()); //harness control
 
+	// DJORDJE : I AM NOT DOING ANYTHING!!!!
         assert (0); // **** IP: need to check the 2-dimensional array
 
         array_guard_t< char[50] > broker_name = new char[i][50]; //49
