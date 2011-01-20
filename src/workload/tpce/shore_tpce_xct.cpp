@@ -4764,6 +4764,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_lookup(const int xct_id, trade_lookup_input_t& pt
     {
         //ptlin.print();
 
+	// CANSU: I NEED TO FIX THIS!!!!
         assert (0); // **** IP: need to check the 2-dimensional array
 
         array_guard_t<double> bid_price = new double[ptlin._max_trades];
