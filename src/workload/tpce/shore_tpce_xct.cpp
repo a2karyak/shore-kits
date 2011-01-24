@@ -46,6 +46,7 @@ using namespace shore;
 using namespace TPCE;
 
 //#define TRACE_TRX_FLOW TRACE_ALWAYS
+#define TRACE_TRX_RESULT TRACE_ALWAYS
 
 ENTER_NAMESPACE(tpce);
 
@@ -8663,7 +8664,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_status(const int xct_id, trade_status_input_t& pt
     lowrep.set(_pexchange_desc->maxsize());
     highrep.set(_pexchange_desc->maxsize());
 
-    //trial part
+    //experimental 
     {
         /*
           char temp[16] = "ARDNA";
@@ -8842,10 +8843,25 @@ w_rc_t ShoreTPCEEnv::xct_trade_status(const int xct_id, trade_status_input_t& pt
             e = t_list_sort_iter.next(_pssm, eof, rsb);
             if (e.is_error()) { goto done; }
         }
-
-        
         assert(i == max_trade_status_len); //Harness control		
 
+
+        for(int j = 0; j < i; j++){
+          TRACE( TRACE_TRX_RESULT, "App: %d TS:Q1 result (%ld), (%ld), (%s)\n", xct_id,  trade_dts[j], trade_id[j], status_name[j]);
+       } 
+
+        for(; !eof; ){
+            TIdent dts, id;
+            char name[11];
+
+            rsb.get_value(0, dts);
+            rsb.get_value(1, id);
+            rsb.get_value(2, name, 11);
+
+          TRACE( TRACE_TRX_RESULT, "App: %d TS:Q1 result (%ld), (%ld), (%s)\n", xct_id,  dts, id, name);
+            e = t_list_sort_iter.next(_pssm, eof, rsb);
+            if (e.is_error()) { goto done; }
+        }
         /**
            select
            cust_l_name = C_L_NAME,
@@ -8885,6 +8901,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_status(const int xct_id, trade_status_input_t& pt
         prcustomer->get_value(3, cust_l_name, 26);
         prcustomer->get_value(4, cust_f_name, 21);
         prbroker->get_value(2, broker_name, 50);
+
+        TRACE( TRACE_TRX_RESULT, "App: %d TS:Q2 result (%s), (%s), (%s)\n", xct_id,  cust_l_name, cust_f_name, broker_name);
     }
 
 #ifdef PRINT_TRX_RESULTS
