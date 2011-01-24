@@ -250,28 +250,36 @@ void testInputs()
 /** Construction  */
 ShoreTPCEEnv::ShoreTPCEEnv(string confname): ShoreEnv(confname), 
                                              _customers(1000), 
-                                             _working_days(20)
+                                             _working_days(20),
+					     _scaling_factor(500)
 {
     // read the scaling factor from the configuration file
-    _scaling_factor = 500;
-    _queried_factor = 500;
+    
+    
 
     //INITIALIZE EGEN
-    char sf1[8], wd1[8], customers1[8];
-    memset(sf1,0,8);
-    memset(wd1,0,8);
-    memset(customers1,0,8);
-    strcpy(sf1,"500 ");
-    strcpy(wd1,"20 ");
-    strcpy(customers1,"1000 ");
+    _customers =envVar::instance()->getSysVarInt("cust");;
+    _working_days=envVar::instance()->getSysVarInt("wd");
+    _scaling_factor=envVar::instance()->getSysVarInt("sf");
+
+    char sf_str[8], wd_str[8], cust_str[8];
+    memset(sf_str,0,8);
+    memset(wd_str,0,8);
+    memset(cust_str,0,8);
+    sprintf(sf_str, "%d",_scaling_factor);
+    sprintf(wd_str, "%d",_working_days);
+    sprintf(cust_str, "%d",_customers);
+    _queried_factor = _scaling_factor;
+
+
  
 #ifdef COMPILE_FLAT_FILE_LOAD 
      fssec = fopen("shoresecurity.txt","wt");
      fshs = fopen("shorehsummary.txt","wt");
-     const char * params[] = {"to_skip", "-i", "./src/workload/tpce/egen/flat/egen_flat_in/","-o", "./src/workload/tpce/egen/flat/egen_flat_out/", "-l", "FLAT", "-f", sf1, "-w", wd1, "-c", customers1, "-t", customers1  }; 
+     const char * params[] = {"to_skip", "-i", "./src/workload/tpce/egen/flat/egen_flat_in/","-o", "./src/workload/tpce/egen/flat/egen_flat_out/", "-l", "FLAT", "-f", sf_str, "-w", wd_str, "-c", cust_str, "-t", cust_str  }; 
      egen_init(15,  (char **)params);  
 #else
-     const char * params[] = {"to_skip", "-i", "./src/workload/tpce/egen/flat/egen_flat_in/", "-l", "NULL", "-f", sf1, "-w", wd1, "-c", customers1, "-t", customers1 }; 
+     const char * params[] = {"to_skip", "-i", "./src/workload/tpce/egen/flat/egen_flat_in/", "-l", "NULL", "-f", sf_str, "-w", wd_str, "-c", cust_str, "-t", cust_str }; 
      egen_init(13,  (char **)params);      
 #endif
 
