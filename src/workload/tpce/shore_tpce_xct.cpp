@@ -264,7 +264,7 @@ w_rc_t ShoreTPCEEnv::run_one_xct(Request* prequest)
         return run_trade_update(prequest);
 
     case XCT_TPCE_DATA_MAINTENANCE:
-        assert(false);
+  //      assert(false);
         return run_data_maintenance(prequest);
 
     case XCT_TPCE_TRADE_CLEANUP:
