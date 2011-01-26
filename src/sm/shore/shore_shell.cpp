@@ -42,9 +42,14 @@ ENTER_NAMESPACE(shore);
 
 // Globals 
 
-extern "C" void alarm_handler(int /* sig */) 
+extern "C" void alarm_handler(int sig) 
 {
-    _g_shore_env->set_measure(MST_DONE);
+    if(sig == SIGALRM) {
+	TRACE( TRACE_ALWAYS, "Start Load Imbalance\n");
+	_g_shore_env->start_load_imbalance();
+    } else {
+	_g_shore_env->set_measure(MST_DONE);
+    }
 }
 
 bool volatile _g_canceled = false;
@@ -758,6 +763,7 @@ int shore_shell_t::register_commands()
     REGISTER_CMD_PARAM(dump_cmd_t,_dumper,_env);
     REGISTER_CMD_PARAM(fake_iodelay_cmd_t,_fakeioer,_env);
     REGISTER_CMD_PARAM(freq_cmd_t,_freqer,_env);
+    REGISTER_CMD_PARAM(skew_cmd_t,_skewer,_env);
 
     REGISTER_CMD_PARAM(log_cmd_t,_logger,_env);
     REGISTER_CMD_PARAM(asynch_cmd_t,_asyncher,_env);
@@ -1060,6 +1066,70 @@ void freq_cmd_t::usage(void)
 string freq_cmd_t::desc() const 
 { 
     return (string("Sets the frequency of INS/DEL/PROBES, used by some workloads")); 
+}
+
+
+/*********************************************************************
+ *
+ *  "skew" command
+ *
+ *  Sets the load imbalance related values
+ *
+ *********************************************************************/
+
+void skew_cmd_t::setaliases() 
+{ 
+    _name = string("skew"); 
+    _aliases.push_back("skew"); 
+}
+
+int skew_cmd_t::handle(const char* cmd)
+{
+    char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];
+    char sArea[SERVER_COMMAND_BUFFER_SIZE];    
+    char sLoad[SERVER_COMMAND_BUFFER_SIZE];
+    char sTime[SERVER_COMMAND_BUFFER_SIZE];
+
+    if ( sscanf(cmd, "%s %s %s %s", cmd_tag, sArea, sLoad, sTime) < 4) {
+        // prints all the env
+        usage();
+	_env->reset_skew();
+        return (SHELL_NEXT_CONTINUE);
+    }
+    assert (_env);
+
+    int area = atoi(sArea);
+    int load = atoi(sLoad);
+    int time = atoi(sTime);
+
+    // Area percentage is [0,100]
+    area = (area<0) ? 0 : area;
+    area = (area>100) ? 100 : area;
+
+    // Load percentage is [0,100]
+    load = (load<0) ? 0 : load;
+    load = (load>100) ? 100 : load;
+
+    TRACE( TRACE_ALWAYS, "Setting load imbalance Area=%d%% Load=%d%% Start=%dsec\n", area, load, time);
+    _env->set_skew(area, load, time);
+    return (SHELL_NEXT_CONTINUE);
+}
+
+
+void skew_cmd_t::usage(void)
+{
+    TRACE( TRACE_ALWAYS, "SKEW Usage:\n\n"                              \
+           "*** skew <AREA> <LOAD> <START_TIME>\n"                     \
+           "\nParameters:\n"                                            \
+           "<AREA> - Percentage of the area that will be affected by the given load\n"          \
+           "<LOAD> - Work load of the given area\n"         \
+           "<START_TIME> - After this many seconds the above the load change will be applied\n\n" \
+	   "DISABLED\n\n");
+}
+
+string skew_cmd_t::desc() const 
+{ 
+    return (string("Sets the load of a particular percentage of records in the database, used by some workloads")); 
 }
 
 

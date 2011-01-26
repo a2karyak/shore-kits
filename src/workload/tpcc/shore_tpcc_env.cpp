@@ -325,6 +325,54 @@ w_rc_t ShoreTPCCEnv::update_partitioning()
 }
 
 
+/******************************************************************** 
+ *
+ *  @fn:    set_skew()
+ *
+ *  @brief: set load imbalance for TPC-C
+ *
+ ********************************************************************/
+void ShoreTPCCEnv::set_skew(int hot_area, int load_imbalance, int start_imbalance) 
+{
+    ShoreEnv::set_skew(hot_area, load_imbalance, start_imbalance);
+
+    _load_imbalance = load_imbalance;
+
+    // for warehouses
+    ShoreEnv::set_skew_intervals(hot_area, 1, _scaling_factor, w_imbalance_lower, w_imbalance_upper);
+    
+}
+
+
+/******************************************************************** 
+ *
+ *  @fn:    start_load_imbalance()
+ *
+ *  @brief: sets the flag indicating load imbalance start for TPC-C
+ *
+ ********************************************************************/
+void ShoreTPCCEnv::start_load_imbalance() 
+{
+    _change_load = true;
+}
+
+
+/******************************************************************** 
+ *
+ *  @fn:    reset_skew()
+ *
+ *  @brief: sets the flag indicating load imbalance should stop for TPC-C
+ *          and cleans the intervals
+ *
+ ********************************************************************/
+void ShoreTPCCEnv::reset_skew() 
+{
+    ShoreEnv::reset_skew();
+    _change_load = false;
+    w_imbalance_lower.clear();
+    w_imbalance_upper.clear();
+}
+
 
 /******************************************************************** 
  *

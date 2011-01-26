@@ -34,6 +34,10 @@
 
 ENTER_NAMESPACE(tm1);	
 
+vector<int> s_imbalance_lower;
+vector<int> s_imbalance_upper;
+int _load_imbalance = 0;
+bool _change_load = false;
 
 /* -------------------- */
 /* --- GET_SUB_DATA --- */
@@ -54,11 +58,29 @@ get_sub_data_input_t create_get_sub_data_input(int sf,
 
     get_sub_data_input_t gsdin;
 
-    if (specificSub>0)
-        gsdin._s_id = specificSub;
-    else
-	gsdin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
-    return (gsdin);
+    bool s_set = false;
+
+    if(_change_load) {
+	// subscribers
+	int rand = URand(1,100);
+	assert(rand >= 0);
+     	assert(s_imbalance_upper.size() == s_imbalance_lower.size());
+	int load = _load_imbalance / s_imbalance_lower.size();
+	for(int i=0; !s_set && i<s_imbalance_upper.size(); i++) {
+	    if(rand < load * (i+1)) {
+		gsdin._s_id = URand(s_imbalance_lower[i],s_imbalance_upper[i]);
+		s_set = true;
+	    }
+	}
+    }
+
+    if(!s_set) {
+	if (specificSub>0)
+	    gsdin._s_id = specificSub;
+	else
+	    gsdin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
+	return (gsdin);
+    }
 }
 
 
@@ -86,11 +108,29 @@ get_new_dest_input_t create_get_new_dest_input(int sf,
 
     get_new_dest_input_t gndin;
 
-    if (specificSub>0)
-        gndin._s_id = specificSub;
-    else
-	gndin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
+    bool s_set = false;
 
+    if(_change_load) {
+	// subscribers
+	int rand = URand(1,100);
+	assert(rand >= 0);
+     	assert(s_imbalance_upper.size() == s_imbalance_lower.size());
+	int load = _load_imbalance / s_imbalance_lower.size();
+	for(int i=0; !s_set && i<s_imbalance_upper.size(); i++) {
+	    if(rand < load * (i+1)) {
+		gndin._s_id = URand(s_imbalance_lower[i],s_imbalance_upper[i]);
+		s_set = true;
+	    }
+	}
+    }
+
+    if(!s_set) {
+	if (specificSub>0)
+	    gndin._s_id = specificSub;
+	else
+	    gndin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
+    }
+    
     gndin._sf_type = URand(1,4);
     gndin._s_time = URand(0,2) * 8;
     gndin._e_time = URand(1,24);
@@ -118,11 +158,29 @@ get_acc_data_input_t create_get_acc_data_input(int sf,
 
     get_acc_data_input_t gadin;
 
-    if (specificSub>0)
-        gadin._s_id = specificSub;
-    else
-	gadin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
+    bool s_set = false;
 
+    if(_change_load) {
+	// subscribers
+	int rand = URand(1,100);
+	assert(rand >= 0);
+     	assert(s_imbalance_upper.size() == s_imbalance_lower.size());
+	int load = _load_imbalance / s_imbalance_lower.size();
+	for(int i=0; !s_set && i<s_imbalance_upper.size(); i++) {
+	    if(rand < load * (i+1)) {
+		gadin._s_id = URand(s_imbalance_lower[i],s_imbalance_upper[i]);
+		s_set = true;
+	    }
+	}
+    }
+
+    if(!s_set) {
+	if (specificSub>0)
+	    gadin._s_id = specificSub;
+	else
+	    gadin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
+    }
+    
     gadin._ai_type = URand(1,4);
     return (gadin);
 }
@@ -149,11 +207,29 @@ upd_sub_data_input_t create_upd_sub_data_input(int sf,
 
     upd_sub_data_input_t usdin;
 
-    if (specificSub>0)
-        usdin._s_id = specificSub;
-    else
-        usdin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
+    bool s_set = false;
 
+    if(_change_load) {
+	// subscribers
+	int rand = URand(1,100);
+	assert(rand >= 0);
+     	assert(s_imbalance_upper.size() == s_imbalance_lower.size());
+	int load = _load_imbalance / s_imbalance_lower.size();
+	for(int i=0; !s_set && i<s_imbalance_upper.size(); i++) {
+	    if(rand < load * (i+1)) {
+		usdin._s_id = URand(s_imbalance_lower[i],s_imbalance_upper[i]);
+		s_set = true;
+	    }
+	}
+    }
+
+    if(!s_set) {
+	if (specificSub>0)
+	    usdin._s_id = specificSub;
+	else
+	    usdin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
+    }
+    
     usdin._sf_type = URand(1,4);
     usdin._a_bit = URandBool();
     usdin._a_data = URand(0,255);
@@ -182,11 +258,29 @@ upd_loc_input_t create_upd_loc_input(int sf,
 
     upd_loc_input_t ulin;
 
-    if (specificSub>0)
-        ulin._s_id = specificSub;
-    else
-        ulin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
-   
+    bool s_set = false;
+
+    if(_change_load) {
+	// subscribers
+	int rand = URand(1,100);
+	assert(rand >= 0);
+     	assert(s_imbalance_upper.size() == s_imbalance_lower.size());
+	int load = _load_imbalance / s_imbalance_lower.size();
+	for(int i=0; !s_set && i<s_imbalance_upper.size(); i++) {
+	    if(rand < load * (i+1)) {
+		ulin._s_id = URand(s_imbalance_lower[i],s_imbalance_upper[i]);
+		s_set = true;
+	    }
+	}
+    }
+
+    if(!s_set) {
+	if (specificSub>0)
+	    ulin._s_id = specificSub;
+	else
+	    ulin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
+    }
+    
     sprintf(ulin._sub_nbr,"%015d",ulin._s_id);
     ulin._vlr_loc = URand(0,(2<<16)-1);
     return (ulin);
@@ -217,11 +311,29 @@ ins_call_fwd_input_t create_ins_call_fwd_input(int sf,
 
     ins_call_fwd_input_t icfin;
 
-    if (specificSub>0)
-        icfin._s_id = specificSub;
-    else
-        icfin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
+    bool s_set = false;
 
+    if(_change_load) {
+	// subscribers
+	int rand = URand(1,100);
+	assert(rand >= 0);
+     	assert(s_imbalance_upper.size() == s_imbalance_lower.size());
+	int load = _load_imbalance / s_imbalance_lower.size();
+	for(int i=0; !s_set && i<s_imbalance_upper.size(); i++) {
+	    if(rand < load * (i+1)) {
+		icfin._s_id = URand(s_imbalance_lower[i],s_imbalance_upper[i]);
+		s_set = true;
+	    }
+	}
+    }
+
+    if(!s_set) {
+	if (specificSub>0)
+	    icfin._s_id = specificSub;
+	else
+	    icfin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
+    }
+    
     sprintf(icfin._sub_nbr,"%015d",icfin._s_id);
     icfin._sf_type = URand(1,4);
     icfin._s_time = URand(0,2) * 8;
@@ -252,11 +364,29 @@ del_call_fwd_input_t create_del_call_fwd_input(int sf,
 
     del_call_fwd_input_t dcfin;
 
-    if (specificSub>0)
-        dcfin._s_id = specificSub;
-    else
-        dcfin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
+    bool s_set = false;
 
+    if(_change_load) {
+	// subscribers
+	int rand = URand(1,100);
+	assert(rand >= 0);
+     	assert(s_imbalance_upper.size() == s_imbalance_lower.size());
+	int load = _load_imbalance / s_imbalance_lower.size();
+	for(int i=0; !s_set && i<s_imbalance_upper.size(); i++) {
+	    if(rand < load * (i+1)) {
+		dcfin._s_id = URand(s_imbalance_lower[i],s_imbalance_upper[i]);
+		s_set = true;
+	    }
+	}
+    }
+
+    if(!s_set) {
+	if (specificSub>0)
+	    dcfin._s_id = specificSub;
+	else
+	    dcfin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
+    }
+    
     sprintf(dcfin._sub_nbr,"%015d",dcfin._s_id);
     dcfin._sf_type = URand(1,4);
     dcfin._s_time = URand(0,2) * 8;
@@ -290,11 +420,29 @@ get_sub_nbr_input_t create_get_sub_nbr_input(int sf,
 
     get_sub_nbr_input_t gsnin;
 
-    if (specificSub>0)
-        gsnin._s_id = specificSub;
-    else
-	gsnin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
+    bool s_set = false;
 
+    if(_change_load) {
+	// subscribers
+	int rand = URand(1,100);
+	assert(rand >= 0);
+     	assert(s_imbalance_upper.size() == s_imbalance_lower.size());
+	int load = _load_imbalance / s_imbalance_lower.size();
+	for(int i=0; !s_set && i<s_imbalance_upper.size(); i++) {
+	    if(rand < load * (i+1)) {
+		gsnin._s_id = URand(s_imbalance_lower[i],s_imbalance_upper[i]);
+		s_set = true;
+	    }
+	}
+    }
+
+    if(!s_set) {
+	if (specificSub>0)
+	    gsnin._s_id = specificSub;
+	else
+	    gsnin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
+    }
+    
     return (gsnin);
 }
 

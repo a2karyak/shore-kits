@@ -57,9 +57,19 @@ enum { TPCB_ACCOUNTS_PER_BRANCH=100000 };
 enum { TPCB_ACCOUNTS_CREATED_PER_POP_XCT=10000 }; // must evenly divide ACCOUNTS_PER_BRANCH
 
 
+/** Exported variables */
+// skew values
+extern vector<int> b_imbalance_lower;
+extern vector<int> b_imbalance_upper;
+extern vector<int> t_imbalance_lower;
+extern vector<int> t_imbalance_upper;
+extern vector<int> a_imbalance_lower;
+extern vector<int> a_imbalance_upper;
+extern int _load_imbalance;
+extern bool _change_load;
+
 
 /** Exported data structures */
-
 
 
 /*********************************************************************

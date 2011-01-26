@@ -174,6 +174,14 @@ w_rc_t ShoreTPCBEnv::run_one_xct(Request* prequest)
 {
     assert (prequest);
 
+    if(_start_imbalance > 0 && !_bAlarmSet) {
+	CRITICAL_SECTION(alarm_cs, _alarm_lock);
+	if(!_bAlarmSet) {
+	    alarm(_start_imbalance);
+	    _bAlarmSet = true;
+	}
+    }
+
     int rand;
 
     switch (prequest->type()) {
@@ -271,7 +279,7 @@ w_rc_t ShoreTPCBEnv::xct_acct_update(const int /* xct_id */,
     assert (_pssm);
     assert (_initialized);
     assert (_loaded);
-
+    
     // account update trx touches 4 tables:
     // branch, teller, account, and history
 

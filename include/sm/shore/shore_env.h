@@ -532,6 +532,11 @@ protected:
     int  configure_sm();
     int  start_sm();
     int  close_sm();
+
+    // load balancing settings
+    volatile bool _bAlarmSet;
+    tatas_lock _alarm_lock;
+    int _start_imbalance;
     
 public:
 
@@ -618,6 +623,13 @@ public:
     // -- insert/delete/probe frequencies for microbenchmarks -- //
     void set_freqs(int insert_freq = 0, int delete_freq = 0, int probe_freq = 0);
 
+    // set load imbalance related
+    virtual void set_skew(int hot_area, int load_imbalance, int start_imbalance);
+    virtual void reset_skew();
+    virtual void set_skew_intervals(int hot_area, int lower, int upper,
+				    vector<int>& imbalance_lower, vector<int>& imbalance_upper);
+    virtual void start_load_imbalance() { };
+    
     // Environment workers
     uint upd_worker_cnt();
     trx_worker_t* worker(const uint idx);        

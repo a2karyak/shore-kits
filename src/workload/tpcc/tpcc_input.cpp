@@ -73,7 +73,11 @@ ENTER_NAMESPACE(tpcc);
 #warning TPCC - Uses only local Warehouses 
 #endif
 
-
+// initial skew values for load imbalance
+vector<int> w_imbalance_lower;
+vector<int> w_imbalance_upper;
+int _load_imbalance = 0;
+bool _change_load = false;
 
 /* ----------------------- */
 /* --- NEW_ORDER_INPUT --- */
@@ -214,10 +218,26 @@ new_order_input_t create_new_order_input(int sf, int specificWH)
 
 #ifndef USE_SAME_INPUT    
 
-    if (specificWH>0)
-        noin._wh_id = specificWH;
-    else
-        noin._wh_id = URand(1, sf);
+    bool w_set = false;
+    if(_change_load) {
+	// wh
+	int rand = URand(1,100);
+	assert(rand >= 0);
+     	assert(w_imbalance_upper.size() == w_imbalance_lower.size());
+	int load = _load_imbalance / w_imbalance_lower.size();
+	for(int i=0; !w_set && i<w_imbalance_upper.size(); i++) {
+	    if(rand < load * (i+1)) {
+		noin._wh_id = URand(w_imbalance_lower[i],w_imbalance_upper[i]);
+		w_set = true;
+	    }
+	}
+    }    
+    if(!w_set) {
+	if (specificWH>0)
+	    noin._wh_id = specificWH;
+	else
+	    noin._wh_id = URand(1, sf);
+    }
     
     noin._d_id   = URand(1, 10);
     noin._c_id   = NURand(1023, 1, 3000);
@@ -326,11 +346,27 @@ payment_input_t create_payment_input(int sf, int specificWH)
 
 #ifndef USE_SAME_INPUT
 
-    if (specificWH>0)
-        pin._home_wh_id = specificWH;
-    else
-        pin._home_wh_id = URand(1, sf);
-
+    bool w_set = false;
+    if(_change_load) {
+	// wh
+	int rand = URand(1,100);
+	assert(rand >= 0);
+     	assert(w_imbalance_upper.size() == w_imbalance_lower.size());
+	int load = _load_imbalance / w_imbalance_lower.size();
+	for(int i=0; !w_set && i<w_imbalance_upper.size(); i++) {
+	    if(rand < load * (i+1)) {
+		pin._home_wh_id = URand(w_imbalance_lower[i],w_imbalance_upper[i]);
+		w_set = true;
+	    }
+	}
+    }    
+    if(!w_set) {
+	if (specificWH>0)
+	    pin._home_wh_id = specificWH;
+	else
+	    pin._home_wh_id = URand(1, sf);
+    }
+    
     pin._home_d_id = URand(1, 10);    
     pin._h_amount = (long)URand(100, 500000)/(long)100.00;
     pin._h_date = time(NULL);
@@ -439,11 +475,27 @@ order_status_input_t create_order_status_input(int sf, int specificWH)
 
 #ifndef USE_SAME_INPUT    
 
-    if (specificWH>0)
-        osin._wh_id = specificWH;
-    else
-        osin._wh_id    = URand(1, sf);
-
+    bool w_set = false;
+    if(_change_load) {
+	// wh
+	int rand = URand(1,100);
+	assert(rand >= 0);
+     	assert(w_imbalance_upper.size() == w_imbalance_lower.size());
+	int load = _load_imbalance / w_imbalance_lower.size();
+	for(int i=0; !w_set && i<w_imbalance_upper.size(); i++) {
+	    if(rand < load * (i+1)) {
+		osin._wh_id = URand(w_imbalance_lower[i],w_imbalance_upper[i]);
+		w_set = true;
+	    }
+	}
+    }    
+    if(!w_set) {
+	if (specificWH>0)
+	    osin._wh_id = specificWH;
+	else
+	    osin._wh_id    = URand(1, sf);
+    }
+    
     osin._d_id     = URand(1, 10);
 
 #ifdef USE_SAFE_PATHS
@@ -509,11 +561,27 @@ delivery_input_t create_delivery_input(int sf, int specificWH)
 
 #ifndef USE_SAME_INPUT    
 
-    if (specificWH>0)
-        din._wh_id = specificWH;
-    else
-        din._wh_id = URand(1, sf);
-
+    bool w_set = false;
+    if(_change_load) {
+	// wh
+	int rand = URand(1,100);
+	assert(rand >= 0);
+     	assert(w_imbalance_upper.size() == w_imbalance_lower.size());
+	int load = _load_imbalance / w_imbalance_lower.size();
+	for(int i=0; !w_set && i<w_imbalance_upper.size(); i++) {
+	    if(rand < load * (i+1)) {
+		din._wh_id = URand(w_imbalance_lower[i],w_imbalance_upper[i]);
+		w_set = true;
+	    }
+	}
+    }    
+    if(!w_set) {
+	if (specificWH>0)
+	    din._wh_id = specificWH;
+	else
+	    din._wh_id = URand(1, sf);
+    }
+    
     din._carrier_id = URand(1, 10);
 
 #else
@@ -566,11 +634,27 @@ stock_level_input_t create_stock_level_input(int sf, int specificWH)
 
 #ifndef USE_SAME_INPUT    
 
-    if (specificWH>0)
-        slin._wh_id = specificWH;
-    else
-        slin._wh_id = URand(1, sf);
-
+    bool w_set = false;
+    if(_change_load) {
+	// wh
+	int rand = URand(1,100);
+	assert(rand >= 0);
+     	assert(w_imbalance_upper.size() == w_imbalance_lower.size());
+	int load = _load_imbalance / w_imbalance_lower.size();
+	for(int i=0; !w_set && i<w_imbalance_upper.size(); i++) {
+	    if(rand < load * (i+1)) {
+		slin._wh_id = URand(w_imbalance_lower[i],w_imbalance_upper[i]);
+		w_set = true;
+	    }
+	}
+    }    
+    if(!w_set) {
+	if (specificWH>0)
+	    slin._wh_id = specificWH;
+	else
+	    slin._wh_id = URand(1, sf);
+    }
+    
     slin._d_id      = URand(1, 10);
     slin._threshold = URand(10, 20);
 

@@ -48,6 +48,16 @@ const int LOCAL_TPCB = 85;
 
 #warning TPCB uses UZRand for generating skewed Zipfian inputs. Skewness can be controlled by the 'zipf' shell command.
 
+// initial skew values for load imbalance
+vector<int> b_imbalance_lower;
+vector<int> b_imbalance_upper;
+vector<int> t_imbalance_lower;
+vector<int> t_imbalance_upper;
+vector<int> a_imbalance_lower;
+vector<int> a_imbalance_upper;
+int _load_imbalance = 0;
+bool _change_load = false;
+
 /* ------------------- */
 /* --- ACCT_UPDATE --- */
 /* ------------------- */
@@ -60,27 +70,89 @@ acct_update_input_t create_acct_update_input(int sf,
 
     acct_update_input_t auin;
 
-    // The TPC-B branches start from 0 (0..SF-1)
-    if (specificBr>0) {
-        auin.b_id = specificBr-1;
-    }
-    else {
-        auin.b_id = UZRand(0,sf-1);
-    }
-        
-    auin.t_id = (auin.b_id * TPCB_TELLERS_PER_BRANCH) + UZRand(0,TPCB_TELLERS_PER_BRANCH-1);
+    bool b_set = false;
+    bool t_set = false;
+    bool a_set = false;
+    
+    if(_change_load) {
 
-    // 85 - 15 local Branch
-    if (URand(0,100)>LOCAL_TPCB) {
-        // remote branch
-        auin.a_id = (URand(0,sf)*TPCB_ACCOUNTS_PER_BRANCH) + UZRand(0,TPCB_ACCOUNTS_PER_BRANCH-1);
+	// branches
+	int rand = URand(1,100);
+	assert(rand >= 0);
+     	assert(b_imbalance_upper.size() == b_imbalance_lower.size());
+	int load = _load_imbalance / b_imbalance_lower.size();
+	for(int i=0; !b_set && i<b_imbalance_upper.size(); i++) {
+	    if(rand < load * (i+1)) {
+		auin.b_id = URand(b_imbalance_lower[i],b_imbalance_upper[i]);
+		b_set = true;
+	    }
+	}
+	
+        // tellers
+	rand = URand(1,100);
+	assert(rand >= 0);
+     	assert(t_imbalance_upper.size() == t_imbalance_lower.size());
+	load = _load_imbalance / t_imbalance_lower.size();
+	for(int i=0; !t_set && i<t_imbalance_upper.size(); i++) {
+	    if(rand < load * (i+1)) {
+		auin.t_id = (auin.b_id * TPCB_TELLERS_PER_BRANCH) +
+		    URand(t_imbalance_lower[i], t_imbalance_upper[i]);
+		t_set = true;
+	    }
+	}
+
+	// accounts
+	rand = URand(1,100);
+	assert(rand >= 0);
+     	assert(a_imbalance_upper.size() == a_imbalance_lower.size());
+	load = _load_imbalance / a_imbalance_lower.size();
+	int account = 0;
+	for(int i=0; a_set && i<a_imbalance_upper.size(); i++) {
+	    if(rand < load * (i+1)) {
+		account = URand(a_imbalance_lower[i], a_imbalance_upper[i]);
+		a_set = true;
+	    }
+	}
+	// 85 - 15 local Branch
+	if (URand(0,100)>LOCAL_TPCB) {
+	    // remote branch
+	    auin.a_id = (URand(0,sf)*TPCB_ACCOUNTS_PER_BRANCH) + account;
+	}
+	else {
+	    // local branch
+	    auin.a_id = (auin.b_id*TPCB_ACCOUNTS_PER_BRANCH) + account;
+	}
+	
     }
-    else {
-        // local branch
-        auin.a_id = (auin.b_id*TPCB_ACCOUNTS_PER_BRANCH) + UZRand(0,TPCB_ACCOUNTS_PER_BRANCH-1);
+
+    if(!b_set) {
+	// The TPC-B branches start from 0 (0..SF-1)
+	if (specificBr>0) {
+	    auin.b_id = specificBr-1;
+	}
+	else {
+	    auin.b_id = UZRand(0,sf-1);
+	}
     }
-        
+
+    if(!t_set) {
+	auin.t_id = (auin.b_id * TPCB_TELLERS_PER_BRANCH) + UZRand(0,TPCB_TELLERS_PER_BRANCH-1);
+    }
+
+    if(!a_set) {
+	// 85 - 15 local Branch
+	if (URand(0,100)>LOCAL_TPCB) {
+	    // remote branch
+	    auin.a_id = (URand(0,sf)*TPCB_ACCOUNTS_PER_BRANCH) + UZRand(0,TPCB_ACCOUNTS_PER_BRANCH-1);
+	}
+	else {
+	    // local branch
+	    auin.a_id = (auin.b_id*TPCB_ACCOUNTS_PER_BRANCH) + UZRand(0,TPCB_ACCOUNTS_PER_BRANCH-1);
+	}
+    }
+    
     auin.delta = URand(0,2000000) - 1000000;
+
     return (auin);
 }
 

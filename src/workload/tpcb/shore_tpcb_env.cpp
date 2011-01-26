@@ -139,6 +139,65 @@ w_rc_t ShoreTPCBEnv::update_partitioning()
 
 /******************************************************************** 
  *
+ *  @fn:    set_skew()
+ *
+ *  @brief: set load imbalance for TPC-B
+ *
+ ********************************************************************/
+void ShoreTPCBEnv::set_skew(int hot_area, int load_imbalance, int start_imbalance) 
+{
+    ShoreEnv::set_skew(hot_area, load_imbalance, start_imbalance);
+
+    _load_imbalance = load_imbalance;
+	
+    // for branches
+    ShoreEnv::set_skew_intervals(hot_area, 0, _scaling_factor-1, b_imbalance_lower, b_imbalance_upper);
+
+    // for tellers
+    ShoreEnv::set_skew_intervals(hot_area, 0, TPCB_TELLERS_PER_BRANCH-1, t_imbalance_lower, t_imbalance_upper);
+	
+    // for accounts
+    ShoreEnv::set_skew_intervals(hot_area, 0, TPCB_ACCOUNTS_PER_BRANCH-1, a_imbalance_lower, a_imbalance_upper);
+	
+}
+
+
+/******************************************************************** 
+ *
+ *  @fn:    start_load_imbalance()
+ *
+ *  @brief: sets the flag indicating load imbalance start for TPC-B
+ *
+ ********************************************************************/
+void ShoreTPCBEnv::start_load_imbalance() 
+{
+    _change_load = true;
+}
+
+
+/******************************************************************** 
+ *
+ *  @fn:    reset_skew()
+ *
+ *  @brief: sets the flag indicating load imbalance should stop for TPC-B
+ *          and cleans the intervals
+ *
+ ********************************************************************/
+void ShoreTPCBEnv::reset_skew() 
+{
+    ShoreEnv::reset_skew();
+    _change_load = false;
+    b_imbalance_lower.clear();
+    b_imbalance_upper.clear();
+    t_imbalance_lower.clear();
+    t_imbalance_upper.clear();
+    a_imbalance_lower.clear();
+    a_imbalance_upper.clear();
+}
+
+
+/******************************************************************** 
+ *
  *  @fn:    info()
  *
  *  @brief: Prints information about the current db instance status

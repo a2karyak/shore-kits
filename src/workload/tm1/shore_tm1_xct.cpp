@@ -175,6 +175,14 @@ w_rc_t ShoreTM1Env::run_one_xct(Request* prequest)
 {
     assert (prequest);
 
+    if(_start_imbalance > 0 && !_bAlarmSet) {
+	CRITICAL_SECTION(alarm_cs, _alarm_lock);
+	if(!_bAlarmSet) {
+	    alarm(_start_imbalance);
+	    _bAlarmSet = true;
+	}
+    }
+
     // if BASELINE TM1 MIX
     if (prequest->type() == XCT_TM1_MIX) {        
         prequest->set_type(random_tm1_xct_type(abs(smthread_t::me()->rand()%100)));

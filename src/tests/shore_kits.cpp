@@ -435,23 +435,33 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const double iQueriedSF,
     shell_await_clients();    
     
     // 2. run iterations
+    int remaining = 0;
+    double delay = 0;
     for (int j=0; j<iIterations && !base_client_t::is_test_aborted(); j++) {
-        sleep(1);
-        TRACE( TRACE_ALWAYS, "Iteration [%d of %d]\n",
-               (j+1), iIterations);
+	if(remaining == 0) {
+	    sleep(1);
+	    TRACE( TRACE_ALWAYS, "Iteration [%d of %d]\n",
+		   (j+1), iIterations);
 
-        // reset cpu monitor
-        _g_mon->cntr_reset();
+	    // reset cpu monitor
+	    _g_mon->cntr_reset();
 
-        // set measurement state
-	TRACE(TRACE_ALWAYS, "begin measurement\n");
-        _env->set_measure(MST_MEASURE);
+	    // set measurement state
+	    TRACE(TRACE_ALWAYS, "begin measurement\n");
+	    _env->set_measure(MST_MEASURE);
 
-        _env->reset_stats();
+	    _env->reset_stats();
+	    delay = 0;
+	    remaining = iDuration;
+	}
 	stopwatch_t timer;
-	sleep(iDuration);
-
-	double delay = timer.time();
+	remaining = sleep(remaining);
+	if(remaining != 0) {
+	    j--;
+	    continue;
+	}
+	
+	delay += timer.time();
         _g_mon->cntr_pause();
 	TRACE(TRACE_ALWAYS, "end measurement\n");
         ulong_t miochs = _g_mon->iochars()/MILLION;

@@ -699,6 +699,14 @@ w_rc_t ShoreTPCCEnv::xct_populate_one_unit(const int /* xct_id */,
 
 w_rc_t ShoreTPCCEnv::run_one_xct(Request* prequest)
 {
+    if(_start_imbalance > 0 && !_bAlarmSet) {
+	CRITICAL_SECTION(alarm_cs, _alarm_lock);
+	if(!_bAlarmSet) {
+	    alarm(_start_imbalance);
+	    _bAlarmSet = true;
+	}
+    }
+
     // if BASELINE TPC-C MIX
     if (prequest->type() == XCT_MIX) {
         prequest->set_type(random_xct_type(abs(smthread_t::me()->rand()%100)));
