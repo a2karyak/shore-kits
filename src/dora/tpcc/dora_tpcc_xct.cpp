@@ -109,6 +109,15 @@ w_rc_t DoraTPCCEnv::dora_new_order(const int xct_id,
                                    new_order_input_t& anoin,
                                    const bool bWake)
 {
+
+    if(_start_imbalance > 0 && !_bAlarmSet) {
+	CRITICAL_SECTION(alarm_cs, _alarm_lock);
+	if(!_bAlarmSet) {
+	    alarm(_start_imbalance);
+	    _bAlarmSet = true;
+	}
+    }
+	
     // 1. Initiate transaction
     tid_t atid;   
 
@@ -220,6 +229,14 @@ w_rc_t DoraTPCCEnv::dora_payment(const int xct_id,
                                  payment_input_t& apin,
                                  const bool bWake)
 {
+    if(_start_imbalance > 0 && !_bAlarmSet) {
+	CRITICAL_SECTION(alarm_cs, _alarm_lock);
+	if(!_bAlarmSet) {
+	    alarm(_start_imbalance);
+	    _bAlarmSet = true;
+	}
+    }
+	
     // 1. Initiate transaction
     tid_t atid;   
 
@@ -307,6 +324,14 @@ w_rc_t DoraTPCCEnv::dora_order_status(const int xct_id,
                                       order_status_input_t& aordstin,
                                       const bool bWake)
 {
+    if(_start_imbalance > 0 && !_bAlarmSet) {
+	CRITICAL_SECTION(alarm_cs, _alarm_lock);
+	if(!_bAlarmSet) {
+	    alarm(_start_imbalance);
+	    _bAlarmSet = true;
+	}
+    }
+	
     // 1. Initiate transaction
     tid_t atid;   
 
@@ -362,6 +387,14 @@ w_rc_t DoraTPCCEnv::dora_delivery(const int xct_id,
                                   delivery_input_t& adelin,
                                   const bool bWake)
 {
+    if(_start_imbalance > 0 && !_bAlarmSet) {
+	CRITICAL_SECTION(alarm_cs, _alarm_lock);
+	if(!_bAlarmSet) {
+	    alarm(_start_imbalance);
+	    _bAlarmSet = true;
+	}
+    }
+	
     // 1. Initiate transaction
     tid_t atid;   
 
@@ -440,6 +473,14 @@ w_rc_t DoraTPCCEnv::dora_stock_level(const int xct_id,
                                      stock_level_input_t& astoin,
                                      const bool bWake)
 {
+    if(_start_imbalance > 0 && !_bAlarmSet) {
+	CRITICAL_SECTION(alarm_cs, _alarm_lock);
+	if(!_bAlarmSet) {
+	    alarm(_start_imbalance);
+	    _bAlarmSet = true;
+	}
+    }
+	
     // 1. Initiate transaction
     tid_t atid;   
 

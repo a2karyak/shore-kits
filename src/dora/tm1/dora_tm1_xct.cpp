@@ -105,6 +105,14 @@ w_rc_t DoraTM1Env::dora_get_sub_data(const int xct_id,
                                      get_sub_data_input_t& in,
                                      const bool bWake)
 {
+    if(_start_imbalance > 0 && !_bAlarmSet) {
+	CRITICAL_SECTION(alarm_cs, _alarm_lock);
+	if(!_bAlarmSet) {
+	    alarm(_start_imbalance);
+	    _bAlarmSet = true;
+	}
+    }
+    
     // 1. Initiate transaction
     tid_t atid;   
 
@@ -157,6 +165,14 @@ w_rc_t DoraTM1Env::dora_get_new_dest(const int xct_id,
                                      get_new_dest_input_t& in,
                                      const bool bWake)
 {
+    if(_start_imbalance > 0 && !_bAlarmSet) {
+	CRITICAL_SECTION(alarm_cs, _alarm_lock);
+	if(!_bAlarmSet) {
+	    alarm(_start_imbalance);
+	    _bAlarmSet = true;
+	}
+    }
+    
     // 1. Initiate transaction
     tid_t atid;   
 
@@ -200,6 +216,14 @@ w_rc_t DoraTM1Env::dora_get_new_dest(const int xct_id,
                                      get_new_dest_input_t& in,
                                      const bool bWake)
 {
+    if(_start_imbalance > 0 && !_bAlarmSet) {
+	CRITICAL_SECTION(alarm_cs, _alarm_lock);
+	if(!_bAlarmSet) {
+	    alarm(_start_imbalance);
+	    _bAlarmSet = true;
+	}
+    }
+	
     // 1. Initiate transaction
     tid_t atid;   
 
@@ -262,6 +286,14 @@ w_rc_t DoraTM1Env::dora_get_acc_data(const int xct_id,
                                      get_acc_data_input_t& in,
                                      const bool bWake)
 {
+    if(_start_imbalance > 0 && !_bAlarmSet) {
+	CRITICAL_SECTION(alarm_cs, _alarm_lock);
+	if(!_bAlarmSet) {
+	    alarm(_start_imbalance);
+	    _bAlarmSet = true;
+	}
+    }
+
     // 1. Initiate transaction
     tid_t atid;   
 
@@ -313,6 +345,14 @@ w_rc_t DoraTM1Env::dora_upd_sub_data(const int xct_id,
                                      upd_sub_data_input_t& in,
                                      const bool bWake)
 {
+    if(_start_imbalance > 0 && !_bAlarmSet) {
+	CRITICAL_SECTION(alarm_cs, _alarm_lock);
+	if(!_bAlarmSet) {
+	    alarm(_start_imbalance);
+	    _bAlarmSet = true;
+	}
+    }
+	
     // 1. Initiate transaction
     tid_t atid;   
 
@@ -357,6 +397,14 @@ w_rc_t DoraTM1Env::dora_upd_sub_data(const int xct_id,
                                      upd_sub_data_input_t& in,
                                      const bool bWake)
 {
+    if(_start_imbalance > 0 && !_bAlarmSet) {
+	CRITICAL_SECTION(alarm_cs, _alarm_lock);
+	if(!_bAlarmSet) {
+	    alarm(_start_imbalance);
+	    _bAlarmSet = true;
+	}
+    }
+    
     // 1. Initiate transaction
     tid_t atid;   
 
@@ -418,6 +466,14 @@ w_rc_t DoraTM1Env::dora_upd_loc(const int xct_id,
                                 upd_loc_input_t& in,
                                 const bool bWake)
 {
+    if(_start_imbalance > 0 && !_bAlarmSet) {
+	CRITICAL_SECTION(alarm_cs, _alarm_lock);
+	if(!_bAlarmSet) {
+	    alarm(_start_imbalance);
+	    _bAlarmSet = true;
+	}
+    }
+    
     // 1. Initiate transaction
     tid_t atid;   
 
@@ -468,6 +524,14 @@ w_rc_t DoraTM1Env::dora_ins_call_fwd(const int xct_id,
                                      ins_call_fwd_input_t& in,
                                      const bool bWake)
 {
+    if(_start_imbalance > 0 && !_bAlarmSet) {
+	CRITICAL_SECTION(alarm_cs, _alarm_lock);
+	if(!_bAlarmSet) {
+	    alarm(_start_imbalance);
+	    _bAlarmSet = true;
+	}
+    }
+
     // 1. Initiate transaction
     tid_t atid;   
 
@@ -520,6 +584,14 @@ w_rc_t DoraTM1Env::dora_del_call_fwd(const int xct_id,
                                      del_call_fwd_input_t& in,
                                      const bool bWake)
 {
+    if(_start_imbalance > 0 && !_bAlarmSet) {
+	CRITICAL_SECTION(alarm_cs, _alarm_lock);
+	if(!_bAlarmSet) {
+	    alarm(_start_imbalance);
+	    _bAlarmSet = true;
+	}
+    }
+
     // 1. Initiate transaction
     tid_t atid;   
 
@@ -648,6 +720,14 @@ w_rc_t DoraTM1Env::dora_get_sub_nbr(const int xct_id,
                                     get_sub_nbr_input_t& in,
                                     const bool bWake)
 {
+    if(_start_imbalance > 0 && !_bAlarmSet) {
+	CRITICAL_SECTION(alarm_cs, _alarm_lock);
+	if(!_bAlarmSet) {
+	    alarm(_start_imbalance);
+	    _bAlarmSet = true;
+	}
+    }
+	
     // 1. Initiate transaction
     tid_t atid;   
 
@@ -735,6 +815,14 @@ w_rc_t DoraTM1Env::dora_get_sub_nbr(const int xct_id,
                                     get_sub_nbr_input_t& in,
                                     const bool bWake)
 {
+    if(_start_imbalance > 0 && !_bAlarmSet) {
+	CRITICAL_SECTION(alarm_cs, _alarm_lock);
+	if(!_bAlarmSet) {
+	    alarm(_start_imbalance);
+	    _bAlarmSet = true;
+	}
+    }
+	
     // 1. Initiate transaction
     w_rc_t e = RCOK;
     tid_t atid;   

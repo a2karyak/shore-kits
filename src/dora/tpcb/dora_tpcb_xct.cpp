@@ -95,6 +95,14 @@ w_rc_t DoraTPCBEnv::dora_acct_update(const int xct_id,
                                      acct_update_input_t& in,
                                      const bool bWake)
 {
+    if(_start_imbalance > 0 && !_bAlarmSet) {
+	CRITICAL_SECTION(alarm_cs, _alarm_lock);
+	if(!_bAlarmSet) {
+	    alarm(_start_imbalance);
+	    _bAlarmSet = true;
+	}
+    }
+	
     // 1. Initiate transaction
     tid_t atid;   
 
