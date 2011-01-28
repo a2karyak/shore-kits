@@ -549,6 +549,7 @@ void usage()
            "-d <PHYSICAL> : Use specific physical design (normal,mrbtnorm,...)\n" \
            "-x            : Enable physical design hacks\n"   \
            "-g <RANGE>    : Use specific range (in some workloads)\n"   \
+           "-f <FILE>     : Use specific configuration file (ie. instead of shore.conf)\n" \
            "-h            : Print this message and exit\n");
 }
 
@@ -585,7 +586,7 @@ int main(int argc, char* argv[])
     int c = 0;
     int iRange = 0;    
 
-    while ((c = getopt(argc,argv,"rnp:c:s:d:xg:h")) != -1) {
+    while ((c = getopt(argc,argv,"rnp:c:s:d:xg:f:h")) != -1) {
         switch (c) {
         case 'r':
             TRACE( TRACE_ALWAYS, "CLOBBERING DB\n");
@@ -627,6 +628,11 @@ int main(int argc, char* argv[])
             iRange = atoi(optarg);
             TRACE( TRACE_ALWAYS, "RANGE (%d)\n", iRange);
             ev->setVarInt("records-to-access",iRange);
+            break;
+        case 'f':
+            TRACE( TRACE_ALWAYS, "CONFIGFILE (%s)\n", optarg);
+            config = (string)optarg;
+            ev->setConfFile(config);
             break;
         case 'h':
             usage();

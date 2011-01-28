@@ -975,7 +975,7 @@ void ShoreEnv::usage(option_group_t& options)
 
 void ShoreEnv::readconfig(string conf_file)
 {
-    TRACE( TRACE_DEBUG, "Reading config file (%s)\n", conf_file.c_str());
+    TRACE( TRACE_ALWAYS, "Reading config file (%s)\n", conf_file.c_str());
     
     string tmp;
     int i=0;

@@ -38,7 +38,7 @@ ENTER_NAMESPACE(tpcb);
 #define ONLY_LOCAL_TCPB
 
 #ifdef  ONLY_LOCAL_TCPB
-#warning TPCB uses only local xcts
+#warning TPCB - uses only local xcts
 const int LOCAL_TPCB = 100;
 #else
 // Modify this value to control the percentage of remote xcts

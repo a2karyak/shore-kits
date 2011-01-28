@@ -58,19 +58,19 @@ ENTER_NAMESPACE(tpcc);
 
 // prints out warnings about the configuration
 #ifdef USE_SAME_INPUT
-#warning TPCC = Uses xcts with same input
+#warning TPCC - Uses xcts with same input
 #endif
 
 #ifdef USE_SAFE_PATHS
-#warning TPCC = Does not generate xcts that probe C_NAME_IDX
+#warning TPCC - Does not generate xcts that probe C_NAME_IDX
 #endif
 
 #ifdef USE_NO_NORD_INPUTS_FOR_ROLLBACK
-#warning TPCC = Does not generate aborting NewOrder xcts
+#warning TPCC - Does not generate aborting NewOrder xcts
 #endif
 
 #ifdef USE_ONLY_LOCAL_WHS
-#warning TPCC = Uses only local Warehouses 
+#warning TPCC - Uses only local Warehouses 
 #endif
 
 
