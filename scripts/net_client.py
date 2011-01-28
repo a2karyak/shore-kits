@@ -143,7 +143,7 @@ class ShoreInstance(object):
 			# child
 
 			affinity = ','.join([str(k) for k in self.affinity])
-			s, o = commands.getstatusoutput('cd %s; taskset -c %s %s/shore_kits -n -p %d -f %s > %s 2>&1' % (self.dir, affinity, self.path, self.port, self.cfgfile, self.output))
+			s, o = commands.getstatusoutput('cd %s; taskset -c %s %s/shore_kits -n -p %d > %s 2>&1' % (self.dir, affinity, self.path, self.port, self.output))
 
 			f = open(self.output, 'a')
 			if s != 0:
