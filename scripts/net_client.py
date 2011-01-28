@@ -8,7 +8,6 @@ Miguel Branco - miguel.branco@epfl.ch
 """
 To Do:
 - Kill process after last result, if it seems hanged.
-- Kill all subprocesses on CTRL-Cing the script
 - Move configurations/runs settings to separate config file
 """
 
@@ -18,6 +17,7 @@ import glob
 import os
 import random
 import re
+import signal
 import shutil
 import socket
 import sys
@@ -152,7 +152,7 @@ class ShoreInstance(object):
 			sys.exit(0)
 
 
-	def wait(self):
+	def wait_start(self):
 		"""Wait until server is ready to receive connections."""
 		while True:
 			time.sleep(1)
@@ -179,11 +179,15 @@ class ShoreInstance(object):
 		self.socket.send('%s\n' % cmd)
 
 
-	def disconnect(self):
-		"""Ask server to stop and wait until is done."""
+	def stop(self):
+		"""Ask server to stop."""
 		self.send('quit\n')
 		self.send('')
 		self.socket.close()
+
+
+	def wait_stop(self):
+		"""Wait until server is done."""
 		os.waitpid(self.pid, 0)
 
 
@@ -196,6 +200,12 @@ class ShoreInstance(object):
 	def clean(self):
 		try: shutil.rmtree(self.dir)
 		except: pass
+
+
+	def kill(self):
+		"""Kill child."""
+		os.kill(self.pid, signal.SIGKILL)
+		return self.pid
 
 
 
@@ -213,7 +223,27 @@ def parse_shore_log(log):
 	return results
 
 
+ShoreInstances = []
+ParentPID = os.getpid()
+
+
+def sigint_handler(signum, frame):
+	global ShoreInstances
+
+	if os.getpid() != ParentPID:
+		sys.exit()
+
+	print 'CTRL-C caught'
+	for s in ShoreInstances:
+		print 'Sent SIGKILL to %s' % s.kill()
+	sys.exit()
+
+
 def main(output, template, path, port_range, temp):
+	global ShoreInstances
+
+	signal.signal(signal.SIGINT, sigint_handler)
+
 	runs = RUNS.keys()
 	runs.sort()
 	for run in runs:
@@ -221,35 +251,36 @@ def main(output, template, path, port_range, temp):
 
 		print 'Run %s' % run
 
-		ss = []
+		ShoreInstances = []
 		for i in xrange(0, len(affinity)):
 			port = random.randint(port_range[0], port_range[1])
-			ss.append( ShoreInstance(template, path, port, cfgname, affinity[i], temp) )
+			ShoreInstances.append( ShoreInstance(template, path, port, cfgname, affinity[i], temp) )
 
-		for i, s in enumerate(ss):
+		for i, s in enumerate(ShoreInstances):
 			print 'Starting server at cores %s...' % affinity[i]
 			s.spawn()
 
-		for i, s in enumerate(ss):
+		for i, s in enumerate(ShoreInstances):
 			print 'Waiting for server at cores %s to initialize...' % affinity[i]
-			s.wait()
+			s.wait_start()
 
-		for i, s in enumerate(ss):
+		for i, s in enumerate(ShoreInstances):
 			print 'Connecting to server at cores %s...' % affinity[i]
 			s.connect()
 
 		print 'Sending commands to servers...'
-		for s in ss:
+		for s in ShoreInstances:
 			for c in cmds:
 				s.send(c)
+			s.stop()
 
 		f = open(output, 'a')
 		f.write('Run\t%s\n' % run)
 		f.close()
 
-		for i, s in enumerate(ss):
+		for i, s in enumerate(ShoreInstances):
 			print 'Waiting for server at cores %s to finish...' % affinity[i]
-			s.disconnect()
+			s.wait_stop()
 	
 			results = parse_shore_log(s.getoutput())
 
