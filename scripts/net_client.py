@@ -52,11 +52,11 @@ RUNS = {
 	# <run name>: (<configuration>, <nr processes>, [<list of commands>])
 	'tpcc-1-1':	('tpcc-1',	[[i] for i in xrange(0, 16)],			['sli', 'elr', 'measure 1 1 1 30 1 3']),
 
-	'tpcc-2-2':	('tpcc-2',	[[i,i+1] for i in xrange(0, 16, 2)],		['sli', 'elr', 'measure 2 1 1 30 1 3']),
+	'tpcc-2-2':	('tpcc-2',	[[i,i+1] for i in xrange(0, 16, 2)],		['sli', 'elr', 'measure 2 1 2 30 1 3']),
 
-	'tpcc-4-4':	('tpcc-4',	[[i,i+1,i+2,i+3] for i in xrange(0, 16, 4)],	['sli', 'elr', 'measure 4 1 1 30 1 3']),
+	'tpcc-4-4':	('tpcc-4',	[[i,i+1,i+2,i+3] for i in xrange(0, 16, 4)],	['sli', 'elr', 'measure 4 1 4 30 1 3']),
 
-	'tpcc-16-16':	('tpcc-16',	[[i for i in xrange(0, 16)]], 			['sli', 'elr', 'measure 16 1 1 30 1 3']),
+	'tpcc-16-16':	('tpcc-16',	[[i for i in xrange(0, 16)]], 			['sli', 'elr', 'measure 16 1 16 30 1 3']),
 }
 
 
