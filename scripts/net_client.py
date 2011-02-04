@@ -57,6 +57,8 @@ RUNS = {
 	'tpcc-4-4':	('tpcc-4',	[[i,i+1,i+2,i+3] for i in xrange(0, 16, 4)],	['sli', 'elr', 'measure 4 1 4 30 1 3']),
 
 	'tpcc-16-16':	('tpcc-16',	[[i for i in xrange(0, 16)]], 			['sli', 'elr', 'measure 16 1 16 30 1 3']),
+
+	'tpcc-4-4mix':	('tpcc-4',	[[i,i+4,i+8,i+12] for i in xrange(0, 4, 1)],	['sli', 'elr', 'measure 4 1 4 30 1 3']),
 }
 
 
