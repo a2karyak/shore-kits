@@ -79,8 +79,9 @@ get_sub_data_input_t create_get_sub_data_input(int sf,
 	    gsdin._s_id = specificSub;
 	else
 	    gsdin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
-	return (gsdin);
     }
+
+    return (gsdin);
 }
 
 
