@@ -23,6 +23,9 @@ import socket
 import sys
 import time
 
+OS = commands.getoutput('uname')
+USER = os.getenv('USER')
+
 # Settings are specified in KBs
 MB = 1024 
 GB = 1024*MB
@@ -44,21 +47,30 @@ CONFIGURATIONS = {
 			'system': 'baseline', 'benchmark': 'tpcc', 'design': 'normal' },
 	'tpcc-4': {	'sf': 4, 'devicequota': 2*GB, 'bufpoolsize': 2*GB, 'logsize': 2*GB, 'logbufsize': 80*MB,
 			'system': 'baseline', 'benchmark': 'tpcc', 'design': 'normal' },
-	'tpcc-16': {	'sf': 16, 'devicequota': 12*GB, 'bufpoolsize': 4*GB, 'logsize': 4*GB, 'logbufsize': 80*MB,
+	'tpcc-16': {	'sf': 16, 'devicequota': 4*GB, 'bufpoolsize': 4*GB, 'logsize': 4*GB, 'logbufsize': 80*MB,
 			'system': 'baseline', 'benchmark': 'tpcc', 'design': 'normal' },
 }
 
 RUNS = {
 	# <run name>: (<configuration>, <nr processes>, [<list of commands>])
-	'tpcc-1-1':	('tpcc-1',	[[i] for i in xrange(0, 16)],			['sli', 'elr', 'measure 1 1 1 30 1 3']),
 
-	'tpcc-2-2':	('tpcc-2',	[[i,i+1] for i in xrange(0, 16, 2)],		['sli', 'elr', 'measure 2 1 2 30 1 3']),
+	# diassrv2
 
-	'tpcc-4-4':	('tpcc-4',	[[i,i+1,i+2,i+3] for i in xrange(0, 16, 4)],	['sli', 'elr', 'measure 4 1 4 30 1 3']),
+	'tpcc-1-1':     ('tpcc-1',      [[i] for i in xrange(0, 16)],                   ['sli', 'elr', 'measure 1 1 1 30 1 3']),
 
-	'tpcc-16-16':	('tpcc-16',	[[i for i in xrange(0, 16)]], 			['sli', 'elr', 'measure 16 1 16 30 1 3']),
+	'tpcc-2-2':     ('tpcc-2',      [[i,i+1] for i in xrange(0, 16, 2)],            ['sli', 'elr', 'measure 2 1 2 30 1 3']),
 
-	'tpcc-4-4mix':	('tpcc-4',	[[i,i+4,i+8,i+12] for i in xrange(0, 4, 1)],	['sli', 'elr', 'measure 4 1 4 30 1 3']),
+	'tpcc-4-4':     ('tpcc-4',      [[i,i+1,i+2,i+3] for i in xrange(0, 16, 4)],    ['sli', 'elr', 'measure 4 1 4 30 1 3']),
+
+	'tpcc-16-16':   ('tpcc-16',     [[i for i in xrange(0, 16)]],                   ['sli', 'elr', 'measure 16 1 16 30 1 3']),
+
+	'tpcc-4-4mix':  ('tpcc-4',      [[i,i+4,i+8,i+12] for i in xrange(0, 4, 1)],    ['sli', 'elr', 'measure 4 1 4 30 1 3']),
+
+	# diassrv4
+
+	'tpcc-16':	('tpcc-16',	[ [j+i for j in xrange(0, 16)] for i in xrange(0, 256, 64)], 	['sli', 'elr', 'measure 16 1 16 30 1 3']),
+
+#	'tpcc-16mix:	('tpcc-16',	[ [j+i for j in xrange(0, 4)]+[j+i+64 for j in xrange(0,4)]+[j+i+128 for j in xrange(0,4)]+[j+i+192 for j in xrange(0,4)] for i in xrange(0, 64, 16)], 	['sli', 'elr', 'measure 16 1 16 30 1 3']),
 }
 
 
@@ -72,10 +84,10 @@ OUTPUT_LOG = 'output.log'
 SHORE_PATH = os.getcwd()+'/..'
 
 # Default value for temporary directory
-TEMPDIR = '/tmpfs/%s' % os.getenv('USER')
+TEMPDIR = '/tmpfs/%s' % USER
 
-# Default value for port range
-PORT_RANGE = (5000, 6000)
+# Default value for starting port number
+START_PORT = 5000
 
 
 class ShoreException(Exception):
@@ -144,20 +156,46 @@ class ShoreInstance(object):
 		if self.pid == 0:
 			# child
 
-			affinity = ','.join([str(k) for k in self.affinity])
-			s, o = commands.getstatusoutput('cd %s; taskset -c %s %s/shore_kits -n -p %d > %s 2>&1' % (self.dir, affinity, self.path, self.port, self.output))
+			os.chdir(self.dir)
 
-			f = open(self.output, 'a')
-			if s != 0:
-				f.write('\nFAILED\n')
-			f.close()
-			sys.exit(0)
+			if OS == 'Linux':
+				affinity = ','.join([str(k) for k in self.affinity])
+				s, o = commands.getstatusoutput('taskset -c %s %s/shore_kits -n -p %d > %s 2>&1' % (affinity, self.path, self.port, self.output))
+				f = open(self.output, 'a')
+				if s != 0:
+					f.write('\nFAILED shore_kits\n')
+				f.close()
+
+			elif OS == 'SunOS':
+				affinity = ' '.join([str(k) for k in self.affinity])
+				s, o = commands.getstatusoutput('sudo psrset -c %s' % affinity)
+				if s != 0:
+					f = open(self.output, 'w')
+					f.write('FAILED prsset\n%s\n' % o)
+					f.close()
+					sys.exit()
+				o = o.split('\n')[0]
+				psrset = o[o.rfind(' '):].strip()
+
+				libs = os.getenv('LD_LIBRARY_PATH')
+
+				s, o = commands.getstatusoutput('sudo psrset -e %s sudo -u %s LD_LIBRARY_PATH=%s %s/shore_kits -n -p %d > %s 2>&1' % (psrset, USER, libs, self.path, self.port, self.output))
+				f = open(self.output, 'a')
+				if s != 0:
+					f.write('\nFAILED\n')
+				f.close()
+				s, o = commands.getstatusoutput('sudo psrset -d %s' % psrset)
+
+			sys.exit()
 
 
 	def wait_start(self):
 		"""Wait until server is ready to receive connections."""
 		while True:
 			time.sleep(1)
+			if not os.path.exists(self.output):
+				continue
+
 			f = open(self.output, 'r')
 			lines = f.readlines()
 			f.close()
@@ -241,13 +279,16 @@ def sigint_handler(signum, frame):
 	sys.exit()
 
 
-def main(output, template, path, port_range, temp):
+def main(output, template, path, start_port, temp):
 	global ShoreInstances
 
 	signal.signal(signal.SIGINT, sigint_handler)
 
 	runs = RUNS.keys()
 	runs.sort()
+
+	port = start_port
+
 	for run in runs:
 		cfgname, affinity, cmds = RUNS[run]
 
@@ -255,8 +296,8 @@ def main(output, template, path, port_range, temp):
 
 		ShoreInstances = []
 		for i in xrange(0, len(affinity)):
-			port = random.randint(port_range[0], port_range[1])
 			ShoreInstances.append( ShoreInstance(template, path, port, cfgname, affinity[i], temp) )
+			port += 1
 
 		for i, s in enumerate(ShoreInstances):
 			print 'Starting server at cores %s...' % affinity[i]
@@ -300,8 +341,8 @@ def usage():
  -t template  : Template file to use for generating shore.conf (Default: %s)
  -p path      : Location of shore_kits executable (Default: %s)
  -T dir       : Temporary directory to use for database (Default: %s)
- -P min,max   : Specify port range to use, comma-separated (Default: %s)"""  % \
-	(OUTPUT_LOG, SHORE_CONF_TEMPLATE, SHORE_PATH, TEMPDIR, ','.join([str(p) for p in PORT_RANGE]))
+ -P min       : Specify starting port to use (Default: %s)"""  % \
+	(OUTPUT_LOG, SHORE_CONF_TEMPLATE, SHORE_PATH, TEMPDIR, START_PORT)
 
 
 if __name__ == '__main__':
@@ -315,7 +356,7 @@ if __name__ == '__main__':
 	template = SHORE_CONF_TEMPLATE
 	path = SHORE_PATH
 	temp = TEMPDIR
-	port_range = PORT_RANGE
+	start_port = START_PORT
 	for o, a in opts:
 		if o == '-h':
 			usage()
@@ -329,7 +370,7 @@ if __name__ == '__main__':
 		elif o == '-T':
 			temp = a
 		elif o == '-P':
-			port_range = [int(p) for p in a.split(',')]
+			start_port = int(a)
 		else:
 			assert False, "unhandled option"
 	print 'Running with settings:'
@@ -339,7 +380,7 @@ if __name__ == '__main__':
 	print '  Temporary directory: %s' % temp
 	print
 	try:
-		main(output, template, path, port_range, temp)
+		main(output, template, path, start_port, temp)
 	except ShoreException, e:
 		print
 		print 'ERROR: %s' % e
