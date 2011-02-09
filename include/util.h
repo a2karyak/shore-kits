@@ -54,6 +54,7 @@
 #include "util/atomic_ops.h"
 #include "util/w_strlcpy.h"
 #include "util/procstat.h"
+#include "util/skewer.h"
 
 #ifdef __sparcv9
 #include "util/sunos_procstat.h"

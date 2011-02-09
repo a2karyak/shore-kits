@@ -537,6 +537,7 @@ protected:
     volatile bool _bAlarmSet;
     tatas_lock _alarm_lock;
     int _start_imbalance;
+    skew_type_t _skew_type;
     
 public:
 
@@ -626,9 +627,7 @@ public:
     // set load imbalance related
     virtual void set_skew(int hot_area, int load_imbalance, int start_imbalance);
     virtual void reset_skew();
-    virtual void set_skew_intervals(int hot_area, int lower, int upper,
-				    vector<int>& imbalance_lower, vector<int>& imbalance_upper);
-    virtual void start_load_imbalance() { };
+    virtual void start_load_imbalance();
     
     // Environment workers
     uint upd_worker_cnt();

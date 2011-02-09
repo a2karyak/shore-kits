@@ -40,9 +40,7 @@ ENTER_NAMESPACE(tpcc);
 
 /** Exported variables */
 // skew values
-extern vector<int> w_imbalance_lower;
-extern vector<int> w_imbalance_upper;
-extern int _load_imbalance;
+extern skewer_t w_skewer;
 extern bool _change_load;
 
 /** Exported data structures */

@@ -335,12 +335,8 @@ w_rc_t ShoreTPCCEnv::update_partitioning()
 void ShoreTPCCEnv::set_skew(int hot_area, int load_imbalance, int start_imbalance) 
 {
     ShoreEnv::set_skew(hot_area, load_imbalance, start_imbalance);
-
-    _load_imbalance = load_imbalance;
-
     // for warehouses
-    ShoreEnv::set_skew_intervals(hot_area, 1, _scaling_factor, w_imbalance_lower, w_imbalance_upper);
-    
+    w_skewer.set(hot_area, 1, _scaling_factor, load_imbalance);
 }
 
 
@@ -353,7 +349,14 @@ void ShoreTPCCEnv::set_skew(int hot_area, int load_imbalance, int start_imbalanc
  ********************************************************************/
 void ShoreTPCCEnv::start_load_imbalance() 
 {
-    _change_load = true;
+    if(w_skewer.is_set()) {
+	// for warehouses
+	w_skewer.reset(_skew_type);
+    }
+    if(_skew_type != SKEW_CHAOTIC || URand(1,100) > 30) {
+	_change_load = true;
+    } 
+    ShoreEnv::start_load_imbalance(); 
 }
 
 
@@ -369,8 +372,7 @@ void ShoreTPCCEnv::reset_skew()
 {
     ShoreEnv::reset_skew();
     _change_load = false;
-    w_imbalance_lower.clear();
-    w_imbalance_upper.clear();
+    w_skewer.clear();
 }
 
 

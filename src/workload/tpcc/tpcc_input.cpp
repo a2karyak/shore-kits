@@ -74,9 +74,7 @@ ENTER_NAMESPACE(tpcc);
 #endif
 
 // initial skew values for load imbalance
-vector<int> w_imbalance_lower;
-vector<int> w_imbalance_upper;
-int _load_imbalance = 0;
+skewer_t w_skewer;
 bool _change_load = false;
 
 /* ----------------------- */
@@ -220,17 +218,7 @@ new_order_input_t create_new_order_input(int sf, int specificWH)
 
     bool w_set = false;
     if(_change_load) {
-	// wh
-	int rand = URand(1,100);
-	assert(rand >= 0);
-     	assert(w_imbalance_upper.size() == w_imbalance_lower.size());
-	int load = _load_imbalance / w_imbalance_lower.size();
-	for(int i=0; !w_set && i<w_imbalance_upper.size(); i++) {
-	    if(rand < load * (i+1)) {
-		noin._wh_id = URand(w_imbalance_lower[i],w_imbalance_upper[i]);
-		w_set = true;
-	    }
-	}
+	w_set = w_skewer.get_input(noin._wh_id);
     }    
     if(!w_set) {
 	if (specificWH>0)
@@ -348,17 +336,7 @@ payment_input_t create_payment_input(int sf, int specificWH)
 
     bool w_set = false;
     if(_change_load) {
-	// wh
-	int rand = URand(1,100);
-	assert(rand >= 0);
-     	assert(w_imbalance_upper.size() == w_imbalance_lower.size());
-	int load = _load_imbalance / w_imbalance_lower.size();
-	for(int i=0; !w_set && i<w_imbalance_upper.size(); i++) {
-	    if(rand < load * (i+1)) {
-		pin._home_wh_id = URand(w_imbalance_lower[i],w_imbalance_upper[i]);
-		w_set = true;
-	    }
-	}
+	w_set = w_skewer.get_input(pin._home_wh_id);	
     }    
     if(!w_set) {
 	if (specificWH>0)
@@ -477,17 +455,7 @@ order_status_input_t create_order_status_input(int sf, int specificWH)
 
     bool w_set = false;
     if(_change_load) {
-	// wh
-	int rand = URand(1,100);
-	assert(rand >= 0);
-     	assert(w_imbalance_upper.size() == w_imbalance_lower.size());
-	int load = _load_imbalance / w_imbalance_lower.size();
-	for(int i=0; !w_set && i<w_imbalance_upper.size(); i++) {
-	    if(rand < load * (i+1)) {
-		osin._wh_id = URand(w_imbalance_lower[i],w_imbalance_upper[i]);
-		w_set = true;
-	    }
-	}
+	w_set = w_skewer.get_input(osin._wh_id);
     }    
     if(!w_set) {
 	if (specificWH>0)
@@ -563,17 +531,7 @@ delivery_input_t create_delivery_input(int sf, int specificWH)
 
     bool w_set = false;
     if(_change_load) {
-	// wh
-	int rand = URand(1,100);
-	assert(rand >= 0);
-     	assert(w_imbalance_upper.size() == w_imbalance_lower.size());
-	int load = _load_imbalance / w_imbalance_lower.size();
-	for(int i=0; !w_set && i<w_imbalance_upper.size(); i++) {
-	    if(rand < load * (i+1)) {
-		din._wh_id = URand(w_imbalance_lower[i],w_imbalance_upper[i]);
-		w_set = true;
-	    }
-	}
+	w_set = w_skewer.get_input(din._wh_id);
     }    
     if(!w_set) {
 	if (specificWH>0)
@@ -636,17 +594,7 @@ stock_level_input_t create_stock_level_input(int sf, int specificWH)
 
     bool w_set = false;
     if(_change_load) {
-	// wh
-	int rand = URand(1,100);
-	assert(rand >= 0);
-     	assert(w_imbalance_upper.size() == w_imbalance_lower.size());
-	int load = _load_imbalance / w_imbalance_lower.size();
-	for(int i=0; !w_set && i<w_imbalance_upper.size(); i++) {
-	    if(rand < load * (i+1)) {
-		slin._wh_id = URand(w_imbalance_lower[i],w_imbalance_upper[i]);
-		w_set = true;
-	    }
-	}
+	w_set = w_skewer.get_input(slin._wh_id);
     }    
     if(!w_set) {
 	if (specificWH>0)

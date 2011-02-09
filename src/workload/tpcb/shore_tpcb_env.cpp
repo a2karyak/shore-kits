@@ -147,18 +147,12 @@ w_rc_t ShoreTPCBEnv::update_partitioning()
 void ShoreTPCBEnv::set_skew(int hot_area, int load_imbalance, int start_imbalance) 
 {
     ShoreEnv::set_skew(hot_area, load_imbalance, start_imbalance);
-
-    _load_imbalance = load_imbalance;
-	
     // for branches
-    ShoreEnv::set_skew_intervals(hot_area, 0, _scaling_factor-1, b_imbalance_lower, b_imbalance_upper);
-
+    b_skewer.set(hot_area, 0, _scaling_factor-1, load_imbalance);
     // for tellers
-    ShoreEnv::set_skew_intervals(hot_area, 0, TPCB_TELLERS_PER_BRANCH-1, t_imbalance_lower, t_imbalance_upper);
-	
+    t_skewer.set(hot_area, 0, TPCB_TELLERS_PER_BRANCH-1, load_imbalance);
     // for accounts
-    ShoreEnv::set_skew_intervals(hot_area, 0, TPCB_ACCOUNTS_PER_BRANCH-1, a_imbalance_lower, a_imbalance_upper);
-	
+    a_skewer.set(hot_area, 0, TPCB_ACCOUNTS_PER_BRANCH-1, load_imbalance);
 }
 
 
@@ -171,7 +165,18 @@ void ShoreTPCBEnv::set_skew(int hot_area, int load_imbalance, int start_imbalanc
  ********************************************************************/
 void ShoreTPCBEnv::start_load_imbalance() 
 {
-    _change_load = true;
+    if(b_skewer.is_set()) {
+	// for branches
+	b_skewer.reset(_skew_type);
+	// for tellers
+	t_skewer.reset(_skew_type);
+	// for accounts
+	a_skewer.reset(_skew_type);
+    }
+    if(_skew_type != SKEW_CHAOTIC || URand(1,100) > 30) {
+	_change_load = true;
+    } 
+    ShoreEnv::start_load_imbalance();
 }
 
 
@@ -187,12 +192,9 @@ void ShoreTPCBEnv::reset_skew()
 {
     ShoreEnv::reset_skew();
     _change_load = false;
-    b_imbalance_lower.clear();
-    b_imbalance_upper.clear();
-    t_imbalance_lower.clear();
-    t_imbalance_upper.clear();
-    a_imbalance_lower.clear();
-    a_imbalance_upper.clear();
+    b_skewer.clear();
+    t_skewer.clear();
+    a_skewer.clear();
 }
 
 

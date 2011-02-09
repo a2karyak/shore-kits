@@ -96,7 +96,8 @@ UTIL = \
         $(SU)/shell.cpp \
         $(SU)/tcp.cpp \
         $(SU)/w_strlcpy.cpp \
-	$(SU)/procstat.cpp
+	$(SU)/procstat.cpp \
+	$(SU)/skewer.cpp
 
 if SPARC_MACHINE
 UTIL +=	$(SU)/sunos_procstat.cpp \

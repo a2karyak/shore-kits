@@ -45,8 +45,10 @@ ENTER_NAMESPACE(shore);
 extern "C" void alarm_handler(int sig) 
 {
     if(sig == SIGALRM) {
-	TRACE( TRACE_ALWAYS, "Start Load Imbalance\n");
-	_g_shore_env->start_load_imbalance();
+	if(_g_shore_env->get_measure() != MST_DONE) {
+	    TRACE( TRACE_ALWAYS, "Start Load Imbalance\n");
+	    _g_shore_env->start_load_imbalance();
+	}
     } else {
 	_g_shore_env->set_measure(MST_DONE);
     }

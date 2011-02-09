@@ -99,7 +99,7 @@ ShoreEnv::ShoreEnv(string confname)
       _pd(PD_NORMAL),
       _insert_freq(0),_delete_freq(0),_probe_freq(100),
       _bUseSLI(false),_bUseELR(false),_bUseFlusher(false),
-      _bAlarmSet(false), _start_imbalance(0)
+      _bAlarmSet(false), _start_imbalance(0), _skew_type(SKEW_NONE)
 {
     _popts = new option_group_t(1);
     _pvid = new vid_t(1);
@@ -315,89 +315,41 @@ void ShoreEnv::set_skew(int hot_area, int load_imbalance, int start_imbalance)
     assert((hot_area>0) && (hot_area<100));
 
     _start_imbalance = start_imbalance;
+
+    int skew_type = URand(1,10);
+    if(skew_type < 6) {
+	// 1. Keep the initial skew (no changes)
+	_skew_type = SKEW_NORMAL;
+	TRACE( TRACE_ALWAYS, "SKEW_NORMAL\n");
+    } else if(skew_type < 9) {
+	// 2. Change the area of the initial skew after some random duration	
+	_skew_type = SKEW_DYNAMIC;
+	TRACE( TRACE_ALWAYS, "SKEW_DYNAMIC\n");
+    } else if(skew_type < 11) {
+	// 3. Change the initial skew randomly after some random duration
+	// (a) The new skew can be like the old one but in another spot
+	// (b) The skew can be omitted for sometime and
+	// (c) The percentages might be changed
+	_skew_type = SKEW_CHAOTIC;
+	TRACE( TRACE_ALWAYS, "SKEW_CHAOTIC\n");
+    } else {
+	assert(0); // More cases can be added as wanted
+    }
 }
 
 
 /******************************************************************** 
  *
  *  @fn:    Related to load balancing work
- *  @brief: Set the intervals the given load will be applied to
+ *  @brief: reset the load imbalance and the time to start it if necessary
  *
  ********************************************************************/
-void ShoreEnv::set_skew_intervals(int hot_area, int lower, int upper,
-				  vector<int>& imbalance_lower, vector<int>& imbalance_upper) 
+void ShoreEnv::start_load_imbalance() 
 {
-    int interval_lower = 0;
-    int interval_upper = 0;
-    int middle = URand(lower,upper);
-    int interval = ceil(((double) (upper * hot_area))/100);
-
-    // TODO: pin: the else part doesn't work that well
-    
-    // for branches
-    if(URand(1,100) < 101) { // a continuous hot spot
-	interval_lower = middle - interval / 2;
-	interval_upper = middle + interval / 2;
-
-	if(interval_lower < lower) {
-
-	    imbalance_lower.push_back(lower);
-	    imbalance_upper.push_back(interval_upper);
-
-	    imbalance_lower.push_back(upper + interval_lower);
-	    imbalance_upper.push_back(upper);
-	    
-	} else if(interval_upper > upper) {
-
-	    imbalance_lower.push_back(lower);
-	    imbalance_upper.push_back(interval_upper - upper);
-
-	    imbalance_lower.push_back(interval_lower);
-	    imbalance_upper.push_back(upper);
-	    
-	} else {
-
-	    imbalance_lower.push_back(interval_lower);
-	    imbalance_upper.push_back(interval_upper);
-	    
-	}
-	
-    } else { // for several hot spots
-
-	interval_lower = middle - 1 - interval / 2;
-	interval_upper = middle + 1 + interval / 2;
-
-	if(interval_lower < lower) {
-
-	    imbalance_lower.push_back(lower);
-	    imbalance_upper.push_back(middle - 1);
-
-	    imbalance_lower.push_back(middle + 1);
-	    imbalance_upper.push_back(interval_upper);
-
-	    imbalance_lower.push_back(upper + interval_lower);
-	    imbalance_upper.push_back(upper);
-	    
-	} else if (interval_upper > upper) {
-
-	    imbalance_lower.push_back(interval_lower);
-	    imbalance_upper.push_back(middle - 1);
-
-	    imbalance_lower.push_back(middle + 1);
-	    imbalance_upper.push_back(upper);
-
-	    imbalance_lower.push_back(lower);
-	    imbalance_upper.push_back(interval_upper - upper);
-	    
-	} else {
-	    
-	    imbalance_lower.push_back(interval_lower);
-	    imbalance_upper.push_back(middle - 1);
-
-	    imbalance_lower.push_back(middle + 1);
-	    imbalance_upper.push_back(interval_upper);
-
-	}
+    // TODO: pin: can change these boundaries depending on preference
+    if(_skew_type == SKEW_DYNAMIC || _skew_type == SKEW_CHAOTIC) {
+	_start_imbalance = URand(10,30);
+	_bAlarmSet = false;
     }
 }
 
@@ -411,7 +363,7 @@ void ShoreEnv::set_skew_intervals(int hot_area, int lower, int upper,
 void ShoreEnv::reset_skew()
 {
     // TODO: pin: these can change depending on your pref
-    _start_imbalance = false;
+    _start_imbalance = 0;
     _bAlarmSet = false;
 }
 

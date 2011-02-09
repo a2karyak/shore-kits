@@ -58,14 +58,10 @@ enum { TPCB_ACCOUNTS_CREATED_PER_POP_XCT=10000 }; // must evenly divide ACCOUNTS
 
 
 /** Exported variables */
-// skew values
-extern vector<int> b_imbalance_lower;
-extern vector<int> b_imbalance_upper;
-extern vector<int> t_imbalance_lower;
-extern vector<int> t_imbalance_upper;
-extern vector<int> a_imbalance_lower;
-extern vector<int> a_imbalance_upper;
-extern int _load_imbalance;
+// related to dynamic skew 
+extern skewer_t b_skewer;
+extern skewer_t t_skewer;
+extern skewer_t a_skewer;
 extern bool _change_load;
 
 
