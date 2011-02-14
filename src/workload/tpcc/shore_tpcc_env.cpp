@@ -350,7 +350,7 @@ void ShoreTPCCEnv::set_skew(int area, int load, int start_imbalance)
  ********************************************************************/
 void ShoreTPCCEnv::start_load_imbalance() 
 {
-    if(w_skewer.is_set()) {
+    if(w_skewer.is_used()) {
 	_change_load = false;
 	// for warehouses
 	w_skewer.reset(_skew_type);

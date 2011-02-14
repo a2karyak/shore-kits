@@ -457,10 +457,10 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const double iQueriedSF,
 	stopwatch_t timer;
 	remaining = sleep(remaining);
 	if(remaining != 0) {
+	    delay += timer.time();
 	    j--;
 	    continue;
 	}
-	
 	delay += timer.time();
         _g_mon->cntr_pause();
 	TRACE(TRACE_ALWAYS, "end measurement\n");

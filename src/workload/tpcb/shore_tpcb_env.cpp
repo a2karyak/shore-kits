@@ -166,7 +166,7 @@ void ShoreTPCBEnv::set_skew(int area, int load, int start_imbalance)
  ********************************************************************/
 void ShoreTPCBEnv::start_load_imbalance() 
 {
-    if(b_skewer.is_set()) {
+    if(b_skewer.is_used()) {
 	_change_load = false;
 	// for branches
 	b_skewer.reset(_skew_type);

@@ -88,10 +88,13 @@ private:
     vector<int> _non_interval_l;
     vector<int> _non_interval_u;
     
+    // indicates whether the set intervals was used once
+    bool _is_used;
+    
 public:
 
     // empty constructor, things should be set later
-    skewer_t() { }
+    skewer_t() { _is_used = false; }
 
     // initialization
     void set(int area, int lower, int upper, int load);
@@ -106,7 +109,10 @@ public:
     int get_input();
 
     // to be called on deciding whether to set or reset
-    bool is_set();
+    bool is_used();
+
+    // for debugging
+    void print_intervals();
     
 private:
 

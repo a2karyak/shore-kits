@@ -164,7 +164,7 @@ void ShoreTM1Env::set_skew(int area, int load, int start_imbalance)
  ********************************************************************/
 void ShoreTM1Env::start_load_imbalance() 
 {
-    if(s_skewer.is_set()) {
+    if(s_skewer.is_used()) {
 	_change_load = false;
 	// for subscribers
 	s_skewer.reset(_skew_type);
