@@ -65,37 +65,11 @@ acct_update_input_t create_acct_update_input(int sf,
     assert (sf>0);
 
     acct_update_input_t auin;
-
-    bool b_set = false;
-    bool t_set = false;
-    bool a_set = false;
-    int teller = 0;
-    int account = 0;
     
     if(_change_load) {
-	b_set = b_skewer.get_input(auin.b_id);
-	t_set = t_skewer.get_input(teller);
-	a_set = a_skewer.get_input(account);
-    }
-
-    if(!b_set) {
-	// The TPC-B branches start from 0 (0..SF-1)
-	if (specificBr>0) {
-	    auin.b_id = specificBr-1;
-	}
-	else {
-	    auin.b_id = UZRand(0,sf-1);
-	}
-    }
-
-    if(t_set) {
-	auin.t_id = (auin.b_id * TPCB_TELLERS_PER_BRANCH) + teller;
-    }
-    else {
-	auin.t_id = (auin.b_id * TPCB_TELLERS_PER_BRANCH) + UZRand(0,TPCB_TELLERS_PER_BRANCH-1);
-    }
-
-    if(a_set) {
+	auin.b_id = b_skewer.get_input();
+	auin.t_id = (auin.b_id * TPCB_TELLERS_PER_BRANCH) + t_skewer.get_input();
+	int account = a_skewer.get_input();
 	// 85 - 15 local Branch
 	if (URand(0,100)>LOCAL_TPCB) {
 	    // remote branch
@@ -105,7 +79,18 @@ acct_update_input_t create_acct_update_input(int sf,
 	    // local branch
 	    auin.a_id = (auin.b_id*TPCB_ACCOUNTS_PER_BRANCH) + account;
 	}
-    } else {
+    }
+    else {
+	// The TPC-B branches start from 0 (0..SF-1)
+	if (specificBr>0) {
+	    auin.b_id = specificBr-1;
+	}
+	else {
+	    auin.b_id = UZRand(0,sf-1);
+	}
+	
+	auin.t_id = (auin.b_id * TPCB_TELLERS_PER_BRANCH) + UZRand(0,TPCB_TELLERS_PER_BRANCH-1);
+
 	// 85 - 15 local Branch
 	if (URand(0,100)>LOCAL_TPCB) {
 	    // remote branch
@@ -118,7 +103,7 @@ acct_update_input_t create_acct_update_input(int sf,
     }
     
     auin.delta = URand(0,2000000) - 1000000;
-
+    
     return (auin);
 }
 

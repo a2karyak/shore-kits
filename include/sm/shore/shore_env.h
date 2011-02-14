@@ -624,8 +624,8 @@ public:
     // -- insert/delete/probe frequencies for microbenchmarks -- //
     void set_freqs(int insert_freq = 0, int delete_freq = 0, int probe_freq = 0);
 
-    // set load imbalance related
-    virtual void set_skew(int hot_area, int load_imbalance, int start_imbalance);
+    // load imbalance related
+    virtual void set_skew(int area, int load, int start_imbalance);
     virtual void reset_skew();
     virtual void start_load_imbalance();
     

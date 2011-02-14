@@ -73,7 +73,7 @@ ENTER_NAMESPACE(tpcc);
 #warning TPCC - Uses only local Warehouses 
 #endif
 
-// initial skew values for load imbalance
+// related to dynamic skew for load imbalance
 skewer_t w_skewer;
 bool _change_load = false;
 
@@ -216,11 +216,9 @@ new_order_input_t create_new_order_input(int sf, int specificWH)
 
 #ifndef USE_SAME_INPUT    
 
-    bool w_set = false;
     if(_change_load) {
-	w_set = w_skewer.get_input(noin._wh_id);
-    }    
-    if(!w_set) {
+	noin._wh_id = w_skewer.get_input();
+    } else {
 	if (specificWH>0)
 	    noin._wh_id = specificWH;
 	else
@@ -334,11 +332,9 @@ payment_input_t create_payment_input(int sf, int specificWH)
 
 #ifndef USE_SAME_INPUT
 
-    bool w_set = false;
     if(_change_load) {
-	w_set = w_skewer.get_input(pin._home_wh_id);	
-    }    
-    if(!w_set) {
+	pin._home_wh_id = w_skewer.get_input();	
+    } else {
 	if (specificWH>0)
 	    pin._home_wh_id = specificWH;
 	else
@@ -453,11 +449,9 @@ order_status_input_t create_order_status_input(int sf, int specificWH)
 
 #ifndef USE_SAME_INPUT    
 
-    bool w_set = false;
     if(_change_load) {
-	w_set = w_skewer.get_input(osin._wh_id);
-    }    
-    if(!w_set) {
+	osin._wh_id = w_skewer.get_input();
+    } else {
 	if (specificWH>0)
 	    osin._wh_id = specificWH;
 	else
@@ -529,11 +523,9 @@ delivery_input_t create_delivery_input(int sf, int specificWH)
 
 #ifndef USE_SAME_INPUT    
 
-    bool w_set = false;
     if(_change_load) {
-	w_set = w_skewer.get_input(din._wh_id);
-    }    
-    if(!w_set) {
+	din._wh_id = w_skewer.get_input();
+    } else {
 	if (specificWH>0)
 	    din._wh_id = specificWH;
 	else
@@ -592,11 +584,9 @@ stock_level_input_t create_stock_level_input(int sf, int specificWH)
 
 #ifndef USE_SAME_INPUT    
 
-    bool w_set = false;
     if(_change_load) {
-	w_set = w_skewer.get_input(slin._wh_id);
-    }    
-    if(!w_set) {
+	slin._wh_id = w_skewer.get_input();
+    } else {
 	if (specificWH>0)
 	    slin._wh_id = specificWH;
 	else

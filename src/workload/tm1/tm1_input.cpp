@@ -34,6 +34,7 @@
 
 ENTER_NAMESPACE(tm1);	
 
+// related to dynamic skew for load imbalance
 skewer_t s_skewer;
 bool _change_load = false;
 
@@ -56,19 +57,16 @@ get_sub_data_input_t create_get_sub_data_input(int sf,
 
     get_sub_data_input_t gsdin;
 
-    bool s_set = false;
-
     if(_change_load) {
-	s_set = s_skewer.get_input(gsdin._s_id);
+	gsdin._s_id = s_skewer.get_input();
     }
-
-    if(!s_set) {
+    else {
 	if (specificSub>0)
 	    gsdin._s_id = specificSub;
 	else
 	    gsdin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
     }
-
+    
     return (gsdin);
 }
 
@@ -97,13 +95,9 @@ get_new_dest_input_t create_get_new_dest_input(int sf,
 
     get_new_dest_input_t gndin;
 
-    bool s_set = false;
-
     if(_change_load) {
-	s_set = s_skewer.get_input(gndin._s_id);
-    }
-
-    if(!s_set) {
+	gndin._s_id = s_skewer.get_input();
+    } else {
 	if (specificSub>0)
 	    gndin._s_id = specificSub;
 	else
@@ -137,13 +131,9 @@ get_acc_data_input_t create_get_acc_data_input(int sf,
 
     get_acc_data_input_t gadin;
 
-    bool s_set = false;
-
     if(_change_load) {
-	s_set = s_skewer.get_input(gadin._s_id);
-    }
-
-    if(!s_set) {
+	gadin._s_id = s_skewer.get_input();
+    } else {
 	if (specificSub>0)
 	    gadin._s_id = specificSub;
 	else
@@ -176,13 +166,9 @@ upd_sub_data_input_t create_upd_sub_data_input(int sf,
 
     upd_sub_data_input_t usdin;
 
-    bool s_set = false;
-
     if(_change_load) {
-	s_set = s_skewer.get_input(usdin._s_id);
-    }
-
-    if(!s_set) {
+	usdin._s_id = s_skewer.get_input();
+    } else {
 	if (specificSub>0)
 	    usdin._s_id = specificSub;
 	else
@@ -217,13 +203,9 @@ upd_loc_input_t create_upd_loc_input(int sf,
 
     upd_loc_input_t ulin;
 
-    bool s_set = false;
-
     if(_change_load) {
-	s_set = s_skewer.get_input(ulin._s_id);
-    }
-
-    if(!s_set) {
+	ulin._s_id = s_skewer.get_input();
+    } else {
 	if (specificSub>0)
 	    ulin._s_id = specificSub;
 	else
@@ -260,13 +242,9 @@ ins_call_fwd_input_t create_ins_call_fwd_input(int sf,
 
     ins_call_fwd_input_t icfin;
 
-    bool s_set = false;
-
     if(_change_load) {
-	s_set = s_skewer.get_input(icfin._s_id);
-    }
-
-    if(!s_set) {
+	icfin._s_id = s_skewer.get_input();
+    } else {
 	if (specificSub>0)
 	    icfin._s_id = specificSub;
 	else
@@ -303,13 +281,9 @@ del_call_fwd_input_t create_del_call_fwd_input(int sf,
 
     del_call_fwd_input_t dcfin;
 
-    bool s_set = false;
-
     if(_change_load) {
-	s_set = s_skewer.get_input(dcfin._s_id);	
-    }
-
-    if(!s_set) {
+	dcfin._s_id = s_skewer.get_input();	
+    } else {
 	if (specificSub>0)
 	    dcfin._s_id = specificSub;
 	else
@@ -349,13 +323,9 @@ get_sub_nbr_input_t create_get_sub_nbr_input(int sf,
 
     get_sub_nbr_input_t gsnin;
 
-    bool s_set = false;
-
     if(_change_load) {
-	s_set = s_skewer.get_input(gsnin._s_id);
-    }
-
-    if(!s_set) {
+	gsnin._s_id = s_skewer.get_input();
+    } else {
 	if (specificSub>0)
 	    gsnin._s_id = specificSub;
 	else

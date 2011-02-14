@@ -143,14 +143,14 @@ int ShoreTM1Env::stop()
  *
  *  @fn:    set_skew()
  *
- *  @brief: set load imbalance for TM-1
+ *  @brief: sets load imbalance for TM-1
  *
  ********************************************************************/
-void ShoreTM1Env::set_skew(int hot_area, int load_imbalance, int start_imbalance) 
+void ShoreTM1Env::set_skew(int area, int load, int start_imbalance) 
 {
-    ShoreEnv::set_skew(hot_area, load_imbalance, start_imbalance);
+    ShoreEnv::set_skew(area, load, start_imbalance);
     // for subscribers
-    s_skewer.set(hot_area, 1, _scaling_factor * TM1_SUBS_PER_SF, load_imbalance);
+    s_skewer.set(area, 1, _scaling_factor * TM1_SUBS_PER_SF, load);
 }
 
 
@@ -158,12 +158,14 @@ void ShoreTM1Env::set_skew(int hot_area, int load_imbalance, int start_imbalance
  *
  *  @fn:    start_load_imbalance()
  *
- *  @brief: sets the flag indicating load imbalance start for TM1
+ *  @brief: sets the flag that triggers load imbalance for TM1
+ *          resets the intervals if necessary (depending on the skew type)
  *
  ********************************************************************/
 void ShoreTM1Env::start_load_imbalance() 
 {
     if(s_skewer.is_set()) {
+	_change_load = false;
 	// for subscribers
 	s_skewer.reset(_skew_type);
     }
@@ -178,7 +180,7 @@ void ShoreTM1Env::start_load_imbalance()
  *
  *  @fn:    reset_skew()
  *
- *  @brief: sets the flag indicating load imbalance should stop for TM1
+ *  @brief: sets the flag that stops the load imbalance for TM1
  *          and cleans the intervals
  *
  ********************************************************************/

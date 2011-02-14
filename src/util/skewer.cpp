@@ -40,78 +40,175 @@
  *
  *********************************************************************/
 
-void skewer_t::set(int hot_area, int lower, int upper, int load_imbalance)
+
+/******************************************************************** 
+ *
+ *  @fn:    set()
+ *
+ *  @brief: Initialization of the field values
+ *
+ ********************************************************************/
+
+void skewer_t::set(int area, int lower, int upper, int load)
 {
-    _hot_area = hot_area;
+    _area = area;
     _lower = lower;
     _upper = upper;
-    _load_imbalance = load_imbalance;
+    _load = load;
     _set_intervals();
 }
+
+
+/******************************************************************** 
+ *
+ *  @fn:    clear()
+ *
+ *  @brief: Clean the intervals for the area
+ *
+ ********************************************************************/
 
 void skewer_t::clear() {
     _interval_l.clear();
     _interval_u.clear();
+    _non_interval_l.clear();
+    _non_interval_u.clear();
 }
+
+
+/******************************************************************** 
+ *
+ *  @fn:    reset()
+ *
+ *  @brief: Reset the intervals for the area
+ *          Recalculate area and load if necessary
+ *
+ ********************************************************************/
 
 void skewer_t::reset(skew_type_t type) {
     clear();
     if(type == SKEW_CHAOTIC) {
-	_load_imbalance = URand(0,100);
-	_hot_area = URand(1,100);
+	_load = URand(0,100);
+	_area = URand(1,100);
     }
     _set_intervals();
 }
+
+
+/******************************************************************** 
+ *
+ *  @fn:    is_set()
+ *
+ *  @brief: Indicates whether the intervals are set once before
+ *
+ ********************************************************************/
 
 bool skewer_t::is_set() {
     return (_interval_u.size() > 0);
 }
 
+
+/******************************************************************** 
+ *
+ *  @fn:    _set_intervals()
+ *
+ *  @brief: sets the intervals for the area
+ *          the intervals don't have to be continuous
+ *          either one or two random points are set and based on the
+ *          the given % area the interval(s) boundaries are determined
+ *          in a way that the chosen random point(s) are the initial
+ *          points of the interval(s)
+ *
+ ********************************************************************/
+
 void skewer_t::_set_intervals() {
-    int interval_lower = 0;
-    int interval_upper = 0;
-    int middle = URand(_lower,_upper);
-    int interval = ceil(((double) (_upper * _hot_area))/100);
     
-    if(URand(1,100) < 70) { // a continuous hot spot
-	interval_lower = middle - interval / 2;
-	interval_upper = middle + interval / 2;
+    if(URand(1,100) < 70) { // a continuous spot
+	int interval_lower = URand(_lower,_upper);
+	int interval_upper = interval_lower + ceil(((double) ((_upper - _lower - 1) * _area))/100);
 	_add_interval(interval_lower, interval_upper);
-    } else { // for non continious several hot spots
-	int middle_2 = URand(_lower,_upper);
-	interval_lower = middle - interval / 4;
-	interval_upper = middle + interval / 4;
-	int interval_lower_2 = middle_2 - interval / 4;
-	int interval_upper_2 = middle_2 + interval / 4;
+    } else { // for possibility of a non continious two spots
+	int interval_lower = URand(_lower,_upper);
+	int interval_upper = interval_lower + ceil(((double) ((_upper - _lower - 1) * _area))/200);
+	int interval_lower_2 = URand(_lower,_upper);
+	int interval_upper_2 = interval_lower + ceil(((double) ((_upper - _lower - 1) * _area))/200);
 	_add_interval(interval_lower, interval_upper);
 	_add_interval(interval_lower_2, interval_upper_2);
     }
 }
 
+
+/******************************************************************** 
+ *
+ *  @fn:    _add_interval()
+ *
+ *  @brief: adds one interval to the interval vectors
+ *          the reason this is made a seperate function is that
+ *          if the chosen interval is not inside the boundaries it's
+ *          split into two and two intervals; one finishes in the upper
+ *          boundary and one startw in the lower boundary is made
+ *
+ ********************************************************************/
+
 void skewer_t::_add_interval(int interval_lower, int interval_upper) {
+    // for intervals
     if(interval_lower < _lower) {
 	_interval_l.push_back(_lower);
-	_interval_u.push_back(interval_upper);
-	_interval_l.push_back(_upper + interval_lower);
-	_interval_u.push_back(_upper);
+	_interval_u.push_back(interval_upper-1);
+	_interval_l.push_back(_upper - (_lower - interval_lower));
+	_interval_u.push_back(_upper-1);
     } else if(interval_upper > _upper) {
 	_interval_l.push_back(_lower);
-	_interval_u.push_back(interval_upper - _upper);
+	_interval_u.push_back(interval_upper - _upper - 1);
 	_interval_l.push_back(interval_lower);
-	_interval_u.push_back(_upper);
+	_interval_u.push_back(_upper - 1);
     } else {
 	_interval_l.push_back(interval_lower);
-	_interval_u.push_back(interval_upper);
+	_interval_u.push_back(interval_upper - 1);
+    }
+    // for outside of intervals
+    for(int i=0; i<_interval_u.size(); i++) {
+	if(i==0) {
+	    if(_interval_l[i] > _lower) {
+		_non_interval_l.push_back(_lower);
+		_non_interval_u.push_back(_interval_l[i]-1);
+	    }
+	    if(i+1<_interval_u.size()) {
+		if(_interval_u[i]+1 < _interval_l[i+1]-1) {
+		    _non_interval_l.push_back(_interval_u[i]+1);
+		    _non_interval_u.push_back(_interval_l[i+1]-1);
+		} else {
+		    if(_interval_l[i] < _upper) {
+			_non_interval_l.push_back(_interval_l[i]+1);
+			_non_interval_u.push_back(_upper);
+		    }
+		}
+	    }
+	}
     }
 }
 
-bool skewer_t::get_input(int& input) {
+
+/******************************************************************** 
+ *
+ *  @fn:    get_input()
+ *
+ *  @brief: creates the input for the input creators when skew is enabled
+ *
+ ********************************************************************/
+
+int skewer_t::get_input() {
     int rand = URand(1,100);
-    int load = _load_imbalance / _interval_u.size();
+    int load = _load / _interval_u.size();
     for(int i=0; i<_interval_u.size(); i++) {
 	if(rand < load * (i+1)) {
-	    input = UZRand(_interval_l[i],_interval_u[i]);
-	    return true;
+	    return UZRand(_interval_l[i],_interval_u[i]);
+	}
+    }
+    rand = URand(1,100);
+    load = (100 - _load) / _non_interval_u.size();
+    for(int i=0; i<_non_interval_u.size(); i++) {
+	if(rand < load * (i+1)) {
+	    return UZRand(_non_interval_l[i],_non_interval_u[i]);
 	}
     }
 }

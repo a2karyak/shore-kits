@@ -39,7 +39,7 @@
 ENTER_NAMESPACE(tpcc);
 
 /** Exported variables */
-// skew values
+// related to dynamic skew 
 extern skewer_t w_skewer;
 extern bool _change_load;
 

@@ -39,10 +39,10 @@
  * @enum:  skew_type_t
  *
  * @brief: There are different options for handling dynamic skew
- *         SKEW_NONE      - 
- *         SKEW_NORMAL    - TODO: pin: explain these
- *         SKEW_DYNAMIC   -
- *         SKEW_CHAOTIC   -
+ *         SKEW_NONE    - means there is no data skew
+ *         SKEW_NORMAL  - the skew given in the input command will be applied
+ *         SKEW_DYNAMIC - the initial area of the skew will be changed in random time durations
+ *         SKEW_CHAOTIC - both the initial area and load of the skew will be changed in random time durations
  *
  * --------------------------------------------------------------- */
 
@@ -64,31 +64,48 @@ using namespace std;
  *
  *********************************************************************/
 
-// TODO: pin: add comments here and .cpp 
 class skewer_t {
   
 private:
-  
-    int _hot_area;
+
+    // the % of the total area that the skew will be applied
+    int _area;
+    
+    // the % of the load to apply to _area 
+    int _load;
+    
+    // the boundaries of the whole area
     int _lower;
     int _upper;
-    int _load_imbalance;
     
+    // the boundaries of the area that the load will be applied to
+    // this area doesn't have to be continuous 
     vector<int> _interval_l;
     vector<int> _interval_u;
+
+    // the boundaries of the area that the remaining load will be applied to
+    // this area doesn't have to be continuous 
+    vector<int> _non_interval_l;
+    vector<int> _non_interval_u;
     
 public:
 
+    // empty constructor, things should be set later
     skewer_t() { }
-    
-    void set(int hot_area, int lower, int upper, int load_imbalance);
 
+    // initialization
+    void set(int area, int lower, int upper, int load);
+
+    // cleans the intervals
     void clear();
-    
-    void reset(skew_type_t type);
-    
-    bool get_input(int& input);
 
+    // re-decides on intervals
+    void reset(skew_type_t type);
+
+    // gives input to the input creators
+    int get_input();
+
+    // to be called on deciding whether to set or reset
     bool is_set();
     
 private:

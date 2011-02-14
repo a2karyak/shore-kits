@@ -308,11 +308,11 @@ void ShoreEnv::set_freqs(int insert_freq, int delete_freq, int probe_freq)
  *  @brief: Set the load imbalance and the time to start it
  *
  ********************************************************************/
-void ShoreEnv::set_skew(int hot_area, int load_imbalance, int start_imbalance) 
+void ShoreEnv::set_skew(int area, int load, int start_imbalance) 
 {
-    assert ((load_imbalance>=0) && (load_imbalance<=100));
+    assert ((load>=0) && (load<=100));
     assert (start_imbalance>0);
-    assert((hot_area>0) && (hot_area<100));
+    assert((area>0) && (area<100));
 
     _start_imbalance = start_imbalance;
 
@@ -346,7 +346,7 @@ void ShoreEnv::set_skew(int hot_area, int load_imbalance, int start_imbalance)
  ********************************************************************/
 void ShoreEnv::start_load_imbalance() 
 {
-    // TODO: pin: can change these boundaries depending on preference
+    // @note: pin: can change these boundaries depending on preference
     if(_skew_type == SKEW_DYNAMIC || _skew_type == SKEW_CHAOTIC) {
 	_start_imbalance = URand(10,30);
 	_bAlarmSet = false;
@@ -357,12 +357,11 @@ void ShoreEnv::start_load_imbalance()
 /******************************************************************** 
  *
  *  @fn:    Related to load balancing work
- *  @brief: Set flag that indicates the stop of the load imbalance
+ *  @brief: Set the flags to stop the load imbalance
  *
  ********************************************************************/
 void ShoreEnv::reset_skew()
 {
-    // TODO: pin: these can change depending on your pref
     _start_imbalance = 0;
     _bAlarmSet = false;
 }

@@ -41,7 +41,7 @@
 ENTER_NAMESPACE(tm1);
 
 /** Exported variables */
-// skew values
+// related to dynamic skew 
 extern skewer_t s_skewer;
 extern bool _change_load;
 
