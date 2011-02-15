@@ -193,8 +193,10 @@ void skewer_t::_add_interval(int interval_lower, int interval_upper) {
 		_interval_l.insert(_interval_l.begin(), _lower);
 		_interval_u.insert(_interval_u.begin(), interval_upper - _upper - 2 + _lower);
 	    } else {
-		_interval_l.insert(++_interval_l.begin(), _lower);
-		_interval_u.insert(++_interval_u.begin(), interval_upper - _upper - 2 + _lower);
+		vector<int>::iterator iter = _interval_l.begin();
+		_interval_l.insert(++iter, _lower);
+		iter = _interval_u.begin();
+		_interval_u.insert(++iter, interval_upper - _upper - 2 + _lower);
 	    }
 	    if(_interval_l[2] < interval_lower+1) {
 		_interval_l.push_back(interval_lower+1);
