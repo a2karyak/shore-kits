@@ -42,6 +42,22 @@ ENTER_NAMESPACE(tm1);
 
 
 
+template<class T, class M>
+struct tuple_guard {
+    T* ptr;
+    M* manager;
+    tuple_guard(M* m)
+	: ptr(m->get_tuple()), manager(m) { assert(ptr); }
+    ~tuple_guard() { manager->give_tuple(ptr); }
+    T* operator->() { return ptr; }
+    operator T*() { return ptr; }
+private:
+    // no you copy!
+    tuple_guard(tuple_guard&);
+    void operator=(tuple_guard&);
+};
+
+
 /******************************************************************** 
  *
  * Thread-local TM1 TRXS Stats
@@ -757,8 +773,6 @@ done:
 w_rc_t ShoreTM1Env::xct_get_acc_data(const int xct_id, 
                                      get_acc_data_input_t& gadin)
 {
-    w_rc_t e = RCOK;
-
     // ensure a valid environment
     assert (_pssm);
     assert (_initialized);
@@ -766,8 +780,7 @@ w_rc_t ShoreTM1Env::xct_get_acc_data(const int xct_id,
 
     // Touches 1 table:
     // AccessInfo
-    table_row_t* prai = _pai_man->get_tuple();
-    assert (prai);
+    tuple_guard<table_row_t, ai_man_impl> prai(_pai_man);
 
     rep_row_t areprow(_pai_man->ts());
 
@@ -790,9 +803,8 @@ w_rc_t ShoreTM1Env::xct_get_acc_data(const int xct_id,
         TRACE( TRACE_TRX_FLOW, 
                "App: %d GAD:ai-idx-probe (%d) (%d)\n", 
                xct_id, gadin._s_id, gadin._ai_type);
-        e = _pai_man->ai_idx_probe(_pssm, prai, 
-                                   gadin._s_id, gadin._ai_type);
-        if (e.is_error()) { goto done; }
+        W_DO(_pai_man->ai_idx_probe(_pssm, prai, 
+				    gadin._s_id, gadin._ai_type));
 
         tm1_ai_t aai;
 
@@ -812,11 +824,7 @@ w_rc_t ShoreTM1Env::xct_get_acc_data(const int xct_id,
 #endif
 
 
-done:    
-    // return the tuples to the cache
-    _pai_man->give_tuple(prai);
-    return (e);
-
+    return RCOK;
 } // EOF: GET_ACC_DATA
 
 

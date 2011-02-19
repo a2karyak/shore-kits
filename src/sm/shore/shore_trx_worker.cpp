@@ -130,13 +130,15 @@ int trx_worker_t::_serve_action(Request* prequest)
     assert (prequest);
     //smthread_t::me()->attach_xct(prequest->_xct);
     tid_t atid;
+    {
     w_rc_t e = _env->db()->begin_xct(atid);
     if (e.is_error()) {
         TRACE( TRACE_TRX_FLOW, "Problem beginning xct [0x%x]\n",
                e.err_num());
         ++_stats._problems;
         return (1);
-    }          
+    }
+    }
 
     xct_t* pxct = smthread_t::me()->xct();
     assert (pxct);
@@ -145,13 +147,15 @@ int trx_worker_t::_serve_action(Request* prequest)
     prequest->_tid = atid;
             
     // Serve request
-    e = _env->run_one_xct(prequest);
+    {
+    w_rc_t e = _env->run_one_xct(prequest);
     if (e.is_error()) {
         TRACE( TRACE_TRX_FLOW, "Problem running xct (%d) (%d) [0x%x]\n",
                prequest->_tid.get_lo(), prequest->_xct_id, e.err_num());
         ++_stats._problems;
         return (1);
-    }          
+    }
+    }
 
     // Update worker stats
     ++_stats._processed;    
