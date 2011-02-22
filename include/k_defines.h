@@ -45,12 +45,7 @@
 #include "sm_vas.h"
 typedef queue_based_lock_t mcs_lock;
 
-#include "atomic_container.h"
-typedef atomic_container atomic_stack;
-
-#include "atomic_class_pool.h"
-//typedef atomic_class_pool atomic_class_stack;
-#define atomic_class_stack atomic_class_pool
+#include "block_alloc.h"
 
 #else // CFG_SHORE_MT
 

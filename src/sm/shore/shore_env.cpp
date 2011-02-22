@@ -98,6 +98,7 @@ ShoreEnv::ShoreEnv(string confname)
       _measure(MST_UNDEF),
       _pd(PD_NORMAL),
       _insert_freq(0),_delete_freq(0),_probe_freq(100),
+      _request_pool(sizeof(trx_request_t)),
       _bUseSLI(false),_bUseELR(false),_bUseFlusher(false),
       _bAlarmSet(false), _start_imbalance(0), _skew_type(SKEW_NONE)
 {

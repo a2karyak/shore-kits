@@ -89,7 +89,7 @@
 #include "util.h"
 
 #ifdef CFG_SHORE_6
-#include "atomic_class_pool.h"
+#include "block_alloc.h"
 #else
 #include "atomic_trash_stack.h"
 #endif
@@ -113,7 +113,7 @@ ENTER_NAMESPACE(shore);
  * --------------------------------------------------------------- */
 
 #ifdef CFG_SHORE_6
-typedef atomic_class_pool<char> ats_char_t;
+typedef blob_pool ats_char_t;
 typedef intptr_t offset_t;
 #else
 typedef atomic_class_stack<char> ats_char_t;
