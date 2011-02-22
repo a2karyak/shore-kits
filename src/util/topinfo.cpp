@@ -89,7 +89,7 @@ void topinfo_t::print_stats()
 
 int topinfo_t::update_cpu()
 {
-    glibtop_get_cpu(&_cpu);
+    //glibtop_get_cpu(&_cpu);
     return (0);
 }
 
