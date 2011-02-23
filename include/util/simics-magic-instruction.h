@@ -47,7 +47,7 @@
 
 #define MAGIC_BREAKPOINT MAGIC(0x40000)
 
-#elif defined(__i386)
+#elif (defined(__i386) || defined(__x86_64))
 
 #define MAGIC(n) do {                           \
 	__MAGIC_CASSERT(!(n));                  \
