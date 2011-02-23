@@ -555,8 +555,8 @@ void usage()
            "-n            : Start in network mode (listens to port)\n"  \
            "-p <PORT>     : Listen to specific port\n"                  \
            "-c <CONFIG>   : Use specific configuration\n"               \
-           "-s <SYSTEM>   : Start specific system (baseline,dora,plp,plppart,plpleaf\n" \
-           "-d <PHYSICAL> : Use specific physical design (normal,mrbtnorm,...)\n" \
+           "-s <SYSTEM>   : Start specific system (baseline,dora,plp,plppart,plpleaf). Default: baseline\n" \
+           "-d <PHYSICAL> : Use specific physical design (normal,mrbtnorm,...). Default: normal\n" \
            "-x            : Enable physical design hacks\n"   \
            "-g <RANGE>    : Use specific range (in some workloads)\n"   \
            "-f <FILE>     : Use specific configuration file (ie. instead of shore.conf)\n" \
