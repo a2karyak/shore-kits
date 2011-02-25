@@ -173,29 +173,29 @@ w_rc_t DoraTPCCEnv::dora_new_order(const int xct_id,
             return (RC(de_PROBLEM_ENQUEUE));
         }
 
-        // CUST_PART_CS
-        CRITICAL_SECTION(cust_part_cs, my_cust_part->_enqueue_lock);
-        wh_part_cs.exit();
-
-        if (my_cust_part->enqueue(r_cust_nord,bWake)) {
-            TRACE( TRACE_DEBUG, "Problem in enqueueing R_CUST_NORD\n");
-            assert (0); 
-            return (RC(de_PROBLEM_ENQUEUE));
-        }
-
         // DIST_PART_CS
         CRITICAL_SECTION(dist_part_cs, my_dist_part->_enqueue_lock);
-        cust_part_cs.exit();
+        wh_part_cs.exit();
 
         if (my_dist_part->enqueue(upd_dist_nord,bWake)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_DIST_NORD\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
         }
+
+        // CUST_PART_CS
+        CRITICAL_SECTION(cust_part_cs, my_cust_part->_enqueue_lock);
+        dist_part_cs.exit();
+
+        if (my_cust_part->enqueue(r_cust_nord,bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing R_CUST_NORD\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
                 
         // ITEM_PART_CS
         CRITICAL_SECTION(item_part_cs, my_item_part->_enqueue_lock);
-        dist_part_cs.exit();
+        cust_part_cs.exit();
 
         if (my_item_part->enqueue(r_item_nord,bWake)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing R_ITEM_NORD\n");
