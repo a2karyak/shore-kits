@@ -150,7 +150,7 @@ w_rc_t DoraTPCBEnv::update_partitioning()
     _pbranch_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_br);
     
 
-    // Tellers:  [ 0 .. (#Branches*TPCB_TELLERS_PER_BRANCH)+1 )
+    // Tellers:  [ 0 .. (#Branches*TPCB_TELLERS_PER_BRANCH) )
     maxKeyVal = (get_sf()*TPCB_TELLERS_PER_BRANCH);
     memset(maxKey,0,sizeof(int));
     memcpy(maxKey,&maxKeyVal,sizeof(int));
@@ -159,7 +159,7 @@ w_rc_t DoraTPCBEnv::update_partitioning()
     // History: does not have account we use the same with Branches
     _phistory_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_hi);
 
-    // Accounts: [ 0 .. (#Branches*TPCB_ACCOUNTS_PER_BRANCH)+1 )
+    // Accounts: [ 0 .. (#Branches*TPCB_ACCOUNTS_PER_BRANCH) )
     maxKeyVal = (get_sf()*TPCB_ACCOUNTS_PER_BRANCH);
     memset(maxKey,0,sizeof(int));
     memcpy(maxKey,&maxKeyVal,sizeof(int));
