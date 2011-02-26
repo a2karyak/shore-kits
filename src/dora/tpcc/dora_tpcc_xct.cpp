@@ -139,7 +139,7 @@ w_rc_t DoraTPCCEnv::dora_new_order(const int xct_id,
     int whid     = anoin._wh_id;
     
     // 4. Setup the midway RVP
-    mid_nord_rvp* midrvp = new_mid_nord_rvp(pxct,atid,xct_id,atrt,anoin,bWake);
+    mid1_nord_rvp* midrvp = new_mid1_nord_rvp(pxct,atid,xct_id,atrt,anoin,bWake);
 
     // 5. Enqueue all the actions
 
@@ -160,9 +160,6 @@ w_rc_t DoraTPCCEnv::dora_new_order(const int xct_id,
 
         r_item_nord_action* r_item_nord = new_r_item_nord_action(pxct,atid,midrvp,anoin);
         irpImpl* my_item_part = decide_part(ite(),whid);
-
-        upd_sto_nord_action* upd_sto_nord = new_upd_sto_nord_action(pxct,atid,midrvp,anoin);
-        irpImpl* my_sto_part = decide_part(sto(),whid);
 
         // WH_PART_CS
         CRITICAL_SECTION(wh_part_cs, my_wh_part->_enqueue_lock);
@@ -199,16 +196,6 @@ w_rc_t DoraTPCCEnv::dora_new_order(const int xct_id,
 
         if (my_item_part->enqueue(r_item_nord,bWake)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing R_ITEM_NORD\n");
-            assert (0); 
-            return (RC(de_PROBLEM_ENQUEUE));
-        }
-
-        // STO_PART_CS
-        CRITICAL_SECTION(sto_part_cs, my_sto_part->_enqueue_lock);
-        item_part_cs.exit();
-
-        if (my_sto_part->enqueue(upd_sto_nord,bWake)) {
-            TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_STO_NORD\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
         }

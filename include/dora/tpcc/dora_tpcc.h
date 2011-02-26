@@ -91,7 +91,9 @@ class upd_oline_del_action;
 class upd_cust_del_action;
 
 // TPC-C NewOrder
-class mid_nord_rvp;
+class mid1_nord_rvp;
+class mid2_nord_rvp;
+class mid3_nord_rvp;
 class final_nord_rvp;
 class r_wh_nord_action;
 class r_cust_nord_action;
@@ -264,29 +266,37 @@ public:
     ////////////////////
 
 
-    DECLARE_DORA_MIDWAY_RVP_GEN_FUNC(mid_nord_rvp,new_order_input_t);
+    DECLARE_DORA_MIDWAY_RVP_GEN_FUNC(mid1_nord_rvp,new_order_input_t);
+
+    DECLARE_DORA_MIDWAY_RVP_WITH_PREV_GEN_FUNC(mid2_nord_rvp,new_order_input_t);
+
+    DECLARE_DORA_MIDWAY_RVP_WITH_PREV_GEN_FUNC(mid3_nord_rvp,new_order_input_t);
 
     DECLARE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(final_nord_rvp);
 
 
-    // Start -> Midway
-    DECLARE_DORA_ACTION_GEN_FUNC(r_wh_nord_action,mid_nord_rvp,no_item_nord_input_t);
+    // Start -> Midway 1
+    DECLARE_DORA_ACTION_GEN_FUNC(r_wh_nord_action,mid1_nord_rvp,no_item_nord_input_t);
 
-    DECLARE_DORA_ACTION_GEN_FUNC(upd_dist_nord_action,mid_nord_rvp,no_item_nord_input_t);
+    DECLARE_DORA_ACTION_GEN_FUNC(upd_dist_nord_action,mid1_nord_rvp,no_item_nord_input_t);
 
-    DECLARE_DORA_ACTION_GEN_FUNC(r_cust_nord_action,mid_nord_rvp,no_item_nord_input_t);
+    DECLARE_DORA_ACTION_GEN_FUNC(r_cust_nord_action,mid1_nord_rvp,no_item_nord_input_t);
 
-    DECLARE_DORA_ACTION_GEN_FUNC(r_item_nord_action,mid_nord_rvp,new_order_input_t);
-
-    DECLARE_DORA_ACTION_GEN_FUNC(upd_sto_nord_action,mid_nord_rvp,new_order_input_t);
+    DECLARE_DORA_ACTION_GEN_FUNC(r_item_nord_action,mid1_nord_rvp,new_order_input_t);
 
 
-    // Midway -> Final
-    DECLARE_DORA_ACTION_GEN_FUNC(ins_ord_nord_action,rvp_t,no_item_nord_input_t);
+    // Midway 1 -> Midway 2
+    DECLARE_DORA_ACTION_GEN_FUNC(ins_ord_nord_action,mid2_nord_rvp,no_item_nord_input_t);
 
-    DECLARE_DORA_ACTION_GEN_FUNC(ins_nord_nord_action,rvp_t,no_item_nord_input_t);
+    DECLARE_DORA_ACTION_GEN_FUNC(ins_nord_nord_action,mid2_nord_rvp,no_item_nord_input_t);
 
-    DECLARE_DORA_ACTION_GEN_FUNC(ins_ol_nord_action,rvp_t,new_order_input_t);
+
+    // Midway 2 -> Midway 3
+    DECLARE_DORA_ACTION_GEN_FUNC(ins_ol_nord_action,mid3_nord_rvp,new_order_input_t);
+
+
+    // Midway 3 -> Final
+    DECLARE_DORA_ACTION_GEN_FUNC(upd_sto_nord_action,rvp_t,new_order_input_t);
 
         
 }; // EOF: DoraTPCCEnv

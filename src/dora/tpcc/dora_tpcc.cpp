@@ -195,7 +195,7 @@ w_rc_t DoraTPCCEnv::update_partitioning()
     // is not according to the leading column, then we have to start multiple
     // index scans.
 
-    // [ 0 .. #WH+1 )
+    // [ 1 .. #WH+1 )
     // Warehouses,Districts,Customers,NewOrders,Orders,OrderLine,History,Stock
     _pwarehouse_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_whs);
     _pdistrict_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_dis);
@@ -206,7 +206,7 @@ w_rc_t DoraTPCCEnv::update_partitioning()
     _phistory_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_his);
     _pstock_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),_parts_sto);
 
-    // Items: [ 0 .. 100K+1 )
+    // Items: [ 1 .. 100K+1 )
     maxKeyVal = ITEMS + 1;
     memset(maxKey,0,sizeof(int));
     memcpy(maxKey,&maxKeyVal,sizeof(int));
@@ -549,29 +549,37 @@ DEFINE_DORA_ACTION_GEN_FUNC(upd_cust_del_action,rvp_t,delivery_input_t,int,DoraT
 // TPC-C NEWORDER
 
 // RVP
-DEFINE_DORA_MIDWAY_RVP_GEN_FUNC(mid_nord_rvp,new_order_input_t,DoraTPCCEnv);
+DEFINE_DORA_MIDWAY_RVP_GEN_FUNC(mid1_nord_rvp,new_order_input_t,DoraTPCCEnv);
+
+DEFINE_DORA_MIDWAY_RVP_WITH_PREV_GEN_FUNC(mid2_nord_rvp,new_order_input_t,DoraTPCCEnv);
+
+DEFINE_DORA_MIDWAY_RVP_WITH_PREV_GEN_FUNC(mid3_nord_rvp,new_order_input_t,DoraTPCCEnv);
 
 DEFINE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(final_nord_rvp,DoraTPCCEnv);
 
 
-// Start -> Midway
-DEFINE_DORA_ACTION_GEN_FUNC(r_wh_nord_action,mid_nord_rvp,no_item_nord_input_t,int,DoraTPCCEnv);
+// Start -> Midway 1
+DEFINE_DORA_ACTION_GEN_FUNC(r_wh_nord_action,mid1_nord_rvp,no_item_nord_input_t,int,DoraTPCCEnv);
 
-DEFINE_DORA_ACTION_GEN_FUNC(upd_dist_nord_action,mid_nord_rvp,no_item_nord_input_t,int,DoraTPCCEnv);
+DEFINE_DORA_ACTION_GEN_FUNC(upd_dist_nord_action,mid1_nord_rvp,no_item_nord_input_t,int,DoraTPCCEnv);
 
-DEFINE_DORA_ACTION_GEN_FUNC(r_cust_nord_action,mid_nord_rvp,no_item_nord_input_t,int,DoraTPCCEnv);
+DEFINE_DORA_ACTION_GEN_FUNC(r_cust_nord_action,mid1_nord_rvp,no_item_nord_input_t,int,DoraTPCCEnv);
 
-DEFINE_DORA_ACTION_GEN_FUNC(r_item_nord_action,mid_nord_rvp,new_order_input_t,int,DoraTPCCEnv);
-
-DEFINE_DORA_ACTION_GEN_FUNC(upd_sto_nord_action,mid_nord_rvp,new_order_input_t,int,DoraTPCCEnv);
+DEFINE_DORA_ACTION_GEN_FUNC(r_item_nord_action,mid1_nord_rvp,new_order_input_t,int,DoraTPCCEnv);
 
 
-// Midway -> Final
-DEFINE_DORA_ACTION_GEN_FUNC(ins_ord_nord_action,rvp_t,no_item_nord_input_t,int,DoraTPCCEnv);
+// Midway 1 -> Midway 2
+DEFINE_DORA_ACTION_GEN_FUNC(ins_ord_nord_action,mid2_nord_rvp,no_item_nord_input_t,int,DoraTPCCEnv);
 
-DEFINE_DORA_ACTION_GEN_FUNC(ins_nord_nord_action,rvp_t,no_item_nord_input_t,int,DoraTPCCEnv);
+DEFINE_DORA_ACTION_GEN_FUNC(ins_nord_nord_action,mid2_nord_rvp,no_item_nord_input_t,int,DoraTPCCEnv);
 
-DEFINE_DORA_ACTION_GEN_FUNC(ins_ol_nord_action,rvp_t,new_order_input_t,int,DoraTPCCEnv);
+
+// Midway 2 -> Midway 3
+DEFINE_DORA_ACTION_GEN_FUNC(ins_ol_nord_action,mid3_nord_rvp,new_order_input_t,int,DoraTPCCEnv);
+
+
+// Midway 3 -> Final
+DEFINE_DORA_ACTION_GEN_FUNC(upd_sto_nord_action,rvp_t,new_order_input_t,int,DoraTPCCEnv);
 
 
 ///////////////////////////////////////////////////////////////////////////////////////

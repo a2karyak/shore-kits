@@ -44,8 +44,10 @@ ENTER_NAMESPACE(dora);
 //
 // RVPS
 //
-// (1) final_nord_rvp
-// (2) midway_nord_rvp
+// (1) mid1_nord_rvp
+// (2) mid2_nord_rvp
+// (3) mid3_nord_rvp
+// (4) final_nord_rvp
 //
 
 DEFINE_DORA_FINAL_RVP_CLASS(final_nord_rvp,new_order);
@@ -54,11 +56,11 @@ DEFINE_DORA_FINAL_RVP_CLASS(final_nord_rvp,new_order);
 
 /******************************************************************** 
  *
- * NEWORDER MIDWAY RVP - enqueues the I(ORD) - I(NORD) - OL_CNT x I(OL) actions
+ * NEWORDER MIDWAY RVP 1 - enqueues the I(ORD) - I(NORD)
  *
  ********************************************************************/
 
-w_rc_t mid_nord_rvp::_run() 
+w_rc_t mid1_nord_rvp::_run() 
 {
     // 0. Calculate the intratrx/total number of actions
 //     register int olcnt    = _in._ol_cnt;
@@ -66,11 +68,11 @@ w_rc_t mid_nord_rvp::_run()
 //     register int total    = (2*_in._ol_cnt) + 6;
     int whid     = _in._wh_id;
 
-    // 1. Setup the final RVP
-    final_nord_rvp* frvp = _penv->new_final_nord_rvp(_xct,_tid,_xct_id,_result,_actions);
+    // 1. Setup the next RVP
+    mid2_nord_rvp* mid2_rvp = _penv->new_mid2_nord_rvp(_xct,_tid,_xct_id,_result,_in,_actions,_bWake);
 
     // 2. Check if aborted during previous phase
-    CHECK_MIDWAY_RVP_ABORTED(frvp);
+    CHECK_MIDWAY_RVP_ABORTED(mid2_rvp);
 
     // By now the d_next_o_id should have been set - sanity check
     assert (_in._d_next_o_id!=-1);
@@ -79,11 +81,10 @@ w_rc_t mid_nord_rvp::_run()
     TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());
     typedef partition_t<int>   irpImpl; 
 
-    // 2. Generate and enqueue the (Midway->Final) actions
+    // 2. Generate and enqueue the (Midway 1 -> Midway 2) actions
     //
     // 1 - INS_ORD
     // 1 - INS_NORD
-    // 1 - INS_OL
 
     {
         // 2a. Generate the no-item-input
@@ -91,16 +92,12 @@ w_rc_t mid_nord_rvp::_run()
         _in.get_no_item_input(anoitin);
 
         // 2b. Insert (ORD)
-        ins_ord_nord_action* ins_ord_nord = _penv->new_ins_ord_nord_action(_xct,_tid,frvp,anoitin);
+        ins_ord_nord_action* ins_ord_nord = _penv->new_ins_ord_nord_action(_xct,_tid,mid2_rvp,anoitin);
         irpImpl* my_ord_part = _penv->decide_part(_penv->ord(),whid);
 
         // 2c. Insert (NORD)
-        ins_nord_nord_action* ins_nord_nord = _penv->new_ins_nord_nord_action(_xct,_tid,frvp,anoitin);
+        ins_nord_nord_action* ins_nord_nord = _penv->new_ins_nord_nord_action(_xct,_tid,mid2_rvp,anoitin);
         irpImpl* my_nord_part = _penv->decide_part(_penv->nor(),whid);
-
-        // 2d. Insert (OL) - used to be OL_CNT actions
-        ins_ol_nord_action* ins_ol_nord = _penv->new_ins_ol_nord_action(_xct,_tid,frvp,_in);
-        irpImpl* my_ol_part = _penv->decide_part(_penv->oli(),whid);
 
 
         // ORD_PART_CS
@@ -119,15 +116,99 @@ w_rc_t mid_nord_rvp::_run()
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
         }
+    }
+    
+    return (RCOK);
+}
+
+
+
+/******************************************************************** 
+ *
+ * NEWORDER MIDWAY RVP 2 - OL_CNT x I(OL) action
+ *
+ ********************************************************************/
+
+w_rc_t mid2_nord_rvp::_run() 
+{
+    int whid     = _in._wh_id;
+
+    // 1. Setup the next RVP
+    mid3_nord_rvp* mid3_rvp = _penv->new_mid3_nord_rvp(_xct,_tid,_xct_id,_result,_in,_actions,_bWake);
+
+    // 2. Check if aborted during previous phase
+    CHECK_MIDWAY_RVP_ABORTED(mid3_rvp);
+
+
+    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());
+    typedef partition_t<int>   irpImpl; 
+
+    // 2. Generate and enqueue the (Midway 2 -> Midway 3) actions
+    //
+    // 1 - INS_OL
+
+    {
+        // 2a. Insert (OL) - used to be OL_CNT actions
+        ins_ol_nord_action* ins_ol_nord = _penv->new_ins_ol_nord_action(_xct,_tid,mid3_rvp,_in);
+        irpImpl* my_ol_part = _penv->decide_part(_penv->oli(),whid);
+
 
         // OLI_PART_CS
         CRITICAL_SECTION(oli_part_cs, my_ol_part->_enqueue_lock);
-        nord_part_cs.exit();
         if (my_ol_part->enqueue(ins_ol_nord,_bWake)) {
             TRACE( TRACE_DEBUG, "Problem in enqueueing INS_OL_NORD\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
         }    
+    }
+    
+    return (RCOK);
+}
+
+
+
+
+/******************************************************************** 
+ *
+ * NEWORDER MIDWAY RVP 3 - enqueues the OL_CNT x U(STO) action
+ *
+ ********************************************************************/
+
+w_rc_t mid3_nord_rvp::_run() 
+{
+    int whid     = _in._wh_id;
+
+    // 1. Setup the final RVP
+    final_nord_rvp* frvp = _penv->new_final_nord_rvp(_xct,_tid,_xct_id,_result,_actions);
+
+    // 2. Check if aborted during previous phase
+    CHECK_MIDWAY_RVP_ABORTED(frvp);
+
+    // By now the d_next_o_id should have been set - sanity check
+    assert (_in._d_next_o_id!=-1);
+
+
+    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());
+    typedef partition_t<int>   irpImpl; 
+
+    // 2. Generate and enqueue the (Midway 3 -> Final) actions
+    //
+    // 1 - UPD STO
+
+    {
+        // 2a. Update (STO) - used to be OL_CNT actions
+        upd_sto_nord_action* upd_sto_nord = _penv->new_upd_sto_nord_action(_xct,_tid,frvp,_in);
+        irpImpl* my_sto_part = _penv->decide_part(_penv->sto(),whid);
+
+
+        // STO_PART_CS
+        CRITICAL_SECTION(sto_part_cs, my_sto_part->_enqueue_lock);
+ 
+        if (my_sto_part->enqueue(upd_sto_nord,_bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_STO_NORD\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
     }
     
     return (RCOK);
@@ -145,14 +226,13 @@ w_rc_t mid_nord_rvp::_run()
 
 /******************************************************************** 
  *
- * - Start -> Midway
+ * - Start -> Midway 1
  *
  *
  * (1) R_WH_NORD_ACTION
- * (2) R_CUST_NORD_ACTION
- * (3) UPD_DIST_NORD_ACTION
+ * (2) UPD_DIST_NORD_ACTION
+ * (3) R_CUST_NORD_ACTION
  * (4) R_ITEM_NORD_ACTION
- * (5) UPD_ITEM_NORD_ACTION
  *
  * @note: Those actions may need to report something to the next (midway) RVP.
  *        Therefore, at the end of each action there may be an update of data 
@@ -441,132 +521,14 @@ done:
 
 
 
-// UPD_STO_NORD_ACTION
-
-void upd_sto_nord_action::calc_keys() 
-{
-    // !!! IP: Correct is to use the _ol_supply_wh_id !!!
-    _down.push_back(_in._wh_id);
-}
-
-w_rc_t upd_sto_nord_action::trx_exec() 
-{
-    assert (_penv);
-
-    // get table tuple from the cache
-    table_row_t* prst = _penv->stock_man()->get_tuple();
-    assert (prst);
-
-    rep_row_t areprow(_penv->stock_man()->ts());
-    areprow.set(_penv->stock_desc()->maxsize()); 
-    prst->_rep = &areprow;
-
-    w_rc_t e = RCOK;
-
-    { // make gotos safe
-
-        int idx=0;
-        int ol_i_id=0;
-        int ol_supply_w_id=0;
-
-        TRACE( TRACE_TRX_FLOW, "App: %d NO:upd-stock (%d)\n", 
-               _tid.get_lo(), _in._ol_cnt);
-
-        // IP: The new version of the upd-stock does all the work in a single action
-        for (idx=0; idx<_in._ol_cnt; idx++) {
-
-            // 4. probe stock (for update)
-            ol_i_id = _prvp->_in.items[idx]._ol_i_id;
-            ol_supply_w_id = _prvp->_in.items[idx]._ol_supply_wh_id;
-
-            /* SELECT s_quantity, s_remote_cnt, s_data, s_dist0, s_dist1, s_dist2, ...
-             * FROM stock
-             * WHERE s_i_id = :ol_i_id AND s_w_id = :ol_supply_w_id
-             *
-             * plan: index probe on "S_IDX"
-             */
-            
-            tpcc_stock_tuple* pstock = &_prvp->_in.items[idx]._astock;
-            tpcc_item_tuple*  pitem  = &_prvp->_in.items[idx]._aitem;
-            TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-idx-nl-%d (%d) (%d)\n", 
-                   _tid.get_lo(), idx, ol_supply_w_id, ol_i_id);
-
-            e = _penv->stock_man()->st_index_probe_nl(_penv->db(), prst, 
-                                                      ol_supply_w_id, ol_i_id);
-            if (e.is_error()) { goto done; }
-
-            prst->get_value(0, pstock->S_I_ID);
-            prst->get_value(1, pstock->S_W_ID);
-            prst->get_value(5, pstock->S_YTD);
-            pstock->S_YTD += _prvp->_in.items[idx]._ol_quantity;
-            prst->get_value(2, pstock->S_REMOTE_CNT);        
-            prst->get_value(3, pstock->S_QUANTITY);
-            pstock->S_QUANTITY -= _prvp->_in.items[idx]._ol_quantity;
-            if (pstock->S_QUANTITY < 10) pstock->S_QUANTITY += 91;
-
-            //prst->get_value(6+_in._d_id, pstock->S_DIST[6+_in._d_id], 25);
-            prst->get_value(6+_in._d_id, pstock->S_DIST[_in._d_id], 25);
-
-            prst->get_value(16, pstock->S_DATA, 51);
-
-            char c_s_brand_generic;
-            if (strstr(pitem->I_DATA, "ORIGINAL") != NULL && 
-                strstr(pstock->S_DATA, "ORIGINAL") != NULL)
-                c_s_brand_generic = 'B';
-            else c_s_brand_generic = 'G';
-
-            prst->get_value(4, pstock->S_ORDER_CNT);
-            pstock->S_ORDER_CNT++;
-
-
-            if (_in._wh_id != _prvp->_in.items[idx]._ol_supply_wh_id) { 
-                pstock->S_REMOTE_CNT++;
-                // Should not happen, because we have disabled the remote xcts
-                assert (0); 
-            }
-
-            /* UPDATE stock
-             * SET s_quantity = :s_quantity, s_order_cnt = :s_order_cnt
-             * WHERE s_w_id = :w_id AND s_i_id = :ol_i_id;
-             */
-
-            TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-upd-tuple-nl-%d (%d) (%d)\n", 
-                   _tid.get_lo(), idx, pstock->S_W_ID, pstock->S_I_ID);
-
-            e = _penv->stock_man()->st_update_tuple_nl(_penv->db(), prst, 
-                                                       pstock);
-            if (e.is_error()) { goto done; }
-
-            // update RVP
-            // The RVP is updated throught the pstock
-            
-        } // EOF: OLCNT upd-stocks
-
-    } // goto
-
-#ifdef PRINT_TRX_RESULTS
-    // at the end of the transaction 
-    // dumps the status of all the table rows used
-    prst->print_tuple();
-#endif
-
-done:
-    // give back the tuple
-    _penv->stock_man()->give_tuple(prst);
-    return (e);
-}
-
-
-
 
 
 /******************************************************************** 
  *
- * - Midway -> Final
+ * - Midway 1 -> Midway 2
  *
- * (6) INS_ORD_NORD_ACTION
- * (7) INS_NORD_NORD_ACTION
- * (8) INS_OL_NORD_ACTION
+ * (5) INS_ORD_NORD_ACTION
+ * (6) INS_NORD_NORD_ACTION
  *
  ********************************************************************/
 
@@ -697,6 +659,16 @@ done:
 
 
 
+
+
+/******************************************************************** 
+ *
+ * - Midway 2 -> Midway 3
+ *
+ * (7) INS_OL_NORD_ACTION
+ *
+ ********************************************************************/
+
 // INS_OL_NORD_ACTION
 
 
@@ -773,6 +745,133 @@ w_rc_t ins_ol_nord_action::trx_exec()
 done:
     // give back the tuple
     _penv->order_line_man()->give_tuple(prol);
+    return (e);
+}
+
+
+
+
+
+/******************************************************************** 
+ *
+ * - Midway 3 -> Final
+ *
+  * (8) UPD_STO_NORD_ACTION
+ *
+ ********************************************************************/
+
+// UPD_STO_NORD_ACTION
+
+void upd_sto_nord_action::calc_keys() 
+{
+    // !!! IP: Correct is to use the _ol_supply_wh_id !!!
+    _down.push_back(_in._wh_id);
+}
+
+w_rc_t upd_sto_nord_action::trx_exec() 
+{
+    assert (_penv);
+
+    // get table tuple from the cache
+    table_row_t* prst = _penv->stock_man()->get_tuple();
+    assert (prst);
+
+    rep_row_t areprow(_penv->stock_man()->ts());
+    areprow.set(_penv->stock_desc()->maxsize()); 
+    prst->_rep = &areprow;
+
+    w_rc_t e = RCOK;
+
+    { // make gotos safe
+
+        int idx=0;
+        int ol_i_id=0;
+        int ol_supply_w_id=0;
+
+        TRACE( TRACE_TRX_FLOW, "App: %d NO:upd-stock (%d)\n", 
+               _tid.get_lo(), _in._ol_cnt);
+
+        // IP: The new version of the upd-stock does all the work in a single action
+        for (idx=0; idx<_in._ol_cnt; idx++) {
+
+            // 4. probe stock (for update)
+            ol_i_id = _in.items[idx]._ol_i_id;
+            ol_supply_w_id = _in.items[idx]._ol_supply_wh_id;
+
+            /* SELECT s_quantity, s_remote_cnt, s_data, s_dist0, s_dist1, s_dist2, ...
+             * FROM stock
+             * WHERE s_i_id = :ol_i_id AND s_w_id = :ol_supply_w_id
+             *
+             * plan: index probe on "S_IDX"
+             */
+            
+            tpcc_stock_tuple* pstock = &_in.items[idx]._astock;
+            tpcc_item_tuple*  pitem  = &_in.items[idx]._aitem;
+            TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-idx-nl-%d (%d) (%d)\n", 
+                   _tid.get_lo(), idx, ol_supply_w_id, ol_i_id);
+
+            e = _penv->stock_man()->st_index_probe_nl(_penv->db(), prst, 
+                                                      ol_supply_w_id, ol_i_id);
+            if (e.is_error()) { goto done; }
+
+            prst->get_value(0, pstock->S_I_ID);
+            prst->get_value(1, pstock->S_W_ID);
+            prst->get_value(5, pstock->S_YTD);
+            pstock->S_YTD += _in.items[idx]._ol_quantity;
+            prst->get_value(2, pstock->S_REMOTE_CNT);        
+            prst->get_value(3, pstock->S_QUANTITY);
+            pstock->S_QUANTITY -= _in.items[idx]._ol_quantity;
+            if (pstock->S_QUANTITY < 10) pstock->S_QUANTITY += 91;
+
+            //prst->get_value(6+_in._d_id, pstock->S_DIST[6+_in._d_id], 25);
+            prst->get_value(6+_in._d_id, pstock->S_DIST[_in._d_id], 25);
+
+            prst->get_value(16, pstock->S_DATA, 51);
+
+            char c_s_brand_generic;
+            if (strstr(pitem->I_DATA, "ORIGINAL") != NULL && 
+                strstr(pstock->S_DATA, "ORIGINAL") != NULL)
+                c_s_brand_generic = 'B';
+            else c_s_brand_generic = 'G';
+
+            prst->get_value(4, pstock->S_ORDER_CNT);
+            pstock->S_ORDER_CNT++;
+
+
+            if (_in._wh_id != _in.items[idx]._ol_supply_wh_id) { 
+                pstock->S_REMOTE_CNT++;
+                // Should not happen, because we have disabled the remote xcts
+                assert (0); 
+            }
+
+            /* UPDATE stock
+             * SET s_quantity = :s_quantity, s_order_cnt = :s_order_cnt
+             * WHERE s_w_id = :w_id AND s_i_id = :ol_i_id;
+             */
+
+            TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-upd-tuple-nl-%d (%d) (%d)\n", 
+                   _tid.get_lo(), idx, pstock->S_W_ID, pstock->S_I_ID);
+
+            e = _penv->stock_man()->st_update_tuple_nl(_penv->db(), prst, 
+                                                       pstock);
+            if (e.is_error()) { goto done; }
+
+            // update RVP
+            // The RVP is updated throught the pstock
+            
+        } // EOF: OLCNT upd-stocks
+
+    } // goto
+
+#ifdef PRINT_TRX_RESULTS
+    // at the end of the transaction 
+    // dumps the status of all the table rows used
+    prst->print_tuple();
+#endif
+
+done:
+    // give back the tuple
+    _penv->stock_man()->give_tuple(prst);
     return (e);
 }
 
