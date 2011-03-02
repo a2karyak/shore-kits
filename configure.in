@@ -579,16 +579,16 @@ fi
 
 # --- HACKS ---
 AC_MSG_CHECKING(whether to enable the hacks)
-AC_ARG_ENABLE(hack, 
-[  --enable-hack            Enable hacks],
+AC_ARG_ENABLE(hacks, 
+[  --enable-hacks           Enable hacks],
 [case "${enableval}" in
-  yes) hack=true ;;
-  no)  hack=false ;;
-  *) hack=false ;;
-esac],[hack=false])
-AM_CONDITIONAL(USE_HACK, test x$hack = xtrue)
+  yes) hacks=true ;;
+  no)  hacks=false ;;
+  *) hacks=false ;;
+esac],[hacks=false])
+AM_CONDITIONAL(USE_HACK, test x$hacks = xtrue)
 
-if test "$hack" = true
+if test "$hacks" = true
 then 
      AC_MSG_RESULT(yes)
      KITS_FEATURES="$KITS_FEATURES hacks"
