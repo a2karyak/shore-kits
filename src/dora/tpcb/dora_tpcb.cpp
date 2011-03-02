@@ -65,8 +65,8 @@ const uint hi_KEY_EST  = 100;
  *
  ******************************************************************/
     
-DoraTPCBEnv::DoraTPCBEnv(string confname)
-    : ShoreTPCBEnv(confname)
+DoraTPCBEnv::DoraTPCBEnv()
+    : ShoreTPCBEnv()
 { 
     update_pd(this);
 }

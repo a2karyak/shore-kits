@@ -118,7 +118,7 @@ class DoraTPCCEnv : public ShoreTPCCEnv, public DoraEnv
 {
 public:
     
-    DoraTPCCEnv(string confname);
+    DoraTPCCEnv();
     virtual ~DoraTPCCEnv();
 
     //// Control Database

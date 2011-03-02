@@ -221,7 +221,7 @@ private:
     
 public:    
 
-    ShoreSSBEnv(string confname);
+    ShoreSSBEnv();
     virtual ~ShoreSSBEnv();
 
     // DB INTERFACE

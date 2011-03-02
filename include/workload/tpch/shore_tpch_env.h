@@ -226,7 +226,7 @@ private:
     
 public:    
 
-    ShoreTPCHEnv(string confname);
+    ShoreTPCHEnv();
     virtual ~ShoreTPCHEnv();
 
     // DB INTERFACE

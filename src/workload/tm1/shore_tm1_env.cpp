@@ -51,6 +51,18 @@ ENTER_NAMESPACE(tm1);
  *
  ********************************************************************/ 
 
+ShoreTM1Env::ShoreTM1Env() 
+    : ShoreEnv()
+{ 
+    _scaling_factor = TM1_DEF_SF;
+    _queried_factor = TM1_DEF_QF;
+}
+
+ShoreTM1Env::~ShoreTM1Env()
+{
+}
+    
+
 /******************************************************************** 
  *
  *  @fn:    load_schema()

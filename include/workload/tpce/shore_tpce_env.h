@@ -296,9 +296,7 @@ private:
     
 public:    
 
-    /** Construction  */
-    ShoreTPCEEnv(string confname);
-
+    ShoreTPCEEnv();
     virtual ~ShoreTPCEEnv();
 
     // DB INTERFACE

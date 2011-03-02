@@ -277,8 +277,8 @@ void ShoreSSBEnv::table_builder_t::work()
  *
  ********************************************************************/ 
 
-ShoreSSBEnv::ShoreSSBEnv(string confname)
-    : ShoreEnv(confname)
+ShoreSSBEnv::ShoreSSBEnv()
+    : ShoreEnv()
 {
     _scaling_factor = SSB_SCALING_FACTOR;
 

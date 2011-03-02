@@ -286,8 +286,8 @@ void ShoreTPCHEnv::table_builder_t::work()
  *
  ********************************************************************/ 
 
-ShoreTPCHEnv::ShoreTPCHEnv(string confname)
-    : ShoreEnv(confname)
+ShoreTPCHEnv::ShoreTPCHEnv()
+    : ShoreEnv()
 {
     _scaling_factor = TPCH_SCALING_FACTOR;
 

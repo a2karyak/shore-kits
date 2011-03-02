@@ -144,7 +144,7 @@ class DoraTM1Env : public ShoreTM1Env, public DoraEnv
 {
 public:
     
-    DoraTM1Env(string confname);
+    DoraTM1Env();
     virtual ~DoraTM1Env();
 
 

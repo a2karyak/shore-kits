@@ -138,6 +138,7 @@ public:
 
     // sets as input another conf file
     void setConfFile(const string& sConfFile);
+    string getConfFile() const;
 
     // prints all the env vars
     void printVars(void);

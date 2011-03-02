@@ -61,8 +61,8 @@ const uint cf_KEY_EST  = 3750;
  *
  ******************************************************************/
 
-DoraTM1Env::DoraTM1Env(string confname)
-    : ShoreTM1Env(confname), DoraEnv()
+DoraTM1Env::DoraTM1Env()
+    : ShoreTM1Env(), DoraEnv()
 { 
     update_pd(this);
 }

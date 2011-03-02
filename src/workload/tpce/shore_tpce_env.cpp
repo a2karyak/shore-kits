@@ -248,15 +248,12 @@ void testInputs()
 
 
 /** Construction  */
-ShoreTPCEEnv::ShoreTPCEEnv(string confname): ShoreEnv(confname), 
-                                             _customers(1000), 
-                                             _working_days(20),
-					     _scaling_factor(500)
+ShoreTPCEEnv::ShoreTPCEEnv()
+  : ShoreEnv(), 
+    _customers(1000), 
+    _working_days(20),
+    _scaling_factor(500)
 {
-    // read the scaling factor from the configuration file
-    
-    
-
     //INITIALIZE EGEN
     _customers =envVar::instance()->getSysVarInt("cust");;
     _working_days=envVar::instance()->getSysVarInt("wd");

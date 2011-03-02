@@ -83,7 +83,7 @@ void env_stats_t::print_env_stats() const
  *
  ********************************************************************/
 
-ShoreEnv::ShoreEnv(string confname)
+ShoreEnv::ShoreEnv()
     : db_iface(),
       _pssm(NULL), 
       _initialized(false), _init_mutex(thread_mutex_create()),
@@ -91,7 +91,6 @@ ShoreEnv::ShoreEnv(string confname)
       _statmap_mutex(thread_mutex_create()),
       _last_stats_mutex(thread_mutex_create()),
       _vol_mutex(thread_mutex_create()), 
-      _cname(confname),
       _max_cpu_count(0),
       _active_cpu_count(0),
       _worker_cnt(0),
@@ -420,7 +419,9 @@ int ShoreEnv::init()
     }
 
     // Read configuration options
-    readconfig(_cname);
+    // We do not pass the configuration file name anymore. 
+    // Instead, this should have been setup at envVar (the global environment)
+    readconfig();
 
     // Set sys params
     if (_set_sys_params()) {
@@ -1040,14 +1041,16 @@ void ShoreEnv::usage(option_group_t& options)
  *
  ******************************************************************/
 
-void ShoreEnv::readconfig(string conf_file)
+void ShoreEnv::readconfig()
 {
-    TRACE( TRACE_ALWAYS, "Reading config file (%s)\n", conf_file.c_str());
-    
+    string conf_file;
+    envVar* ev = envVar::instance();
+    conf_file = ev->getConfFile();
+
+    TRACE( TRACE_ALWAYS, "Reading config file (%s)\n", conf_file.c_str());    
+
     string tmp;
     int i=0;
-    envVar* ev = envVar::instance();
-    ev->setConfFile(conf_file);
 
     // Parse the configuration which will use (suffix)
     string configsuf = ev->getVar(CONFIG_PARAM,CONFIG_PARAM_VALUE);

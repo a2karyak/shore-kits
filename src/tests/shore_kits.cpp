@@ -232,7 +232,7 @@ template<class Client,class DB>
 int kit_t<Client,DB>::inst_test_env(int argc, char* argv[]) 
 {    
     // 1. Instanciate the Shore Environment
-    _env = _dbinst = new DB(SHORE_CONF_FILE);
+    _env = _dbinst = new DB();
     assert (_g_mon);
     _env->set_max_cpu_count(_g_mon->get_num_of_cpus());
 
@@ -606,6 +606,7 @@ int main(int argc, char* argv[])
             TRACE( TRACE_ALWAYS, "CONFIGFILE (%s)\n", optarg);
             confFile = (string)optarg;            
             ev->setConfFile(confFile);
+            TRACE( TRACE_ALWAYS, "CONFIG (%s)\n", config.c_str());
             ev->setConfiguration(config);
             break;
         case 'r':

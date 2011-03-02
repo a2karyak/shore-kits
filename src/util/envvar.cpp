@@ -232,6 +232,10 @@ void envVar::setConfFile(const string& sConfFile)
     assert (_pfparser);
 }
 
+string envVar::getConfFile() const
+{
+    return (_cfname);
+}
 
 
 // parses a SET request

@@ -166,17 +166,8 @@ private:
 
 public:    
 
-    // Construction
-    ShoreTPCBEnv(string confname)
-        : ShoreEnv(confname)
-    {
-        // read the scaling factor from the configuration file
-        _scaling_factor=100;
-        _queried_factor=100;
-    }
-
-
-    virtual ~ShoreTPCBEnv() { }
+    ShoreTPCBEnv();
+    virtual ~ShoreTPCBEnv();
 
 
     // DB INTERFACE

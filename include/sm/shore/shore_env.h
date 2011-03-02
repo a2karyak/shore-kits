@@ -472,7 +472,6 @@ protected:
 
     // Configuration variables
     guard<option_group_t>   _popts;     // config options
-    string                  _cname;     // config filename
 
     ParamMap      _sys_opts;  // db-instance-independent options  
     ParamMap      _sm_opts;   // db-instance-specific options that are passed to Shore
@@ -522,7 +521,7 @@ protected:
     
     // Helper functions
     void usage(option_group_t& options);
-    void readconfig(const string conf_file);
+    void readconfig();
 
     // Used for some benchmarks - number of records to access
     volatile uint _rec_to_acc;
@@ -545,7 +544,7 @@ protected:
     
 public:
 
-    ShoreEnv(string confname);
+    ShoreEnv();
     virtual ~ShoreEnv();
 
 

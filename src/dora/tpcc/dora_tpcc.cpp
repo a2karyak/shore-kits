@@ -79,8 +79,8 @@ const uint sto_KEY_EST = 1000;
  *
  ******************************************************************/
     
-DoraTPCCEnv::DoraTPCCEnv(string confname)
-    : ShoreTPCCEnv(confname)
+DoraTPCCEnv::DoraTPCCEnv()
+    : ShoreTPCCEnv()
 { 
     update_pd(this);
 }

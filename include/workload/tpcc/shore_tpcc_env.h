@@ -166,16 +166,8 @@ private:
     
 public:    
 
-    // Construction 
-    ShoreTPCCEnv(string confname)
-        : ShoreEnv(confname)
-    {
-        _scaling_factor = TPCC_SCALING_FACTOR;
-        _queried_factor = QUERIED_TPCC_SCALING_FACTOR;
-    }
-
-
-    virtual ~ShoreTPCCEnv() { }
+    ShoreTPCCEnv();
+    virtual ~ShoreTPCCEnv();
 
 
     // DB INTERFACE

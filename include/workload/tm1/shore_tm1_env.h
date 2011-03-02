@@ -166,18 +166,8 @@ private:
     
 public:    
 
-    // Construction 
-    ShoreTM1Env(string confname)
-        : ShoreEnv(confname)
-    { 
-        _scaling_factor = TM1_DEF_SF;
-        _queried_factor = TM1_DEF_QF;
-    }
-
-    virtual ~ShoreTM1Env() 
-    {         
-    }
-
+    ShoreTM1Env();
+    virtual ~ShoreTM1Env();
 
     // DB INTERFACE
 
