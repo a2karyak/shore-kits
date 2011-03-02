@@ -5,7 +5,30 @@
 STAMP=$(date +"%F-%Hh%Mm%Ss")
 echo "[$STAMP]" | tee -a building-db
 
+### EDIT if moving to a different machine
+CPUS=16;
+
+echo "Assuming a $CPUS hw contexts machine" | tee -a building-db
+
+
+## Creates a directory if this does not exist
 check_dir ()
+{
+    # Dir name
+    DIR=$1
+
+    if [ -d $DIR ] 
+        then        
+        return
+    else
+        echo "Creating $DIR"
+        mkdir $DIR
+    fi
+}
+
+
+## Clears the contents of a directory
+clear_dir ()
 {
     # Dir name
     DIR=$1
@@ -20,35 +43,54 @@ check_dir ()
     fi
 }
 
+
+## 
 load_db ()
 {
-    # System (baseline,dora,plp)
-    SYSTEM=$1
-
-    # Configuration (tm1-16,...)
-    CONF=$2
-
-    # Design (normal,mrbtnorm,...)
-    DESIGN=$3
-
-    echo "XXX $SYSTEM $CONF $DESIGN XXX"  | tee -a building-db
+    if [ $# -lt 3 ]; then
+        echo "Not enough parameters" >& 2
+        return;
+    fi
 
     STAMP=$(date +"%F-%Hh%Mm%Ss")
     echo "[$STAMP]" | tee -a building-db
 
-    # Check the corresponding log dir
-    echo "Checking $SYSTEM-log-$CONF"
-    check_dir $SYSTEM-log-$CONF
+    # System (baseline,dora,plp)
+    SYSTEM=$1
 
-    if [ -e shore.conf.$SYSTEM ] 
+    # Design (normal,mrbtnorm,...)
+    DESIGN=$2
+
+    # Configuration (tm1-16,...)
+    CONF=$3
+
+    # Configuration file
+    CONFFILE="shore.conf.$SYSTEM.$CPUS"
+    if [ $# -ge 4 ]; then
+        CONFFILE=$4
+        echo "Trying custom conf file $CONFFILE"
+    fi
+
+    if [ -e $CONFFILE ] 
         then
-        echo "Using config file shore.conf.$SYSTEM" | tee -a building-db
+        echo "Using config file $CONFFILE" | tee -a building-db
         else
+        $CONFFILE=shore.conf
         echo "!!! POSSIBLE ERROR: using default config file" | tee -a building-db
     fi
 
-    echo "./shore_kits -f shore.conf.$SYSTEM -c $CONF -s $SYSTEM -d $DESIGN -x -r" | tee -a building-db
-    #(echo quit | LD_LIBRARY_PATH="/export/home/ipandis/apps/readline/;/usr/sfw/lib/sparcv9" ./shore_kits -f shore.conf.$SYSTEM -c $CONF -s $SYSTEM -d $DESIGN -x -r ) 2>&1 | tee -a building-db
+    echo "XXX $CONFFILE $SYSTEM $DESIGN $CONF XXX"  | tee -a building-db
+
+    # Clear the contents of the corresponding log dir
+    cat $CONFFILE | grep $CONF- | grep logdir | cut -d' ' -f 3
+    LOGDIR=`cat $CONFFILE | grep $CONF- | grep logdir | cut -d' ' -f 3`
+    echo "Clearing $LOGDIR"
+    clear_dir $LOGDIR
+
+    echo "./shore_kits -f $CONFFILE -s $SYSTEM -d $DESIGN -c $CONF -x -r" | tee -a building-db
+    (echo quit | LD_LIBRARY_PATH="/home/ipandis/apps/lib64/" ./shore_kits -f $CONFFILE -s $SYSTEM -d $DESIGN -c $CONF -x -r ) 2>&1 | tee -a building-db
+
+# (echo quit | LD_LIBRARY_PATH="/export/home/ipandis/apps/readline/;/usr/sfw/lib/sparcv9" ./shore_kits -f $CONFFILE -s $SYSTEM -d $DESIGN -c $CONF -x -r ) 2>&1 | tee -a building-db
 }
 
 
@@ -57,35 +99,37 @@ check_dir databases
 
 
 ### The various databases that will be created
-load_db baseline tm1-1 normal
+load_db baseline normal tm1-10 
+load_db dora normal tm1-10 
+load_db dora mrbtnorm tm1-10 shore.conf.plp.$CPUS 
 
-# load_db baseline tm1-16 normal
-# load_db baseline tm1-64 normal
-# load_db baseline tpcb-20 normal
-# load_db baseline tpcb-100 normal
-# load_db baseline tpcc-20 normal
-# load_db baseline tpcc-100 normal
+# load_db baseline normal tm1-16
+# load_db baseline normal tm1-64
+# load_db baseline normal tpcb-20
+# load_db baseline normal tpcb-100
+# load_db baseline normal tpcc-20
+# load_db baseline normal tpcc-100
 
-# load_db dora tm1-16 normal
-# load_db dora tm1-64 normal
-# load_db dora tpcb-20 normal
-# load_db dora tpcb-100 normal
-# load_db dora tpcc-20 normal
-# load_db dora tpcc-100 normal
+# load_db dora normal tm1-16
+# load_db dora normal tm1-64
+# load_db dora normal tpcb-20
+# load_db dora normal tpcb-100
+# load_db dora normal tpcc-20
+# load_db dora normal tpcc-100
 
 
-# Instead of plp we use dora-mrbtnorm
-# load_db plp tm1-16 mrbtnorm
-# load_db plp tm1-64 mrbtnorm
-# load_db plp tpcb-20 mrbtnorm
-# load_db plp tpcb-100 mrbtnorm
-# load_db plp tpcc-20 mrbtnorm
-# load_db plp tpcc-100 mrbtnorm
+# # Instead of plp we use dora-mrbtnorm
+# # load_db plp mrbtnorm tm1-16
+# # load_db plp mrbtnorm tm1-64
+# # load_db plp mrbtnorm tpcb-20
+# # load_db plp mrbtnorm tpcb-100
+# # load_db plp mrbtnorm tpcc-20
+# # load_db plp mrbtnorm tpcc-100
 
-# load_db dora tm1-16 mrbtnorm
-# load_db dora tm1-64 mrbtnorm
-# load_db dora tpcb-20 mrbtnorm
-# load_db dora tpcb-100 mrbtnorm
-# load_db dora tpcc-20 mrbtnorm
-# load_db dora tpcc-100 mrbtnorm
+# load_db dora mrbtnorm tm1-16 shore.conf.plp.$CPUS 
+# load_db dora mrbtnorm tm1-64 shore.conf.plp.$CPUS 
+# load_db dora mrbtnorm tpcb-20 shore.conf.plp.$CPUS 
+# load_db dora mrbtnorm tpcb-100 shore.conf.plp.$CPUS 
+# load_db dora mrbtnorm tpcc-20 shore.conf.plp.$CPUS 
+# load_db dora mrbtnorm tpcc-100 shore.conf.plp.$CPUS 
 
