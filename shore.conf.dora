@@ -405,7 +405,7 @@ records-to-access = 1
 #########################
 
 ### Device file
-tpcc-1-device = databases/db-tpcc-1
+tpcc-1-device = databases/dora-db-tpcc-1
 
 ### Device quota (in KB)
 ### 2GB
@@ -416,7 +416,7 @@ tpcc-1-devicequota = 2048000
 tpcc-1-bufpoolsize = 2048000
 
 ### Location of log directory
-tpcc-1-logdir = log-tpcc-1
+tpcc-1-logdir = dora-log-tpcc-1
 
 ### Size of log (in KB)
 ### TotalLogSize = 2GB * 1 = 2GB
@@ -430,7 +430,7 @@ tpcc-1-logbufsize = 81920
 tpcc-1-sf = 1
 
 ### System
-tpcc-1-system = baseline
+tpcc-1-system = dora
 
 ### Benchmark
 tpcc-1-benchmark = tpcc
@@ -449,7 +449,7 @@ tpcc-1-design = normal
 ##########################
 
 ### Device file
-tpcc-10-device = databases/db-tpcc-10
+tpcc-10-device = databases/dora-db-tpcc-10
 
 ### Device quota (in KB)
 ### 12GB
@@ -460,7 +460,7 @@ tpcc-10-devicequota = 12097152
 tpcc-10-bufpoolsize = 4096000
 
 ### Location of log directory
-tpcc-10-logdir = log-tpcc-10
+tpcc-10-logdir = dora-log-tpcc-10
 
 ### Size of log (in KB)
 ### TotalLogSize = 2GB * 1 = 2GB
@@ -474,7 +474,7 @@ tpcc-10-logbufsize = 81920
 tpcc-10-sf = 10
 
 ### System
-tpcc-10-system = baseline
+tpcc-10-system = dora
 
 ### Benchmark
 tpcc-10-benchmark = tpcc
@@ -493,7 +493,7 @@ tpcc-10-design = normal
 ##########################
 
 ### Device file
-tpcc-20-device = databases/db-tpcc-20
+tpcc-20-device = databases/dora-db-tpcc-20
 
 ### Device quota (in KB)
 ### 12GB
@@ -504,7 +504,7 @@ tpcc-20-devicequota = 12097152
 tpcc-20-bufpoolsize = 4096000
 
 ### Location of log directory
-tpcc-20-logdir = log-tpcc-20
+tpcc-20-logdir = dora-log-tpcc-20
 
 ### Size of log (in KB)
 ### TotalLogSize = 2GB * 1 = 2GB
@@ -518,7 +518,7 @@ tpcc-20-logbufsize = 81920
 tpcc-20-sf = 20
 
 ### System
-tpcc-20-system = baseline
+tpcc-20-system = dora
 
 ### Benchmark
 tpcc-20-benchmark = tpcc
@@ -533,7 +533,7 @@ tpcc-20-benchmark = tpcc
 ########################
 
 ### Device file
-tpcc-50-device = databases/db-tpcc-50
+tpcc-50-device = databases/dora-db-tpcc-50
 
 ### Device quota (in KB)
 ### 10GB
@@ -544,7 +544,7 @@ tpcc-50-devicequota = 10485760
 tpcc-50-bufpoolsize = 5242880
 
 ### Location of log directory
-tpcc-50-logdir = log-tpcc-50
+tpcc-50-logdir = dora-log-tpcc-50
 
 ### Size of log (in KB)
 ### TotalLogSize = 3GB
@@ -558,7 +558,7 @@ tpcc-50-logbufsize = 81920
 tpcc-50-sf = 50
 
 ### System
-tpcc-50-system = baseline
+tpcc-50-system = dora
 
 ### Benchmark
 tpcc-50-benchmark = tpcc
@@ -577,7 +577,7 @@ tpcc-50-design = normal
 ########################
 
 ### Device file
-tpcc-60-device = databases/db-tpcc-60
+tpcc-60-device = databases/dora-db-tpcc-60
 
 ### Device quota (in KB)
 ### 20GB
@@ -588,7 +588,7 @@ tpcc-60-devicequota = 20971520
 tpcc-60-bufpoolsize = 6291456
 
 ### Location of log directory
-tpcc-60-logdir = log-tpcc-60
+tpcc-60-logdir = dora-log-tpcc-60
 
 ### Size of log (in KB)
 ### TotalLogSize = 3GB
@@ -602,7 +602,7 @@ tpcc-60-logbufsize = 81920
 tpcc-60-sf = 60
 
 ### System
-tpcc-60-system = baseline
+tpcc-60-system = dora
 
 ### Benchmark
 tpcc-60-benchmark = tpcc
@@ -634,7 +634,7 @@ tpcc-100-devicequota = 26214400
 tpcc-100-bufpoolsize = 5242880
 
 ### Location of log directory
-tpcc-100-logdir = log-tpcc-100
+tpcc-100-logdir = dora-log-tpcc-100
 
 ### Size of log (in KB)
 ### TotalLogSize = 3GB * 1 = 3GB
@@ -648,7 +648,7 @@ tpcc-100-logbufsize = 81920
 tpcc-100-sf = 100
 
 ### System
-tpcc-100-system = baseline
+tpcc-100-system = dora
 
 ### Benchmark
 tpcc-100-benchmark = tpcc
@@ -678,7 +678,7 @@ tpcc-150-devicequota = 52428800
 tpcc-150-bufpoolsize = 5242880
 
 ### Location of log directory
-tpcc-150-logdir = log-tpcc-150
+tpcc-150-logdir = dora-log-tpcc-150
 
 ### Size of log (in KB)
 ### TotalLogSize = 3GB * 1 = 3GB
@@ -692,7 +692,7 @@ tpcc-150-logbufsize = 81920
 tpcc-150-sf = 150
 
 ### System
-tpcc-150-system = baseline
+tpcc-150-system = dora
 
 ### Benchmark
 tpcc-150-benchmark = tpcc
@@ -719,7 +719,7 @@ tpcc-200-devicequota = 52428800
 tpcc-200-bufpoolsize = 5242880
 
 ### Location of log directory
-tpcc-200-logdir = log-tpcc-200
+tpcc-200-logdir = dora-log-tpcc-200
 
 ### Size of log (in KB)
 ### TotalLogSize = 3GB * 1 = 3GB
@@ -735,7 +735,7 @@ tpcc-200-logbufsize = 81920
 tpcc-200-sf = 200
 
 ### System
-tpcc-200-system = baseline
+tpcc-200-system = dora
 
 ### Benchmark
 tpcc-200-benchmark = tpcc
@@ -750,7 +750,7 @@ tpcc-200-benchmark = tpcc
 ############################
 
 ### Device file
-tpcc-1000-device = databases/db-tpcc-1000
+tpcc-1000-device = databases/dora-db-tpcc-1000
 
 ### Device quota (in KB)
 ### 200GB
@@ -761,7 +761,7 @@ tpcc-1000-devicequota = 204800000
 tpcc-1000-bufpoolsize = 10240000
 
 ### Location of log directory
-tpcc-1000-logdir = log-tpcc-1000
+tpcc-1000-logdir = dora-log-tpcc-1000
 
 ### Size of log (in KB)
 ### TotalLogSize = 4GB
@@ -775,7 +775,7 @@ tpcc-1000-logbufsize = 81920
 tpcc-1000-sf = 1000
 
 ### System
-tpcc-1000-system = baseline
+tpcc-1000-system = dora
 
 ### Benchmark
 tpcc-1000-benchmark = tpcc
@@ -795,7 +795,7 @@ tpcc-1000-design = normal
 ##########################
 
 ### Device file
-tpcb-1-device = databases/db-tpcb-1
+tpcb-1-device = databases/dora-db-tpcb-1
 
 ### Device quota (in KB)
 ### 12GB
@@ -806,7 +806,7 @@ tpcb-1-devicequota = 12097152
 tpcb-1-bufpoolsize = 4096000
 
 ### Location of log directory
-tpcb-1-logdir = log-tpcb-1
+tpcb-1-logdir = dora-log-tpcb-1
 
 ### Size of log (in KB)
 ### TotalLogSize = 2GB
@@ -820,7 +820,7 @@ tpcb-1-logbufsize = 81920
 tpcb-1-sf = 1
 
 ### System
-tpcb-1-system = baseline
+tpcb-1-system = dora
 
 ### Benchmark
 tpcb-1-benchmark = tpcb
@@ -839,7 +839,7 @@ tpcb-1-design = hack
 ###########################
 
 ### Device file
-tpcb-10-device = databases/db-tpcb-10
+tpcb-10-device = databases/dora-db-tpcb-10
 
 ### Device quota (in KB)
 ### 12GB
@@ -850,7 +850,7 @@ tpcb-10-devicequota = 12097152
 tpcb-10-bufpoolsize = 4096000
 
 ### Location of log directory
-tpcb-10-logdir = log-tpcb-10
+tpcb-10-logdir = dora-log-tpcb-10
 
 ### Size of log (in KB)
 ### TotalLogSize = 2GB
@@ -864,7 +864,7 @@ tpcb-10-logbufsize = 81920
 tpcb-10-sf = 10
 
 ### System
-tpcb-10-system = baseline
+tpcb-10-system = dora
 
 ### Benchmark
 tpcb-10-benchmark = tpcb
@@ -883,7 +883,7 @@ tpcb-10-design = hack
 ###########################
 
 ### Device file
-tpcb-20-device = databases/db-tpcb-20
+tpcb-20-device = databases/dora-db-tpcb-20
 
 ### Device quota (in KB)
 ### 12GB
@@ -894,7 +894,7 @@ tpcb-20-devicequota = 12097152
 tpcb-20-bufpoolsize = 4096000
 
 ### Location of log directory
-tpcb-20-logdir = log-tpcb-20
+tpcb-20-logdir = dora-log-tpcb-20
 
 ### Size of log (in KB)
 ### TotalLogSize = 2GB
@@ -908,7 +908,7 @@ tpcb-20-logbufsize = 81920
 tpcb-20-sf = 20
 
 ### System
-tpcb-20-system = baseline
+tpcb-20-system = dora
 
 ### Benchmark
 tpcb-20-benchmark = tpcb
@@ -927,7 +927,7 @@ tpcb-20-design = hack
 ###########################
 
 ### Device file
-tpcb-50-device = databases/db-tpcb-50
+tpcb-50-device = databases/dora-db-tpcb-50
 
 ### Device quota (in KB)
 ### 20GB
@@ -938,7 +938,7 @@ tpcb-50-devicequota = 20971520
 tpcb-50-bufpoolsize = 4096000
 
 ### Location of log directory
-tpcb-50-logdir = log-tpcb-50
+tpcb-50-logdir = dora-log-tpcb-50
 
 ### Size of log (in KB)
 ### TotalLogSize = 3GB
@@ -952,7 +952,7 @@ tpcb-50-logbufsize = 81920
 tpcb-50-sf = 50
 
 ### System
-tpcb-50-system = baseline
+tpcb-50-system = dora
 
 ### Benchmark
 tpcb-50-benchmark = tpcb
@@ -971,7 +971,7 @@ tpcb-50-design = hack
 ###########################
 
 ### Device file
-tpcb-60-device = databases/db-tpcb-60
+tpcb-60-device = databases/dora-db-tpcb-60
 
 ### Device quota (in KB)
 ### 12GB
@@ -982,7 +982,7 @@ tpcb-60-devicequota = 12097152
 tpcb-60-bufpoolsize = 4096000
 
 ### Location of log directory
-tpcb-60-logdir = log-tpcb-60
+tpcb-60-logdir = dora-log-tpcb-60
 
 ### Size of log (in KB)
 ### TotalLogSize = 3GB
@@ -996,7 +996,7 @@ tpcb-60-logbufsize = 81920
 tpcb-60-sf = 60
 
 ### System
-tpcb-60-system = baseline
+tpcb-60-system = dora
 
 ### Benchmark
 tpcb-60-benchmark = tpcb
@@ -1015,7 +1015,7 @@ tpcb-60-design = hack
 ##########################
 
 ### Device file
-tpcb-100-device = databases/db-tpcb-100
+tpcb-100-device = databases/dora-db-tpcb-100
 
 ### Device quota (in KB)
 ### 20GB
@@ -1026,7 +1026,7 @@ tpcb-100-devicequota = 20971520
 tpcb-100-bufpoolsize = 4096000
 
 ### Location of log directory
-tpcb-100-logdir = log-tpcb-100
+tpcb-100-logdir = dora-log-tpcb-100
 
 ### Size of log (in KB)
 ### TotalLogSize = 3GB
@@ -1040,7 +1040,7 @@ tpcb-100-logbufsize = 81920
 tpcb-100-sf = 100
 
 ### System
-tpcb-100-system = baseline
+tpcb-100-system = dora
 
 ### Benchmark
 tpcb-100-benchmark = tpcb
@@ -1070,7 +1070,7 @@ tpcb-1000-devicequota = 31457280
 tpcb-1000-bufpoolsize = 10485760
 
 ### Location of log directory
-tpcb-1000-logdir = log-tpcb-1000
+tpcb-1000-logdir = dora-log-tpcb-1000
 
 ### Size of log (in KB)
 ### TotalLogSize = 3GB
@@ -1084,7 +1084,7 @@ tpcb-1000-logbufsize = 81920
 tpcb-1000-sf = 1000
 
 ### System
-tpcb-1000-system = baseline
+tpcb-1000-system = dora
 
 ### Benchmark
 tpcb-1000-benchmark = tpcb
@@ -1103,7 +1103,7 @@ tpcb-1000-design = hack
 #######################
 
 ### Device file
-tm1-1-device = databases/db-tm1-1
+tm1-1-device = databases/dora-db-tm1-1
 
 ### Device quota (in KB)
 ### 20MB
@@ -1114,7 +1114,7 @@ tm1-1-devicequota = 204800
 tm1-1-bufpoolsize = 102400
 
 ### Location of log directory
-tm1-1-logdir = log-tm1-1
+tm1-1-logdir = dora-log-tm1-1
 
 ### Size of log (in KB)
 ### 100MB 
@@ -1128,7 +1128,7 @@ tm1-1-logbufsize = 81920
 tm1-1-sf = 1
 
 ### System
-tm1-1-system = baseline
+tm1-1-system = dora
 
 ### Benchmark
 tm1-1-benchmark = tm1
@@ -1147,7 +1147,7 @@ tm1-1-design = normal
 #########################
 
 ### Device file
-tm1-10-device = databases/db-tm1-10
+tm1-10-device = databases/dora-db-tm1-10
 
 ### Device quota (in KB)
 ### 2GB
@@ -1158,7 +1158,7 @@ tm1-10-devicequota = 2048000
 tm1-10-bufpoolsize = 1024000
 
 ### Location of log directory
-tm1-10-logdir = log-tm1-10
+tm1-10-logdir = dora-log-tm1-10
 
 ### Size of log (in KB)
 ### TotalLogSize = 1GB * 1 = 1GB
@@ -1172,7 +1172,7 @@ tm1-10-logbufsize = 81920
 tm1-10-sf = 10
 
 ### System
-tm1-10-system = baseline
+tm1-10-system = dora
 
 ### Benchmark
 tm1-10-benchmark = tm1
@@ -1193,7 +1193,7 @@ tm1-10-design = normal
 #########################
 
 ### Device file
-tm1-8-device = databases/db-tm1-8
+tm1-8-device = databases/dora-db-tm1-8
 
 ### Device quota (in KB)
 ### 2GB
@@ -1204,7 +1204,7 @@ tm1-8-devicequota = 2048000
 tm1-8-bufpoolsize = 1024000
 
 ### Location of log directory
-tm1-8-logdir = log-tm1-8
+tm1-8-logdir = dora-log-tm1-8
 
 ### Size of log (in KB)
 ### TotalLogSize = 1GB * 1 = 1GB
@@ -1218,7 +1218,7 @@ tm1-8-logbufsize = 81920
 tm1-8-sf = 8
 
 ### System
-tm1-8-system = baseline
+tm1-8-system = dora
 
 ### Benchmark
 tm1-8-benchmark = tm1
@@ -1237,7 +1237,7 @@ tm1-8-design = normal
 #########################
 
 ### Device file
-tm1-12-device = databases/db-tm1-12
+tm1-12-device = databases/dora-db-tm1-12
 
 ### Device quota (in KB)
 ### 2GB
@@ -1248,7 +1248,7 @@ tm1-12-devicequota = 2048000
 tm1-12-bufpoolsize = 1024000
 
 ### Location of log directory
-tm1-12-logdir = log-tm1-12
+tm1-12-logdir = dora-log-tm1-12
 
 ### Size of log (in KB)
 ### TotalLogSize = 1GB * 1 = 1GB
@@ -1262,7 +1262,7 @@ tm1-12-logbufsize = 81920
 tm1-12-sf = 12
 
 ### System
-tm1-12-system = baseline
+tm1-12-system = dora
 
 ### Benchmark
 tm1-12-benchmark = tm1
@@ -1281,7 +1281,7 @@ tm1-12-design = normal
 #########################
 
 ### Device file
-tm1-16-device = databases/db-tm1-16
+tm1-16-device = databases/dora-db-tm1-16
 
 ### Device quota (in KB)
 ### 2GB
@@ -1292,7 +1292,7 @@ tm1-16-devicequota = 2048000
 tm1-16-bufpoolsize = 1024000
 
 ### Location of log directory
-tm1-16-logdir = log-tm1-16
+tm1-16-logdir = dora-log-tm1-16
 
 ### Size of log (in KB)
 ### TotalLogSize = 1GB * 1 = 1GB
@@ -1306,7 +1306,7 @@ tm1-16-logbufsize = 81920
 tm1-16-sf = 16
 
 ### System
-tm1-16-system = baseline
+tm1-16-system = dora
 
 ### Benchmark
 tm1-16-benchmark = tm1
@@ -1326,7 +1326,7 @@ tm1-16-design = normal
 #########################
 
 ### Device file
-tm1-20-device = databases/db-tm1-20
+tm1-20-device = databases/dora-db-tm1-20
 
 ### Device quota (in KB)
 ### 2GB
@@ -1337,7 +1337,7 @@ tm1-20-devicequota = 2048000
 tm1-20-bufpoolsize = 1024000
 
 ### Location of log directory
-tm1-20-logdir = log-tm1-20
+tm1-20-logdir = dora-log-tm1-20
 
 ### Size of log (in KB)
 ### TotalLogSize = 1GB * 1 = 1GB
@@ -1351,7 +1351,7 @@ tm1-20-logbufsize = 81920
 tm1-20-sf = 20
 
 ### System
-tm1-20-system = baseline
+tm1-20-system = dora
 
 ### Benchmark
 tm1-20-benchmark = tm1
@@ -1370,7 +1370,7 @@ tm1-20-design = normal
 #########################
 
 ### Device file
-tm1-32-device = databases/db-tm1-32
+tm1-32-device = databases/dora-db-tm1-32
 
 ### Device quota (in KB)
 ### 2GB
@@ -1381,7 +1381,7 @@ tm1-32-devicequota = 2048000
 tm1-32-bufpoolsize = 1024000
 
 ### Location of log directory
-tm1-32-logdir = log-tm1-32
+tm1-32-logdir = dora-log-tm1-32
 
 ### Size of log (in KB)
 ### TotalLogSize = 1GB * 1 = 1GB
@@ -1395,7 +1395,7 @@ tm1-32-logbufsize = 81920
 tm1-32-sf = 32
 
 ### System
-tm1-32-system = baseline
+tm1-32-system = dora
 
 ### Benchmark
 tm1-32-benchmark = tm1
@@ -1414,7 +1414,7 @@ tm1-32-design = normal
 #########################
 
 ### Device file
-tm1-50-device = databases/db-tm1-50
+tm1-50-device = databases/dora-db-tm1-50
 
 ### Device quota (in KB)
 ### 2GB
@@ -1425,7 +1425,7 @@ tm1-50-devicequota = 2048000
 tm1-50-bufpoolsize = 1024000
 
 ### Location of log directory
-tm1-50-logdir = log-tm1-50
+tm1-50-logdir = dora-log-tm1-50
 
 ### Size of log (in KB)
 ### TotalSize = 2GB
@@ -1439,7 +1439,7 @@ tm1-50-logbufsize = 81920
 tm1-50-sf = 50
 
 ### System
-tm1-50-system = baseline
+tm1-50-system = dora
 
 ### Benchmark
 tm1-50-benchmark = tm1
@@ -1458,7 +1458,7 @@ tm1-50-design = normal
 #########################
 
 ### Device file
-tm1-60-device = databases/db-tm1-60
+tm1-60-device = databases/dora-db-tm1-60
 
 ### Device quota (in KB)
 ### 2GB
@@ -1469,7 +1469,7 @@ tm1-60-devicequota = 2048000
 tm1-60-bufpoolsize = 1024000
 
 ### Location of log directory
-tm1-60-logdir = log-tm1-60
+tm1-60-logdir = dora-log-tm1-60
 
 ### Size of log (in KB)
 ### TotalSize = 2GB
@@ -1483,7 +1483,7 @@ tm1-60-logbufsize = 81920
 tm1-60-sf = 60
 
 ### System
-tm1-60-system = baseline
+tm1-60-system = dora
 
 ### Benchmark
 tm1-60-benchmark = tm1
@@ -1502,7 +1502,7 @@ tm1-60-design = normal
 #########################
 
 ### Device file
-tm1-70-device = databases/db-tm1-70
+tm1-70-device = databases/dora-db-tm1-70
 
 ### Device quota (in KB)
 ### 2GB
@@ -1513,7 +1513,7 @@ tm1-70-devicequota = 2097152
 tm1-70-bufpoolsize = 2097152
 
 ### Location of log directory
-tm1-70-logdir = log-tm1-70
+tm1-70-logdir = dora-log-tm1-70
 
 ### Size of log (in KB)
 ### TotalSize = 2GB
@@ -1527,7 +1527,7 @@ tm1-70-logbufsize = 81920
 tm1-70-sf = 70
 
 ### System
-tm1-70-system = baseline
+tm1-70-system = dora
 
 ### Benchmark
 tm1-70-benchmark = tm1
@@ -1542,7 +1542,7 @@ tm1-70-benchmark = tm1
 ##########################
 
 ### Device file
-tm1-100-device = databases/db-tm1-100
+tm1-100-device = databases/dora-db-tm1-100
 
 ### Device quota (in KB)
 ### 2GB
@@ -1553,7 +1553,7 @@ tm1-100-devicequota = 2097152
 tm1-100-bufpoolsize = 2097152
 
 ### Location of log directory
-tm1-100-logdir = log-tm1-100
+tm1-100-logdir = dora-log-tm1-100
 
 ### Size of log (in KB)
 ### TotalLogSize = 2GB * 1 = 2GB 
@@ -1567,7 +1567,7 @@ tm1-100-logbufsize = 81920
 tm1-100-sf = 100
 
 ### System
-tm1-100-system = baseline
+tm1-100-system = dora
 
 ### Benchmark
 tm1-100-benchmark = tm1
@@ -1597,7 +1597,7 @@ tm1-1000-devicequota = 31457280
 tm1-1000-bufpoolsize = 10485760
 
 ### Location of log directory
-tm1-1000-logdir = log-tm1-1000
+tm1-1000-logdir = dora-log-tm1-1000
 
 ### Size of log (in KB)
 ### TotalLogSize = 2GB * 1 = 2GB 
@@ -1611,7 +1611,7 @@ tm1-1000-logbufsize = 81920
 tm1-1000-sf = 1000
 
 ### System
-tm1-1000-system = baseline
+tm1-1000-system = dora
 
 ### Benchmark
 tm1-1000-benchmark = tm1
@@ -1627,7 +1627,7 @@ tm1-1000-benchmark = tm1
 ##########################
 
 ### Device file
-tm1-300-device = databases/db-tm1-300
+tm1-300-device = databases/dora-db-tm1-300
 
 ### Device quota (in KB)
 ### 8GB
@@ -1638,7 +1638,7 @@ tm1-300-devicequota = 8388608
 tm1-300-bufpoolsize = 6291456
 
 ### Location of log directory
-tm1-300-logdir = log-tm1-300
+tm1-300-logdir = dora-log-tm1-300
 
 ### Size of log (in KB)
 ### TotalLogSize = 2GB * 1 = 2GB 
@@ -1652,7 +1652,7 @@ tm1-300-logbufsize = 81920
 tm1-300-sf = 300
 
 ### System
-tm1-300-system = baseline
+tm1-300-system = dora
 
 ### Benchmark
 tm1-300-benchmark = tm1
@@ -1673,7 +1673,7 @@ tm1-300-design = normal
 ################################
 
 ### Device file
-tpch-01-device = databases/db-tpch-01
+tpch-01-device = databases/dora-db-tpch-01
 
 ### Device quota (in KB)
 ### 300MB
@@ -1684,7 +1684,7 @@ tpch-01-devicequota = 307200
 tpch-01-bufpoolsize = 307200
 
 ### Location of log directory
-tpch-01-logdir = log-tpch-01
+tpch-01-logdir = dora-log-tpch-01
 
 ### Size of log (in KB)
 ### 250MB (Does not matter, read-only)
@@ -1698,7 +1698,7 @@ tpch-01-logbufsize = 25600
 tpch-01-sf = 0.1
 
 ### System
-tpch-01-system = baseline
+tpch-01-system = dora
 
 ### Benchmark
 tpch-01-benchmark = tpch
@@ -1718,7 +1718,7 @@ tpch-01-design = normal
 ################################
 
 ### Device file
-tpch-1-device = databases/db-tpch-1
+tpch-1-device = databases/dora-db-tpch-1
 
 ### Device quota (in KB)
 ### 3GB
@@ -1729,7 +1729,7 @@ tpch-1-devicequota = 3072000
 tpch-1-bufpoolsize = 3072000
 
 ### Location of log directory
-tpch-1-logdir = log-tpch-1
+tpch-1-logdir = dora-log-tpch-1
 
 ### Size of log (in KB)
 ### 250MB (Does not matter, read-only)
@@ -1743,7 +1743,7 @@ tpch-1-logbufsize = 25600
 tpch-1-sf = 1
 
 ### System
-tpch-1-system = baseline
+tpch-1-system = dora
 
 ### Benchmark
 tpch-1-benchmark = tpch
@@ -1763,7 +1763,7 @@ tpch-1-design = normal
 ################################
 
 ### Device file
-tpch-10-device = databases/db-tpch-10
+tpch-10-device = databases/dora-db-tpch-10
 
 ### Device quota (in KB)
 ### 30GB
@@ -1774,7 +1774,7 @@ tpch-10-devicequota = 30720000
 tpch-10-bufpoolsize = 6291456
 
 ### Location of log directory
-tpch-10-logdir = log-tpch-10
+tpch-10-logdir = dora-log-tpch-10
 
 ### Size of log (in KB)
 ### 1GB (Does not matter, read-only)
@@ -1788,7 +1788,7 @@ tpch-10-logbufsize = 81920
 tpch-10-sf = 10
 
 ### System
-tpch-10-system = baseline
+tpch-10-system = dora
 
 ### Benchmark
 tpch-10-benchmark = tpch
@@ -1809,7 +1809,7 @@ tpch-10-design = normal
 ################################
 
 ### Device file
-ssb-1-device = databases/db-ssb-1
+ssb-1-device = databases/dora-db-ssb-1
 
 ### Device quota (in KB)
 ### 30GB
@@ -1820,7 +1820,7 @@ ssb-1-devicequota = 30720000
 ssb-1-bufpoolsize = 6291456             
 
 ### Location of log directory
-ssb-1-logdir = log-ssb-1
+ssb-1-logdir = dora-log-ssb-1
 
 ### Size of log (in KB)
 ### 1GBMB (Does not matter, read-only)
@@ -1834,7 +1834,7 @@ ssb-1-logbufsize = 81920
 ssb-1-sf = 1
 
 ### System
-ssb-1-system = baseline
+ssb-1-system = dora
 
 ### Benchmark
 ssb-1-benchmark = ssb
@@ -1853,7 +1853,7 @@ ssb-1-design = normal
 #######################
  
 ### Device file
-tpce-1-device = databases/db-tpce-1
+tpce-1-device = databases/dora-db-tpce-1
 
 ### Device quota (in KB)
 ### 5GB
@@ -1864,7 +1864,7 @@ tpce-1-devicequota = 5242880
 tpce-1-bufpoolsize = 5242880
 
 ### Location of log directory
-tpce-1-logdir = log-tpce-1
+tpce-1-logdir = dora-log-tpce-1
 
 ### Size of log (in KB)
 ### TotalLogSize = 4GB * 1 = 4GB 
@@ -1884,7 +1884,7 @@ tpce-1-wd = 10
 tpce-1-sf = 500
 
 ### system
-tpce-1-system = baseline
+tpce-1-system = dora
 
 ### benchmark
 tpce-1-benchmark = tpce
@@ -1902,7 +1902,7 @@ tpce-1-design = normal
 #######################
 
 ### Device file
-tpce-5-device = databases/db-tpce-5
+tpce-5-device = databases/dora-db-tpce-5
 
 ### Device quota (in KB)
 ### 20GB
@@ -1913,7 +1913,7 @@ tpce-5-devicequota = 20971520
 tpce-5-bufpoolsize = 20971520
 
 ### Location of log directory
-tpce-5-logdir = log-tpce-5
+tpce-5-logdir = dora-log-tpce-5
 
 ### Size of log (in KB)
 ### TotalLogSize = 4GB * 1 = 4GB 
@@ -1933,7 +1933,7 @@ tpce-5-wd = 75
 tpce-5-sf = 500
 
 ### system
-tpce-5-system = baseline
+tpce-5-system = dora
 
 ### benchmark
 tpce-5-benchmark = tpce
@@ -1952,7 +1952,7 @@ tpce-5-design = normal
 #######################
 
 ### Device file
-tpce-10-device = databases/db-tpce-10
+tpce-10-device = databases/dora-db-tpce-10
 
 ### Device quota (in KB)
 ### 20GB
@@ -1963,7 +1963,7 @@ tpce-10-devicequota = 20971520
 tpce-10-bufpoolsize = 20971520
 
 ### Location of log directory
-tpce-10-logdir = log-tpce-10
+tpce-10-logdir = dora-log-tpce-10
 
 ### Size of log (in KB)
 ### TotalLogSize = 4GB * 1 = 4GB 
@@ -1983,7 +1983,7 @@ tpce-10-wd = 150
 tpce-10-sf = 500
 
 ### system
-tpce-10-system = baseline
+tpce-10-system = dora
 
 ### benchmark
 tpce-10-benchmark = tpce
@@ -2001,7 +2001,7 @@ tpce-10-design = normal
 #######################
 
 ### Device file
-tpce-20-device = databases/db-tpce-20
+tpce-20-device = databases/dora-db-tpce-20
 
 ### Device quota (in KB)
 ### 50GB
@@ -2012,7 +2012,7 @@ tpce-20-devicequota = 52428800
 tpce-20-bufpoolsize = 20971520
 
 ### Location of log directory
-tpce-20-logdir = log-tpce-20
+tpce-20-logdir = dora-log-tpce-20
 
 ### Size of log (in KB)
 ### TotalLogSize = 4GB * 1 = 4GB 
@@ -2032,7 +2032,7 @@ tpce-20-wd = 300
 tpce-20-sf = 500
 
 ### system
-tpce-20-system = baseline
+tpce-20-system = dora
 
 ### benchmark
 tpce-20-benchmark = tpce

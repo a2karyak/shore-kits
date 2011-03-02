@@ -583,21 +583,31 @@ int main(int argc, char* argv[])
                //| TRACE_DEBUG
                );
 
-    // Check if there is any particular configuration selected
-    envVar* ev = envVar::instance();
-
     _g_shore_env = NULL;
     _g_mon = NULL;
 
     // Get options
     bool netmode = false;
     int netport = 0;
-    string config, system, physical;
-    int c = 0;
+    string system,physical;
     int iRange = 0;    
+    int c = 0;
+    string config = DEFAULTCONFIG;
+    string confFile = ENVCONFFILE;
 
-    while ((c = getopt(argc,argv,"rnp:c:s:d:xg:f:h")) != -1) {
+    envVar* ev = envVar::instance();
+
+    // Check if there is any particular configuration selected
+    // We first need to make sure we use the correct config file
+
+    while ((c = getopt(argc,argv,"f:rnp:c:s:d:xg:h")) != -1) {
         switch (c) {
+        case 'f':
+            TRACE( TRACE_ALWAYS, "CONFIGFILE (%s)\n", optarg);
+            confFile = (string)optarg;            
+            ev->setConfFile(confFile);
+            ev->setConfiguration(config);
+            break;
         case 'r':
             TRACE( TRACE_ALWAYS, "CLOBBERING DB\n");
             ev->setVarInt("db-clobberdev",1);
@@ -638,11 +648,6 @@ int main(int argc, char* argv[])
             iRange = atoi(optarg);
             TRACE( TRACE_ALWAYS, "RANGE (%d)\n", iRange);
             ev->setVarInt("records-to-access",iRange);
-            break;
-        case 'f':
-            TRACE( TRACE_ALWAYS, "CONFIGFILE (%s)\n", optarg);
-            config = (string)optarg;
-            ev->setConfFile(config);
             break;
         case 'h':
             usage();
