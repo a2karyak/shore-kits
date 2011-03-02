@@ -259,6 +259,21 @@ const int ACTIONS_PER_RVP_POOL_SZ = 30; // should be comparable with batch_sz
 
 
 
+#define DECLARE_ALTER_DORA_TRX(trxlid,trximpl)				\
+    w_rc_t dora_##trximpl(const int xct_id, trx_result_tuple_t& atrt,	\
+			  trxlid##_input_t& in, const bool bWake);	\
+    w_rc_t dora_##trximpl(const int xct_id, trx_result_tuple_t& atrt,	\
+			  const int specificID, const bool bWake)
+
+#define DEFINE_ALTER_DORA_WITHOUT_INPUT_TRX_WRAPPER(cname,trxlid,trximpl) \
+    w_rc_t cname::dora_##trximpl(const int xct_id, trx_result_tuple_t& atrt, \
+				 const int specificID, const bool bWake) { \
+        trxlid##_input_t in = create_##trxlid##_input(_scaling_factor, specificID); \
+        return (dora_##trximpl(xct_id, atrt, in, bWake)); }
+
+
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 //

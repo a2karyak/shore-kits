@@ -645,6 +645,168 @@ done:
 }
 
 
+/******************************************************************** 
+ *
+ * DORA TM1 UPD_SUB_DATA MIX
+ *
+ ********************************************************************/
+
+w_rc_t mid_usdmix_rvp::_run() 
+{
+    // 1. Setup the final RVP
+    final_usdmix_rvp* frvp = _penv->new_final_usdmix_rvp(_xct,_tid,_xct_id,_result,_actions);
+
+    // 2. Check if aborted during previous phase
+    CHECK_MIDWAY_RVP_ABORTED(frvp);
+
+    // 3. Generate the action
+    upd_sf_usdmix_action* upd_sf = _penv->new_upd_sf_usdmix_action(_xct,_tid,frvp,_in);
+
+    TRACE( TRACE_TRX_FLOW, "Next phase (%d)\n", _tid.get_lo());    
+
+    // 4a. Decide about partition
+    // 4b. Enqueue
+    {        
+        irpImpl* my_sf_part = _penv->decide_part(_penv->sf(),_in._s_id);
+
+        // SF_PART_CS
+        CRITICAL_SECTION(sf_part_cs, my_sf_part->_enqueue_lock);
+        if (my_sf_part->enqueue(upd_sf,_bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_SF_USD\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+    }
+    return (RCOK);
+}
+
+DEFINE_DORA_FINAL_RVP_CLASS(final_usdmix_rvp,upd_sub_data);
+
+
+/******************************************************************** 
+ *
+ * DORA TM1 UPD_SUB_DATA MIX ACTIONS
+ *
+ * (1) UPD-SUB
+ * (2) UPD-SF
+ *
+ ********************************************************************/
+
+
+void upd_sub_usdmix_action::calc_keys()
+{
+    _down.push_back(_in._s_id);
+}
+
+
+w_rc_t upd_sub_usdmix_action::trx_exec() 
+{
+    assert (_penv);
+    w_rc_t e = RCOK;
+
+    // get table tuple from the cache
+    // Subscriber
+    table_row_t* prsub = _penv->sub_man()->get_tuple();
+    assert (prsub);
+
+    rep_row_t areprow(_penv->sub_man()->ts());
+    areprow.set(_penv->sub_desc()->maxsize()); 
+    prsub->_rep = &areprow;
+
+    { // make gotos safe
+
+        /* UPDATE Subscriber
+         * SET bit_1 = <bit_rnd>
+         * WHERE s_id = <s_id rnd subid>;
+         *
+         * plan: index probe on "S_IDX"
+         */
+
+        // 1. Update Subscriber
+        TRACE( TRACE_TRX_FLOW, 
+               "App: %d USD:sub-idx-nl (%d)\n", _tid.get_lo(), _in._s_id);
+
+        e = _penv->sub_man()->sub_idx_nl(_penv->db(), prsub, _in._s_id);
+        if (e.is_error()) { goto done; }
+
+        prsub->set_value(2, _in._a_bit);
+
+        e = _penv->sub_man()->update_tuple(_penv->db(), prsub, NL);
+        if (e.is_error()) { goto done; }
+
+    } // goto
+
+#ifdef PRINT_TRX_RESULTS
+    // dumps the status of all the table rows used
+    prsub->print_tuple();
+#endif
+
+done:
+    // give back the tuple
+    _penv->sub_man()->give_tuple(prsub);
+    return (e);
+}
+
+
+
+void upd_sf_usdmix_action::calc_keys()
+{
+    int sftype = _in._sf_type;
+    _down.push_back(_in._s_id);
+    _down.push_back(sftype);
+}
+
+
+w_rc_t upd_sf_usdmix_action::trx_exec() 
+{
+    assert (_penv);
+    w_rc_t e = RCOK;
+
+    // get table tuple from the cache
+    // Subscriber
+    table_row_t* prsf = _penv->sf_man()->get_tuple();
+    assert (prsf);
+
+    rep_row_t areprow(_penv->sf_man()->ts());
+    areprow.set(_penv->sf_desc()->maxsize()); 
+    prsf->_rep = &areprow;
+
+    { // make gotos safe
+
+        /* UPDATE Special_Facility
+         * SET data_a = <data_a rnd>
+         * WHERE s_id = <s_id value subid>
+         * AND sf_type = <sf_type rnd>;
+         *
+         * plan: index probe on "SF_IDX"
+         */
+
+        // 2. Update SpecialFacility
+        TRACE( TRACE_TRX_FLOW, 
+               "App: %d USD:sf-idx-nl (%d) (%d)\n", 
+               _tid.get_lo(), _in._s_id, _in._sf_type);
+
+        e = _penv->sf_man()->sf_idx_nl(_penv->db(), prsf, _in._s_id, _in._sf_type);
+        if (e.is_error()) { goto done; }
+
+        prsf->set_value(4, _in._a_data);
+
+        e = _penv->sf_man()->update_tuple(_penv->db(), prsf, NL);
+        if (e.is_error()) { goto done; }
+
+    } // goto
+
+#ifdef PRINT_TRX_RESULTS
+    // dumps the status of all the table rows used
+    prsf->print_tuple();
+#endif
+
+done:
+    // give back the tuple
+    _penv->sf_man()->give_tuple(prsf);
+    return (e);
+}
+
 
 /******************************************************************** 
  *

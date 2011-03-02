@@ -88,6 +88,12 @@ class upd_sub_usd_action;
 class upd_sf_usd_action;
 #endif
 
+// TM1 UpdSubData Mix
+class final_usdmix_rvp;
+class mid_usdmix_rvp;
+class upd_sub_usdmix_action;
+class upd_sf_usdmix_action;
+
 // TM1 UpdLocation
 class final_ul_rvp;
 class upd_sub_ul_action;
@@ -243,6 +249,22 @@ public:
 #endif
 
 
+    ////////////////////
+    // UpdSubData Mix //
+    ////////////////////
+
+    // trxlid:  upd_sub_data
+    // trximpl: upd_sub_data_mix
+
+    DECLARE_ALTER_DORA_TRX(upd_sub_data,upd_sub_data_mix);
+    
+    DECLARE_DORA_MIDWAY_RVP_GEN_FUNC(mid_usdmix_rvp,upd_sub_data_input_t);
+    DECLARE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(final_usdmix_rvp);
+
+    DECLARE_DORA_ACTION_GEN_FUNC(upd_sub_usdmix_action,mid_usdmix_rvp,upd_sub_data_input_t);
+    DECLARE_DORA_ACTION_GEN_FUNC(upd_sf_usdmix_action,rvp_t,upd_sub_data_input_t);
+
+    
     ////////////
     // UpdLoc //
     ////////////

@@ -83,6 +83,7 @@ DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTM1Env,get_sub_data);
 DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTM1Env,get_new_dest);
 DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTM1Env,get_acc_data);
 DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTM1Env,upd_sub_data);
+DEFINE_ALTER_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTM1Env,upd_sub_data,upd_sub_data_mix);
 DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTM1Env,upd_loc);
 DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTM1Env,ins_call_fwd);
 DEFINE_DORA_WITHOUT_INPUT_TRX_WRAPPER(DoraTM1Env,del_call_fwd);
@@ -454,6 +455,63 @@ w_rc_t DoraTM1Env::dora_upd_sub_data(const int xct_id,
 }
 
 #endif
+
+
+/******************************************************************** 
+ *
+ * DORA TM1 UPD_SUB_DATA MIX
+ *
+ ********************************************************************/
+
+w_rc_t DoraTM1Env::dora_upd_sub_data_mix(const int xct_id, 
+					 trx_result_tuple_t& atrt, 
+					 upd_sub_data_input_t& in,
+					 const bool bWake)
+{
+    if(_start_imbalance > 0 && !_bAlarmSet) {
+	CRITICAL_SECTION(alarm_cs, _alarm_lock);
+	if(!_bAlarmSet) {
+	    alarm(_start_imbalance);
+	    _bAlarmSet = true;
+	}
+    }
+	
+    // 1. Initiate transaction
+    tid_t atid;   
+
+    W_DO(_pssm->begin_xct(atid));
+    TRACE( TRACE_TRX_FLOW, "Begin (%d)\n", atid.get_lo());
+
+    xct_t* pxct = smthread_t::me()->xct();
+
+    // 2. Detatch self from xct
+    assert (pxct);
+    smthread_t::me()->detach_xct(pxct);
+    TRACE( TRACE_TRX_FLOW, "Detached from (%d)\n", atid.get_lo());
+
+    // 3. Setup the next RVP
+    // PH1 consists of 1 action
+    mid_usdmix_rvp* rvp = new_mid_usdmix_rvp(pxct,atid,xct_id,atrt,in,bWake);    
+
+    // 4. Generate the action
+    upd_sub_usdmix_action* upd_sub = new_upd_sub_usdmix_action(pxct,atid,rvp,in);
+
+    // 5a. Decide about partition
+    // 5b. Enqueue
+    {        
+        irpImpl* my_sub_part = decide_part(sub(),in._s_id);
+
+        // SUB_PART_CS
+        CRITICAL_SECTION(sub_part_cs, my_sub_part->_enqueue_lock);
+        if (my_sub_part->enqueue(upd_sub,bWake)) {
+            TRACE( TRACE_DEBUG, "Problem in enqueueing UPD_SUB\n");
+            assert (0); 
+            return (RC(de_PROBLEM_ENQUEUE));
+        }
+    }
+    return (RCOK); 
+}
+
 
 /******************************************************************** 
  *

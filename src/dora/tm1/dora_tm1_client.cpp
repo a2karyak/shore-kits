@@ -53,6 +53,7 @@ const int XCT_TM1_DORA_CALL_FWD_MIX_BENCH  = 230;
 const int XCT_TM1_DORA_INS_CALL_FWD_BENCH  = 231;
 const int XCT_TM1_DORA_DEL_CALL_FWD_BENCH  = 232;
 
+const int XCT_TM1_DORA_UPD_SUB_DATA_MIX  = 234;
 
 /********************************************************************* 
  *
@@ -106,6 +107,9 @@ w_rc_t dora_tm1_client_t::submit_one(int xct_type, int xctid)
     bool bWake = false;
     if (xct_type == XCT_TM1_DORA_MIX) {        
         xct_type = XCT_TM1_DORA_MIX + random_tm1_xct_type(rand(100));
+	if(xct_type == XCT_TM1_DORA_UPD_SUB_DATA) {
+	    xct_type = XCT_TM1_DORA_UPD_SUB_DATA_MIX;
+	}
         bWake = true;
     }
 
@@ -159,6 +163,8 @@ w_rc_t dora_tm1_client_t::submit_one(int xct_type, int xctid)
     case XCT_TM1_DORA_INS_CALL_FWD_BENCH:
         return (_tm1db->dora_ins_call_fwd_bench(xctid,atrt,selid,true));
 
+    case XCT_TM1_DORA_UPD_SUB_DATA_MIX:
+	return (_tm1db->dora_upd_sub_data_mix(xctid,atrt,selid,bWake));
 
     default:
         assert (0); // UNKNOWN TRX-ID

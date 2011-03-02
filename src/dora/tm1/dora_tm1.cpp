@@ -401,6 +401,16 @@ DEFINE_DORA_ACTION_GEN_FUNC(upd_sf_usd_action,rvp_t,upd_sub_data_input_t,int,Dor
 #endif
 
 
+////////////////////
+// UpdSubData Mix //
+////////////////////
+DEFINE_DORA_MIDWAY_RVP_GEN_FUNC(mid_usdmix_rvp,upd_sub_data_input_t,DoraTM1Env);
+DEFINE_DORA_FINAL_RVP_WITH_PREV_GEN_FUNC(final_usdmix_rvp,DoraTM1Env);
+
+DEFINE_DORA_ACTION_GEN_FUNC(upd_sub_usdmix_action,mid_usdmix_rvp,upd_sub_data_input_t,int,DoraTM1Env);
+DEFINE_DORA_ACTION_GEN_FUNC(upd_sf_usdmix_action,rvp_t,upd_sub_data_input_t,int,DoraTM1Env);
+
+
 ////////////
 // UpdLoc //
 ////////////

@@ -114,6 +114,19 @@ DECLARE_DORA_ACTION_NO_RVP_CLASS(upd_sf_usd_action,int,DoraTM1Env,upd_sub_data_i
 
 /******************************************************************** 
  *
+ * DORA TM1 UPD_SUB_DATA MIX
+ *
+ ********************************************************************/
+DECLARE_DORA_EMPTY_MIDWAY_RVP_CLASS(mid_usdmix_rvp,DoraTM1Env,upd_sub_data_input_t,1,1);
+DECLARE_DORA_FINAL_RVP_CLASS(final_usdmix_rvp,DoraTM1Env,1,2);
+
+DECLARE_DORA_ACTION_WITH_RVP_CLASS(upd_sub_usdmix_action,int,DoraTM1Env,mid_usdmix_rvp,upd_sub_data_input_t,1);
+
+DECLARE_DORA_ACTION_NO_RVP_CLASS(upd_sf_usdmix_action,int,DoraTM1Env,upd_sub_data_input_t,2);
+
+
+/******************************************************************** 
+ *
  * DORA TM1 UPD_LOC
  *
  ********************************************************************/
