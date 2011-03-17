@@ -136,7 +136,7 @@ SM_SHORE = \
    $(SMS)/shore_row.cpp \
    $(SMS)/shore_index.cpp \
    $(SMS)/shore_sort_buf.cpp \
-   $(SMS)/shore_asc_sort_buf.cpp \
+   $(SMS)/shore_desc_sort_buf.cpp \
    $(SMS)/shore_reqs.cpp \
    $(SMS)/shore_flusher.cpp \
    $(SMS)/shore_env.cpp \
@@ -262,8 +262,22 @@ WL_TPCE_SHORE = \
    $(SW)/tpce/shore_tpce_schema.cpp \
    $(SW)/tpce/shore_tpce_schema_man.cpp \
    $(SW)/tpce/shore_tpce_env.cpp \
-   $(SW)/tpce/shore_tpce_xct.cpp \
    $(SW)/tpce/shore_tpce_client.cpp
+
+WL_TPCE_SHORE_XCTS = \
+   $(SW)/tpce/shore_tpce_xct_populate.cpp \
+   $(SW)/tpce/shore_tpce_xct_trade_order.cpp \
+   $(SW)/tpce/shore_tpce_xct_trade_result.cpp \
+   $(SW)/tpce/shore_tpce_xct_trade_lookup.cpp \
+   $(SW)/tpce/shore_tpce_xct_customer_position.cpp \
+   $(SW)/tpce/shore_tpce_xct_market_feed.cpp \
+   $(SW)/tpce/shore_tpce_xct_trade_cleanup.cpp \
+   $(SW)/tpce/shore_tpce_xct_market_watch.cpp \
+   $(SW)/tpce/shore_tpce_xct_data_maintenance.cpp \
+   $(SW)/tpce/shore_tpce_xct_security_detail.cpp \
+   $(SW)/tpce/shore_tpce_xct_trade_status.cpp \
+   $(SW)/tpce/shore_tpce_xct_broker_volume.cpp \
+   $(SW)/tpce/shore_tpce_xct_trade_update.cpp
 
 WL_TPCE_SHORE_EGEN = \
    $(SW)/tpce/egen/DateTime.cpp \
@@ -310,7 +324,8 @@ lib_libworkload_a_SOURCES = \
    $(WL_TPCH_DBGEN_SHORE) \
    $(WL_TPCH_SHORE) \
    $(WL_TPCE_SHORE_EGEN) \
-   $(WL_TPCE_SHORE)
+   $(WL_TPCE_SHORE) \
+   $(WL_TPCE_SHORE_XCTS)
 
 
 if USE_QPIPE

@@ -102,7 +102,7 @@ customer_t::customer_t(const uint4_t& pd)
     create_primary_idx_desc("C_INDEX", 0, keys, 1, pd); //unique
     //create_index_desc("C_INDEX_2", 0, keys2, 2); //unique
     //create_index_desc("C_INDEX_3", 0, keys3, 2); //unique
-    create_index_desc("C_INDEX_4", 0, keys4, 1, false, false, pd); //non-unique (not pk)
+    create_index_desc("C_INDEX_4", 0, keys4, 1, true, false, pd); //non-unique (not pk)
 }
 
 
@@ -145,18 +145,18 @@ holding_t::holding_t(const uint4_t& pd)
 {
     _desc[0].setup(SQL_LONG,    "H_T_ID");//FK (T_)		//8
     _desc[1].setup(SQL_LONG,    "H_CA_ID"); //FK (HS_)		//8
-    _desc[2].setup(SQL_FIXCHAR, "H_S_SYMB", 15);//FK (HS_)	//16
+    _desc[2].setup(SQL_FIXCHAR, "H_S_SYMB", 16);//FK (HS_)	//16, padded
     _desc[3].setup(SQL_LONG,    "H_DTS"); //DATETIME		//8
     _desc[4].setup(SQL_FLOAT,   "H_PRICE");			//8
     _desc[5].setup(SQL_INT,     "H_QTY");			//8
 
     uint  keys[1] = { 0 };
     uint  keys2[4] = { 1, 2, 3, 0 };
-    uint  keys3[3] = { 1, 3, 0 };
+    //uint  keys3[3] = { 1, 3, 0 };
 
     create_primary_idx_desc("H_INDEX", 0, keys, 1, pd); //unique
-    //create_index_desc("H_INDEX_2", 0, keys2, 4); //unique, unaligned
-    create_index_desc("H_INDEX_3", 0, keys3, 3, true, false, pd); //unique
+    create_index_desc("H_INDEX_2", 0, keys2, 4, true, false, pd); //unique
+    //create_index_desc("H_INDEX_3", 0, keys3, 3, true, false, pd); //unique
 }
 
 
@@ -180,7 +180,7 @@ holding_summary_t::holding_summary_t(const uint4_t& pd)
     : table_desc_t("HOLDING_SUMMARY", TPCE_HOLDING_SUMMARY_FCOUNT, pd) //32B
 {
     _desc[0].setup(SQL_LONG,    "HS_CA_ID");//FK (CA_)	
-    _desc[1].setup(SQL_FIXCHAR, "HS_S_SYMB", 15); //FK (S_)
+    _desc[1].setup(SQL_FIXCHAR, "HS_S_SYMB", 16); //FK (S_), //was 15, padded
     _desc[2].setup(SQL_INT,     "HS_QTY");
 
     uint  keys[2] = { 0, 1 };
@@ -209,9 +209,11 @@ watch_list_t::watch_list_t(const uint4_t& pd)
 
     uint  keys[1] = { 0 };
     uint  keys2[2] = { 1, 0 };
+    uint  keys3[1] = { 1 };
 
     //create_primary_idx_desc("WL_INDEX", 0, keys, 1); //unique
     create_primary_idx_desc("WL_INDEX_2", 0, keys2, 2, pd); //unique
+    create_index_desc("WL_INDEX_3", 0, keys3, 1, true, false, pd); //unique
 }
 
 
@@ -236,6 +238,7 @@ broker_t::broker_t(const uint4_t& pd)
     uint  keys4[1] = { 2 };
 
     create_primary_idx_desc("B_INDEX", 0, keys, 1, pd); //unique
+    //create_index_desc("B_INDEX_2", 0, keys2, 2, true, false, pd); //unique
     create_index_desc("B_INDEX_4", 0, keys4, 1, true, false, pd); //unique, to solve alignment problem
 }
 
@@ -257,14 +260,13 @@ cash_transaction_t::cash_transaction_t(const uint4_t& pd)
 charge_t::charge_t(const uint4_t& pd)
     : table_desc_t("CHARGE", TPCE_CHARGE_FCOUNT, pd) //14B
 {
-    _desc[0].setup(SQL_FIXCHAR,  "CH_TT_ID", 3);//FK (TT_)
+    _desc[0].setup(SQL_FIXCHAR,  "CH_TT_ID", 4);//FK (TT_)//padded
     _desc[1].setup(SQL_SMALLINT, "CH_C_TIER"); 
     _desc[2].setup(SQL_FLOAT,    "CH_CHRG");
 	 	
     uint  keys[2] = { 0 , 1 }; 
-    uint  keys2[2] = { 0 };
 
-    create_index_desc("CH_INDEX_2", 0, keys2, 1, false, false, pd); //non-unique
+    create_primary_idx_desc("CH_INDEX", 0, keys, 2, pd); //unique
 }
 
 
@@ -272,17 +274,17 @@ commission_rate_t::commission_rate_t(const uint4_t& pd)
     : table_desc_t("COMMISSION_RATE", TPCE_COMMISSION_RATE_FCOUNT, pd) //37B
 {
     _desc[0].setup(SQL_SMALLINT, "CR_C_TIER");			
-    _desc[1].setup(SQL_FIXCHAR,  "CR_TT_ID", 3); //FK (TT_)
-    _desc[2].setup(SQL_FIXCHAR,  "CR_EX_ID", 6);//FK (EX_)
+    _desc[1].setup(SQL_FIXCHAR,  "CR_TT_ID", 6); //FK (TT_), padded
+    _desc[2].setup(SQL_FIXCHAR,  "CR_EX_ID", 8);//FK (EX_), padded
     _desc[3].setup(SQL_INT,      "CR_FROM_QTY");   //// DOUBLE IN EGEN
     _desc[4].setup(SQL_INT,      "CR_TO_QTY");////DOUBLE IN EGEN
     _desc[5].setup(SQL_FLOAT,    "CR_RATE");
 		
     uint  keys[4] = { 0, 1, 2, 3 };
-    uint  keys2[1] = { 3 }; 
+    //uint  keys2[1] = { 3 }; 
 
-    // CK: I could not create an index with fields 0 and 3
-    create_index_desc("CR_INDEX_2", 0, keys2, 1, false, false, pd); //non-unique 
+   // create_primary_idx_desc("CR_INDEX", 0, keys, 4, pd); //unique
+    create_index_desc("CR_INDEX", 0, keys, 4, false, false, pd); //non-unique 
 }
 
 
@@ -308,7 +310,7 @@ trade_t::trade_t(const uint4_t& pd)
     _desc[2].setup(SQL_FIXCHAR, "T_ST_ID",4); //FK (ST_)	//5
     _desc[3].setup(SQL_FIXCHAR, "T_TT_ID",3);//FK (TT_)	//4
     _desc[4].setup(SQL_BIT,     "T_IS_CASH");  //INT IN EGEN	//1
-    _desc[5].setup(SQL_FIXCHAR, "T_S_SYMB",15);//FK (S_)	//16
+    _desc[5].setup(SQL_FIXCHAR, "T_S_SYMB",16);//FK (S_)	//16 //padded
     _desc[6].setup(SQL_INT,     "T_QTY"); //4
     _desc[7].setup(SQL_FLOAT,   "T_BID_PRICE"); //8
     _desc[8].setup(SQL_LONG,    "T_CA_ID");//FK (CA_) //8
@@ -320,14 +322,14 @@ trade_t::trade_t(const uint4_t& pd)
     _desc[14].setup(SQL_BIT,    "T_LIFO"); //INT IN EGEN
 
     uint  keys[1] = { 0 };	
-    uint  keys2[3] = { 8, 1, 0 };
-
-    uint  keys3[3] = { 5, 1, 0 };	
-    uint  keys4[1] = { 1 };
+    uint  keys2[2] = { 8, 1 };
+    uint  keys3[2] = { 5, 1 };	
+    //uint  keys4[1] = { 1 };
 
     create_primary_idx_desc("T_INDEX", 0, keys, 1, pd); //unique
-    create_index_desc("T_INDEX_2", 0, keys2, 3, true, false, pd); //unique
-    create_index_desc("T_INDEX_4", 0, keys4, 1, false, false, pd); //non-unique
+    create_index_desc("T_INDEX_2", 0, keys2, 2, false, false, pd); //non-unique
+    create_index_desc("T_INDEX_3", 0, keys3, 2, false, false, pd); //non-unique
+    //create_index_desc("T_INDEX_4", 0, keys4, 1, false, false, pd); //non-unique
 }
 
 
@@ -347,9 +349,9 @@ trade_history_t::trade_history_t(const uint4_t& pd)
 trade_request_t::trade_request_t(const uint4_t& pd)
     : table_desc_t("TRADE_REQUEST", TPCE_TRADE_REQUEST_FCOUNT, pd) //44B
 {
-    _desc[0].setup(SQL_LONG,	"TR_T_ID");
+    _desc[0].setup(SQL_LONG,	  "TR_T_ID");
     _desc[1].setup(SQL_FIXCHAR,	"TR_TT_ID", 3); //FK (TT_)
-    _desc[2].setup(SQL_FIXCHAR, "TR_S_SYMB", 15);//FK (EX_)
+    _desc[2].setup(SQL_FIXCHAR, "TR_S_SYMB", 16);//FK (EX_), was 15, fixed for padding
     _desc[3].setup(SQL_INT,     "TR_QTY");
     _desc[4].setup(SQL_FLOAT,   "TR_BID_PRICE");
     _desc[5].setup(SQL_LONG,    "TR_B_ID"); //called TR_CA_ID in EGEN?, (FK B_)
@@ -357,24 +359,25 @@ trade_request_t::trade_request_t(const uint4_t& pd)
     uint  keys[1] = { 0 };
     uint  keys2[3] = { 5, 2, 0 }; //alignment problem
     uint  keys3[5] = { 2, 0, 1, 4, 3 };
-    uint  keys4[1] = { 5 };
-
+    uint  keys4[2] = { 5, 2 }; //instead of 2
+    uint  keys5[2] = { 2 ,0};
     create_primary_idx_desc("TR_INDEX", 0, keys, 1, pd); //unique
-    //create_index_desc("TR_INDEX_2", 0, keys2, 3); //unique
+    create_index_desc("TR_INDEX_2", 0, keys2, 3); //unique
     //create_index_desc("TR_INDEX_3", 0, keys3, 5); //unique   
-    create_index_desc("TR_INDEX_4", 0, keys4, 1, false, false, pd); //non-unique
+    //create_index_desc("TR_INDEX_4", 0, keys4, 2, false, false, pd); //non-unique
+    //create_index_desc("TR_INDEX_5", 0, keys5, 1, false, false, pd); //non-unique
 }
 
 
 trade_type_t::trade_type_t(const uint4_t& pd) 
     : table_desc_t("TRADE_TYPE", TPCE_TRADE_TYPE_FCOUNT, pd) //19B
 {
-    _desc[0].setup(SQL_FIXCHAR,	"TT_ID", 3);
+    _desc[0].setup(SQL_FIXCHAR,	"TT_ID", 4);//was 3, padded
     _desc[1].setup(SQL_FIXCHAR,	"TT_NAME", 12); 
     _desc[2].setup(SQL_BIT,  	"TT_IS_SELL"); //INT IN EGEN
     _desc[3].setup(SQL_BIT,   	"TT_IS_MRKT"); //INT IN EGEN
 		 
-    uint  keys[4] = { 0 };
+    uint  keys[1] = { 0 };
     uint  keys2[4] = { 0, 3, 2, 1 };
 
     create_primary_idx_desc("TT_INDEX", 0, keys, 1, pd); //unique
@@ -390,22 +393,26 @@ company_t::company_t(const uint4_t& pd)
     : table_desc_t("COMPANY", TPCE_COMPANY_FCOUNT, pd) //296B
 {
     _desc[0].setup(SQL_LONG,    "CO_ID");	 //8
-    _desc[1].setup(SQL_FIXCHAR, "CO_ST_ID",4);	 //5
-    _desc[2].setup(SQL_FIXCHAR, "CO_NAME",60);	 //61
-    _desc[3].setup(SQL_FIXCHAR,	"CO_IN_ID",2);	 //3
-    _desc[4].setup(SQL_FIXCHAR,	"CO_SP_RATE",4); //5
-    _desc[5].setup(SQL_FIXCHAR,	"CO_CEO",46);    //47
+    _desc[1].setup(SQL_FIXCHAR, "CO_ST_ID", 4);	 //5
+    _desc[2].setup(SQL_FIXCHAR, "CO_NAME", 60);	 //61
+    _desc[3].setup(SQL_FIXCHAR,	"CO_IN_ID", 4);	 //3 //should be 2, padding for index 2
+    _desc[4].setup(SQL_FIXCHAR,	"CO_SP_RATE", 4); //5
+    _desc[5].setup(SQL_FIXCHAR,	"CO_CEO", 46);    //47
     _desc[6].setup(SQL_LONG,    "CO_AD_ID");     //8
     _desc[7].setup(SQL_FIXCHAR, "CO_DESC", 150); //151
     _desc[8].setup(SQL_LONG,    "CO_OPEN_DATE"); //8
 		
     uint  keys1[1] = { 0 };
     uint  keys2[2] = { 2, 0 }; //alignment problem
-    uint  keys3[2] = { 3, 0 }; //not used
-    uint  keys4[3] = { 2 };	
+    uint  keys3[2] = { 3, 0 }; 
+//    uint  keys4[1] = { 2 };	
+//    uint  keys5[1] = { 3 };	
     
     create_primary_idx_desc("CO_INDEX", 0, keys1, 1, pd); //unique
-    create_index_desc("CO_INDEX_4", 0, keys4, 1, false, false, pd); //non-unique
+    create_index_desc("CO_INDEX_2", 0, keys2, 2, true, false, pd); //unique
+    create_index_desc("CO_INDEX_3", 0, keys3, 2, true, false, pd); //unique
+//    create_index_desc("CO_INDEX_4", 0, keys4, 1, false, false, pd); //non-unique
+//    create_index_desc("CO_INDEX_5", 0, keys5, 1, false, false, pd); //non-unique
 }
 
 company_competitor_t::company_competitor_t(const uint4_t& pd)
@@ -413,13 +420,13 @@ company_competitor_t::company_competitor_t(const uint4_t& pd)
 {
     _desc[0].setup(SQL_LONG,    "CP_CO_ID");
     _desc[1].setup(SQL_LONG,    "CP_COMP_CO_ID");
-    _desc[2].setup(SQL_FIXCHAR, "CP_IN_ID", 2);
+    _desc[2].setup(SQL_FIXCHAR, "CP_IN_ID", 4);//was 2, padded
 		
     uint  keys1[3] = { 0, 1, 2 };
     uint  keys2[1] = { 0 }; //used
 	
-    //create_primary_idx_desc("CP_INDEX", 0, keys1, 3); //unique
-    create_index_desc("CP_INDEX_2", 0, keys2, 1, false, false, pd); //non-unique
+    create_primary_idx_desc("CP_INDEX", 0, keys1, 3, pd); //unique
+    //create_index_desc("CP_INDEX_2", 0, keys2, 1, false, false, pd); //non-unique
 }
 
 
@@ -427,7 +434,7 @@ daily_market_t::daily_market_t(const uint4_t& pd)
     : table_desc_t("DAILY_MARKET", TPCE_DAILY_MARKET_FCOUNT, pd) //56B
 {
     _desc[0].setup(SQL_LONG,    "DM_DATE");
-    _desc[1].setup(SQL_FIXCHAR, "DM_S_SYMB", 15);
+    _desc[1].setup(SQL_FIXCHAR, "DM_S_SYMB", 16); //was 15, padded
     _desc[2].setup(SQL_FLOAT,   "DM_CLOSE"); 	
     _desc[3].setup(SQL_FLOAT,   "DM_HIGH");
     _desc[4].setup(SQL_FLOAT,   "DM_LOW");
@@ -438,12 +445,11 @@ daily_market_t::daily_market_t(const uint4_t& pd)
     uint  keys3[1] = { 0 };
     uint  keys4[1] = { 1 };
 	
-#ifdef ALIGNEMENT_RESOLVED
     create_primary_idx_desc("DM_INDEX", 0, keys1, 2, pd); //unique
     //create_index_desc("DM_INDEX_2", 0, keys2, 2); //unique
-#endif
-    create_index_desc("DM_INDEX_3", 0, keys3, 1, false, false, pd); //non-unique
-    create_index_desc("DM_INDEX_4", 0, keys4, 1, false, false, pd); //non-unique
+    
+    //create_index_desc("DM_INDEX_3", 0, keys3, 1, false, false, pd); //non-unique
+    //create_index_desc("DM_INDEX_4", 0, keys4, 1, false, false, pd); //non-unique
 }
 
 
@@ -491,24 +497,24 @@ financial_t::financial_t(const uint4_t& pd)
 industry_t::industry_t(const uint4_t& pd) 
     : table_desc_t("INDUSTRY", TPCE_INDUSTRY_FCOUNT, pd) //57B
 {
-    _desc[0].setup(SQL_FIXCHAR, "IN_ID", 2);
-    _desc[1].setup(SQL_FIXCHAR, "IN_NAME", 50);
+    _desc[0].setup(SQL_FIXCHAR, "IN_ID",3); // should be 2
+    _desc[1].setup(SQL_FIXCHAR, "IN_NAME", 51); // should be 50
     _desc[2].setup(SQL_FIXCHAR, "IN_SC_ID", 2);
 		
     uint  keys1[1] = { 0 };
-    uint  keys2[2] = { 1, 0 };
+    uint  keys2[1] = { 1 };
     uint  keys3[2] = { 2, 0 };
 	
     create_primary_idx_desc("IN_INDEX", 0, keys1, 1, pd); //unique
-    create_index_desc("IN_INDEX_2", 0, keys2, 2, true, false, pd); //unique
-    //create_index_desc("IN_INDEX_3", 0, keys3, 2); //unique
+    create_index_desc("IN_INDEX_2", 0, keys2, 1, true, false, pd); //unique
+    create_index_desc("IN_INDEX_3", 0, keys3, 2); //unique
 }
 
 
 last_trade_t::last_trade_t(const uint4_t& pd)
     : table_desc_t("LAST_TRADE", TPCE_LAST_TRADE_FCOUNT, pd) //48B
 {
-    _desc[0].setup(SQL_FIXCHAR, "LT_S_SYMB", 15);
+    _desc[0].setup(SQL_FIXCHAR, "LT_S_SYMB", 16);//padded
     _desc[1].setup(SQL_LONG,  	"LT_DTS");
     _desc[2].setup(SQL_FLOAT,  	"LT_PRICE");
     _desc[3].setup(SQL_FLOAT,  	"LT_OPEN_PRICE");
@@ -555,46 +561,47 @@ news_xref_t::news_xref_t(const uint4_t& pd)
 sector_t::sector_t(const uint4_t& pd)
     : table_desc_t("SECTOR", TPCE_SECTOR_FCOUNT, pd) //34B
 {
-    _desc[0].setup(SQL_FIXCHAR, "SC_ID", 2);
-    _desc[1].setup(SQL_FIXCHAR, "SC_NAME", 30);
+    _desc[0].setup(SQL_FIXCHAR, "SC_ID", 4); //padded
+    _desc[1].setup(SQL_FIXCHAR, "SC_NAME", 32); //padded
 		
     uint  keys[1] = { 0 };
-    uint  keys2[2] = { 1, 0 };
+    uint  keys2[1] = { 1 };
 	
-    create_primary_idx_desc("SC_INDEX", 0, keys, 1, pd); //unique
-    //create_index_desc("SC_INDEX_2", 0, keys2, 2); //unique
+//    create_primary_idx_desc("SC_INDEX", 0, keys, 1, pd); //unique
+    create_index_desc("SC_INDEX_2", 0, keys2, 1, true, false, pd); //unique
 }
 
 
 security_t::security_t(const uint4_t& pd)
     : table_desc_t("SECURITY", TPCE_SECURITY_FCOUNT, pd) //194B
 {
-    _desc[0].setup(SQL_FIXCHAR, "S_SYMB", 15);	//16
-    _desc[1].setup(SQL_FIXCHAR, "S_ISSUE", 6);	//7
+    _desc[0].setup(SQL_FIXCHAR, "S_SYMB", 16);	//16, was 15, changed for padding
+    _desc[1].setup(SQL_FIXCHAR, "S_ISSUE", 8);	//7, was 6, changed for padding 
     _desc[2].setup(SQL_FIXCHAR, "S_ST_ID", 4);	//5
     _desc[3].setup(SQL_FIXCHAR, "S_NAME", 70);	//71
-    _desc[4].setup(SQL_FIXCHAR, "S_EX_ID", 6);	//7
+    _desc[4].setup(SQL_FIXCHAR, "S_EX_ID", 8);	//7, was 6, changed for padding
     _desc[5].setup(SQL_LONG,   	"S_CO_ID");
     _desc[6].setup(SQL_FLOAT,   "S_NUM_OUT");
     _desc[7].setup(SQL_LONG,  	"S_START_DATE");
     _desc[8].setup(SQL_LONG,   	"S_EXCH_DATE");
-    _desc[9].setup(SQL_FLOAT,	"S_PE");
+    _desc[9].setup(SQL_FLOAT,	  "S_PE");
     _desc[10].setup(SQL_FLOAT, 	"S_52WK_HIGH");
-    _desc[11].setup(SQL_LONG,	"S_52WK_HIGH_DATE");
+    _desc[11].setup(SQL_LONG,	  "S_52WK_HIGH_DATE");
     _desc[12].setup(SQL_FLOAT,	"S_52WK_LOW");
-    _desc[13].setup(SQL_LONG,	"S_52WK_LOW_DATE");
+    _desc[13].setup(SQL_LONG,	  "S_52WK_LOW_DATE");
     _desc[14].setup(SQL_FLOAT,  "S_DIVIDEND");
     _desc[15].setup(SQL_FLOAT,  "S_YIELD");
 		
     uint  keys1[1] = { 0 };
     uint  keys2[4] = { 5, 1, 4, 0 }; //alignment problem
     uint  keys3[3] = { 5, 6, 0 }; //not used
-    uint  keys4[1] = { 5 };
+    uint  keys4[2] = { 5, 0 };
 		
     create_primary_idx_desc("S_INDEX", 0, keys1, 1, pd); //unique
+    create_index_desc("S_INDEX_2", 0, keys2, 4, true, false, pd); //unique
     //create_index_desc("S_INDEX_2", 0, keys2, 4); //unique
     //create_index_desc("S_INDEX_3", 0, keys3, 3); //unique
-    create_index_desc("S_INDEX_4", 0, keys4, 1, false, false, pd); //non-unique
+      create_index_desc("S_INDEX_4", 0, keys4, 2, true, false, pd); //non-unique
 }
 
 
@@ -664,3 +671,4 @@ zip_code_t::zip_code_t(const uint4_t& pd)
 
 
 EXIT_NAMESPACE(tpce);
+

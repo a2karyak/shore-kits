@@ -39,7 +39,7 @@
 using namespace TPCE;
 
 ENTER_NAMESPACE(tpce);
-const int max_buffer = 512;
+const int max_buffer = 512000;
 
 template <typename T>
 class InputBuffer 
@@ -47,29 +47,35 @@ class InputBuffer
       mcs_lock a_lock;
       T* buffer[max_buffer];
       int size, first, last;
+      int flag;
 public:
-       InputBuffer():size(0), first(0), last(0){};	
+       InputBuffer():size(0), first(0), last(0), flag(0){};	
        bool isEmpty(){
 	  {
-	    CRITICAL_SECTION(cs, a_lock);
-	    return size==0;
-
-	  }
+//	    CRITICAL_SECTION(cs, a_lock);
+             if(flag==1) return true;    
+	     if(size==0) return true;
+             else {
+                flag=1;
+                return false;
+	      }              
+	   }
       }
       T* get(){
 	    {
-     	      CRITICAL_SECTION(cs, a_lock);
+   //  	      CRITICAL_SECTION(cs, a_lock);
 		if (size==0) return NULL;
 		T* tmp=buffer[first];
 		size--;
 		first=(first+1)%max_buffer;
+                flag=0; 
 		return tmp;
 	    }
         }
 
        void put(T* tmp){
 	    {
-     	      CRITICAL_SECTION(cs, a_lock);
+     //	      CRITICAL_SECTION(cs, a_lock);
 		assert(size<max_buffer);
 		buffer[last]=tmp;
 		last=(last+1)%max_buffer;

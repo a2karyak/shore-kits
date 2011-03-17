@@ -45,6 +45,7 @@ using namespace shore;
 using namespace TPCE;
 
 
+
 // Thread-local row caches
 
 ENTER_NAMESPACE(shore);
@@ -248,12 +249,15 @@ void testInputs()
 
 
 /** Construction  */
-ShoreTPCEEnv::ShoreTPCEEnv()
-  : ShoreEnv(), 
-    _customers(1000), 
-    _working_days(20),
-    _scaling_factor(500)
+ShoreTPCEEnv::ShoreTPCEEnv(): ShoreEnv(), 
+			      _customers(1000), 
+			      _working_days(20),
+			      _scaling_factor(500)
 {
+    // read the scaling factor from the configuration file
+    
+    
+
     //INITIALIZE EGEN
     _customers =envVar::instance()->getSysVarInt("cust");;
     _working_days=envVar::instance()->getSysVarInt("wd");
@@ -296,6 +300,12 @@ ShoreTPCEEnv::ShoreTPCEEnv()
      meesut->setMFQueue(MarketFeedInputBuffer);
      meesut->setTRQueue(TradeResultInputBuffer);
      mee = market_init( _working_days*8, meesut, AutoRand()); 		
+
+#ifdef TESTING_TPCE
+    for(int i=0; i<10; i++) trxs_cnt_executed[i]= trxs_cnt_failed[i]=0;
+#endif
+        TradeOrderCnt = 0;
+
 }
 
 ShoreTPCEEnv::~ShoreTPCEEnv() 
@@ -503,6 +513,7 @@ struct ShoreTPCEEnv::checkpointer_t : public thread_t {
 
 class ShoreTPCEEnv::table_builder_t : public thread_t {
     ShoreTPCEEnv* _env;
+    int my_load_unit;
 public:
     table_builder_t(ShoreTPCEEnv* env)
 	: thread_t("TPC-E loader"), _env(env) { }

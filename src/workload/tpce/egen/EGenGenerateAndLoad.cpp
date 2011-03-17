@@ -1528,6 +1528,8 @@ bool CGenerateAndLoad::hasNextFinancial()
 void CGenerateAndLoad::InitHoldingAndTrade()
 {
 
+       printf("\n\n customers= %d, loadunit= %d\n\n", m_iTotalCustomers, m_iLoadUnitSize);
+
 	pTradeGen = new CTradeGen(m_inputFiles, m_iCustomerCount, m_iStartFromCustomer, 
 							  m_iTotalCustomers, m_iLoadUnitSize,
 						  m_iScaleFactor, m_iHoursOfInitialTrades);
@@ -1545,7 +1547,13 @@ void CGenerateAndLoad::ReleaseHoldingAndTrade(){
 
 bool CGenerateAndLoad::hasNextLoadUnit()
 {
-	return pTradeGen->InitNextLoadUnit();
+        bool x=false;
+        printf("\n\n BEFORE \n\n");
+    
+	x =pTradeGen->InitNextLoadUnit();
+ 	if(x)   printf("\n\nhasnext AFTER TRUE\n\n");
+	else printf("\n\nhasnext AFTER FALSE\n\n");
+	return x; 
 }
 
 //TRADE

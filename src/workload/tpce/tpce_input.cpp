@@ -267,7 +267,8 @@ void trade_lookup_input_t::print(){
 trade_result_input_t      create_trade_result_input(int sf, int specificIdx) 
 { 
     trade_result_input_t atri;
-    TTradeResultTxnInput* input =TradeResultInputBuffer->get();   
+    TTradeResultTxnInput* input =TradeResultInputBuffer->get();
+    assert(input!=NULL);   
     atri._trade_id=input->trade_id;
     atri._trade_price=input->trade_price;
     return (atri);
@@ -453,8 +454,8 @@ market_feed_input_t create_market_feed_input(int sf, int specificIdx)
     strcpy(amfi._symbol[18], "BWG");
     strcpy(amfi._symbol[19], "BXP");
 
-    return (amfi);*/
-
+    return (amfi);
+*/
 };
 
 void market_feed_input_t::print()

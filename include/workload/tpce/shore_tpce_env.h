@@ -32,6 +32,7 @@
 #ifndef __SHORE_TPCE_ENV_H
 #define __SHORE_TPCE_ENV_H
 
+
 #include "sm_vas.h"
 #include "util.h"
 
@@ -39,7 +40,7 @@
 
 #include "sm/shore/shore_env.h"
 #include "sm/shore/shore_sort_buf.h"
-#include "sm/shore/shore_asc_sort_buf.h"
+#include "sm/shore/shore_desc_sort_buf.h"
 #include "sm/shore/shore_trx_worker.h"
 
 #include "workload/tpce/shore_tpce_schema_man.h"
@@ -56,6 +57,8 @@
 using namespace shore;
 using namespace TPCE;
 
+
+#define TESTING_TPCE
 
 int egen_init(int argc, char* argv[]);
 void egen_release();
@@ -103,6 +106,13 @@ extern StatusTypeBuffer statusTypeBuffer;
 extern TaxrateBuffer taxrateBuffer ;
 extern ZipCodeBuffer zipCodeBuffer ;
 
+
+#ifdef TESTING_TPCE
+extern int trxs_cnt_executed[];
+extern int trxs_cnt_failed[];
+#endif
+
+extern int TradeOrderCnt;
 
 
 /******************************************************************** 
@@ -296,7 +306,9 @@ private:
     
 public:    
 
+    /** Construction  */
     ShoreTPCEEnv();
+
     virtual ~ShoreTPCEEnv();
 
     // DB INTERFACE

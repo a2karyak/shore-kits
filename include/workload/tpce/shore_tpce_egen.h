@@ -70,6 +70,7 @@ public:
     void setMoreToRead(bool x) {moreToRead = x;}    
     void reset() {size=0;}
     void release() {/*delete [] buffer;*/}
+    void newLoadUnit(){size=0; moreToRead=true;} 
 };
 
 class AccountPermissionBuffer: public EgenTupleContainer<ACCOUNT_PERMISSION_ROW>{
