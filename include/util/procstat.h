@@ -135,6 +135,8 @@ protected:
     shore::ShoreEnv* _env;
     uint_t _last_reading;
 
+    bool _print_verbose;
+    
 public:
 
     procmonitor_t(const char* name, 
@@ -174,6 +176,10 @@ public:
 
     // Print perf data for the interval
     void print_interval();
+
+    // Set up for printing more information everysecond
+    void set_print_verbose(bool print_verbose);
+    void print_verbose();
     
 }; // EOF procmonitor_t
 

@@ -766,6 +766,7 @@ int shore_shell_t::register_commands()
     REGISTER_CMD_PARAM(fake_iodelay_cmd_t,_fakeioer,_env);
     REGISTER_CMD_PARAM(freq_cmd_t,_freqer,_env);
     REGISTER_CMD_PARAM(skew_cmd_t,_skewer,_env);
+    REGISTER_CMD_PARAM(stats_verbose_cmd_t,_stats_verboser,_env);
 
     REGISTER_CMD_PARAM(log_cmd_t,_logger,_env);
     REGISTER_CMD_PARAM(asynch_cmd_t,_asyncher,_env);
@@ -1132,6 +1133,61 @@ void skew_cmd_t::usage(void)
 string skew_cmd_t::desc() const 
 { 
     return (string("Sets the load of a particular percentage of records in the database, used by some workloads")); 
+}
+
+
+/*********************************************************************
+ *
+ *  "stats_verbose" command
+ *
+ *  Sets the load imbalance related values
+ *
+ *********************************************************************/
+
+void stats_verbose_cmd_t::setaliases() 
+{ 
+    _name = string("stats_verbose"); 
+    _aliases.push_back("stats_verbose"); 
+}
+
+int stats_verbose_cmd_t::handle(const char* cmd)
+{
+    char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];
+    char s[SERVER_COMMAND_BUFFER_SIZE];    
+
+    if ( sscanf(cmd, "%s %s", cmd_tag, s) < 2) {
+        // prints all the env
+        usage();
+        return (SHELL_NEXT_CONTINUE);
+    }
+    assert (_env);
+
+    if(0 == strcasecmp("on", s)) {
+	_g_mon->set_print_verbose(true);
+	TRACE( TRACE_ALWAYS, "Verbose statistics will be printed every second during a measurement!\n" );
+    } else if(0 == strcasecmp("off", s)) {
+	_g_mon->set_print_verbose(false);
+	TRACE( TRACE_ALWAYS, "Verbose statistics off!\n" );
+    } else {
+	usage();
+    }
+
+    return (SHELL_NEXT_CONTINUE);
+}
+
+
+void stats_verbose_cmd_t::usage(void)
+{
+    TRACE( TRACE_ALWAYS, "STATS_VERBOSE Usage:\n\n"                              \
+           "*** stats_verbose <MODE>\n"                     \
+           "\nParameters:\n"                                            \
+           "<MODE> - \"ON\" starts to print verbose statistics every second during a measurement. " \
+	   "\"OFF\" disables it.\n\n");
+}
+
+string stats_verbose_cmd_t::desc() const 
+{ 
+    return (string("To start-stop printing more statistics during a measurement.")); 
 }
 
 

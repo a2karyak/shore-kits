@@ -80,7 +80,8 @@ procmonitor_t::procmonitor_t(const char* name,
                              const double interval_sec)
     : thread_t(name), _interval_usec(0), _interval_sec(interval_sec),
       _total_usage(0), _num_usage_readings(0), _avg_usage(0),
-      _state(CPS_NOTSET), _env(env), _last_reading(0)
+      _state(CPS_NOTSET), _env(env), _last_reading(0),
+      _print_verbose(false)
 {
 }
 
@@ -164,7 +165,9 @@ void procmonitor_t::work()
 
             // Hook
             case_tick();
-            print_interval();
+	if(_print_verbose)
+	    print_verbose();
+	else print_interval();
 
             // Update secs/usecs
             ts = start;
@@ -313,4 +316,24 @@ void procmonitor_t::setEnv(shore::ShoreEnv* env)
 {
     assert (env);
     _env = env;
+}
+
+
+void procmonitor_t::set_print_verbose(bool print_verbose)
+{
+    _print_verbose = print_verbose;
+}
+
+void procmonitor_t::print_verbose()
+{
+    assert(_env);
+    uint_t att = _env->get_trx_att();    
+    if (_env->get_measure() == shore::MST_MEASURE) {
+        TRACE( TRACE_STATISTICS, "(%.1f) (%.1f)\n", 
+               get_avg_usage(false), 
+               (double)(att-_last_reading)/_interval_sec);
+	print_load(_interval_sec);
+	print_ext_stats();
+    }
+    _last_reading=att;
 }
