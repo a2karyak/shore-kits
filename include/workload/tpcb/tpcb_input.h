@@ -42,16 +42,6 @@ ENTER_NAMESPACE(tpcb);
 const int XCT_TPCB_ACCT_UPDATE = 31;
 const int XCT_TPCB_POPULATE_DB = 39;
 
-// microbenchmarks
-const int XCT_TPCB_MBENCH_INSERT_ONLY = 41;
-const int XCT_TPCB_MBENCH_DELETE_ONLY = 42;
-const int XCT_TPCB_MBENCH_PROBE_ONLY = 43;
-const int XCT_TPCB_MBENCH_INSERT_DELETE = 44;
-const int XCT_TPCB_MBENCH_INSERT_PROBE = 45;
-const int XCT_TPCB_MBENCH_DELETE_PROBE = 46;
-const int XCT_TPCB_MBENCH_MIX = 47;
-
-
 enum { TPCB_TELLERS_PER_BRANCH=10 };
 enum { TPCB_ACCOUNTS_PER_BRANCH=100000 };
 enum { TPCB_ACCOUNTS_CREATED_PER_POP_XCT=10000 }; // must evenly divide ACCOUNTS_PER_BRANCH
@@ -95,77 +85,6 @@ struct populate_db_input_t
     populate_db_input_t(int sf, int a_id) : _sf(sf), _first_a_id(a_id) { }
 };
 
-// microbenchmarks
-struct mbench_insert_only_input_t 
-{
-    int b_id;
-    int a_id;
-    double balance;
-
-    mbench_insert_only_input_t() { }
-
-    void print();
-};
-
-struct mbench_delete_only_input_t 
-{
-    int b_id;
-    int a_id;
-    double balance;
-
-    mbench_delete_only_input_t() { }
-
-    void print();
-};
-
-struct mbench_probe_only_input_t 
-{
-    int b_id;
-    int a_id;
-    double balance;
-
-    mbench_probe_only_input_t() { }
-
-    void print();
-};
-
-struct mbench_insert_delete_input_t 
-{
-    int b_id;
-    int a_id;
-    double balance;
-
-    mbench_insert_delete_input_t() { }
-};
-
-struct mbench_insert_probe_input_t 
-{
-    int b_id;
-    int a_id;
-    double balance;
-
-    mbench_insert_probe_input_t() { }
-};
-
-struct mbench_delete_probe_input_t 
-{
-    int b_id;
-    int a_id;
-    double balance;
-
-    mbench_delete_probe_input_t() { }
-};
-
-struct mbench_mix_input_t 
-{
-    int b_id;
-    int a_id;
-    double balance;
-
-    mbench_mix_input_t() { }
-};
-
-
 /////////////////////////////////////////////////////////////
 //
 // @brief: Declaration of functions that generate the inputs 
@@ -180,34 +99,6 @@ acct_update_input_t create_acct_update_input(int SF,
 
 populate_db_input_t create_populate_db_input(int SF, 
                                              int specificBr = 0);
-
-
-mbench_insert_only_input_t create_mbench_insert_only_input(int SF, 
-							   int specificBr = 0);
-
-
-mbench_delete_only_input_t create_mbench_delete_only_input(int SF, 
-							   int specificBr = 0);
-
-
-mbench_probe_only_input_t create_mbench_probe_only_input(int SF, 
-							  int specificBr = 0);
-
-
-mbench_insert_delete_input_t create_mbench_insert_delete_input(int SF, 
-							       int specificBr = 0);
-
-
-mbench_insert_probe_input_t create_mbench_insert_probe_input(int SF, 
-							     int specificBr = 0);
-
-
-mbench_delete_probe_input_t create_mbench_delete_probe_input(int SF, 
-							     int specificBr = 0);
-
-
-mbench_mix_input_t create_mbench_mix_input(int SF, 
-					   int specificBr = 0);
 
 
 EXIT_NAMESPACE(tpcb);

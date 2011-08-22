@@ -622,7 +622,6 @@ public:
     uint4_t add_pd(const physical_design_t& apd);
     bool check_hacks_enabled();
     bool is_hacks_enabled() const;
-    virtual w_rc_t update_partitioning() { return (RCOK); }
 
     // -- insert/delete/probe frequencies for microbenchmarks -- //
     void set_freqs(int insert_freq = 0, int delete_freq = 0, int probe_freq = 0);

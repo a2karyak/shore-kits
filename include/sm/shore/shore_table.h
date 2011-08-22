@@ -134,13 +134,6 @@ protected:
   
     volatile uint_t _maxsize;            // max tuple size for this table, shortcut
     
-    // Partitioning info (for MRBTrees)
-    char*  _sMinKey;
-    uint   _sMinKeyLen;
-    char*  _sMaxKey;
-    uint   _sMaxKeyLen;
-    uint  _numParts;
-
     int find_field_by_name(const char* field_name) const;
 
 public:
@@ -151,28 +144,6 @@ public:
 
     table_desc_t(const char* name, int fieldcnt, uint4_t pd);
     virtual ~table_desc_t();
-
-
-    /* ---------------------------------------------------- */
-    /* --- partitioning information, used with MRBTrees --- */
-    /* ---------------------------------------------------- */
-
-    // @note: If the partitioning is set *BEFORE* the indexes have been 
-    //        created (which is done at the create_table()) then this
-    //        is the partitioning which will be used.
-    
-    w_rc_t set_partitioning(const char* sMinKey, uint len1, 
-                            const char* sMaxKey, uint len2, 
-                            uint numParts);
-
-    // @note: Accessing information about the main partitioning scheme
-    uint  pcnt() const;
-    char* getMinKey() const;
-    uint  getMinKeyLen() const;
-    char* getMaxKey() const;
-    uint  getMaxKeyLen() const;
-
-    w_rc_t get_main_rangemap(key_ranges_map*& prangemap);
 
 
     /* ----------------------------------------- */
@@ -399,12 +370,6 @@ public:
                         const lock_mode_t   lock_mode = EX,
                         const lpid_t& primary_root = lpid_t::null);
 
-    w_rc_t    add_plp_tuple(ss_m* db, 
-                            table_tuple*  ptuple, 
-                            const lock_mode_t lock_mode,
-                            const uint system_mode,
-                            const lpid_t& primary_root = lpid_t::null);
-    
     w_rc_t    delete_tuple(ss_m* db, 
                            table_tuple* ptuple, 
                            const lock_mode_t lock_mode = EX,
@@ -481,50 +446,9 @@ public:
     virtual w_rc_t print_table(ss_m* db)=0; /* print the table on screen */
 
 
-    /* ---------------------------------------------------------------
-     *
-     * @fn:    relocate_records
-     *
-     * @brief: The registered callback function, which is called when 
-     *         PLP-Leaf or PLP-Part moves records
-     *
-     * --------------------------------------------------------------- */
-    
-    static w_rc_t relocate_records(vector<rid_t>&    old_rids, 
-				   vector<rid_t>&    new_rids);
-
-
-
-
-
 }; // EOF: table_man_t
 
 
-/* ---------------------------------------------------------------
- *
- * @class: el_filler_leaf
- *
- * @brief: The callback for inserting PLP tuples 
- *
- * --------------------------------------------------------------- */
-
-struct el_filler_part : public el_filler
-{
-    typedef table_row_t table_tuple; 
-
-    el_filler_part(size_t indexentrysz,
-                   ss_m* db,
-                   table_man_t* ptable,
-                   table_tuple* ptuple,
-                   index_desc_t* pindex,
-                   bool bIgnoreLocks);
-    ss_m* _db;
-    table_man_t* _ptableman;
-    table_tuple* _ptuple;
-    index_desc_t* _pindex;
-    bool _bIgnoreLocks;
-    rc_t fill_el(vec_t& el, const lpid_t& leaf);
-};
 
 
 /****************************************************************** 

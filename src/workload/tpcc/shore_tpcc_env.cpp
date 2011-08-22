@@ -283,60 +283,6 @@ w_rc_t ShoreTPCCEnv::load_schema()
 
 /******************************************************************** 
  *
- *  @fn:    update_partitioning()
- *
- *  @brief: Applies the baseline partitioning to the TPC-C tables
- *
- ********************************************************************/
-
-w_rc_t ShoreTPCCEnv::update_partitioning() 
-{
-    // *** Reminder: the numbering in TPC-C starts from 1
-
-    // First configure
-    conf();
-
-    // Pulling this partitioning out of the thin air
-    uint mrbtparts = envVar::instance()->getVarInt("mrbt-partitions",10);
-    int minKeyVal = 1;
-    int maxKeyVal = get_sf()+1;
-
-    char* minKey = (char*)malloc(sizeof(int));
-    memset(minKey,0,sizeof(int));
-    memcpy(minKey,&minKeyVal,sizeof(int));
-
-    char* maxKey = (char*)malloc(sizeof(int));
-    memset(maxKey,0,sizeof(int));
-    memcpy(maxKey,&maxKeyVal,sizeof(int));
-
-    // [ 1 .. #WH+1 )
-    // Warehouses,Districts,Customers,NewOrders,Orders,OrderLine,History,Stock
-    _pwarehouse_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
-    _pdistrict_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
-    _pcustomer_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
-    _pnew_order_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
-    _porder_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
-    _porder_line_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);    
-    _phistory_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
-    _pstock_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
-
-
-    // Items: [ 1 .. 100K+1 )
-    maxKeyVal = ITEMS + 1;
-    memset(maxKey,0,sizeof(int));
-    memcpy(maxKey,&maxKeyVal,sizeof(int));
-    _pitem_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
-
-    
-    free (minKey);
-    free (maxKey);
-
-    return (RCOK);
-}
-
-
-/******************************************************************** 
- *
  *  @fn:    set_skew()
  *
  *  @brief: sets load imbalance for TPC-C
@@ -775,18 +721,10 @@ w_rc_t ShoreTPCCEnv::_post_init_impl()
 		    int pnum = _pwarehouse_man->get_pnum(&idx[i], &row);
 		    stid_t fid = idx[i].fid(pnum);
 
-		    if(idx[i].is_mr()) {
-			W_DO(db->destroy_mr_assoc(fid, kvec, rvec));
-			// now put the entry back with the new rid
-			el_filler ef;
-			ef._el.put(nrvec);
-			W_DO(db->create_mr_assoc(fid, kvec, ef));
-		    } else {
-			W_DO(db->destroy_assoc(fid, kvec, rvec));
-			// now put the entry back with the new rid
-			W_DO(db->create_assoc(fid, kvec, nrvec));
-		    }
-				    
+		    W_DO(db->destroy_assoc(fid, kvec, rvec));
+		    // now put the entry back with the new rid
+		    W_DO(db->create_assoc(fid, kvec, nrvec));
+		    				    
 		}
                 fprintf(stderr, ".");
 	    }

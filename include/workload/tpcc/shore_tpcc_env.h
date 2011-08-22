@@ -235,9 +235,6 @@ public:
     DECLARE_TRX(populate_baseline);
     DECLARE_TRX(populate_one_unit);    
 
-    // Update the partitioning info, if any needed
-    virtual w_rc_t update_partitioning();
-
     // for thread-local stats
     virtual void env_thread_init();
     virtual void env_thread_fini();   

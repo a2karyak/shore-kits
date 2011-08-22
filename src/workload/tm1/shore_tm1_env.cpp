@@ -92,48 +92,6 @@ w_rc_t ShoreTM1Env::load_schema()
 
 /******************************************************************** 
  *
- *  @fn:    update_partitioning()
- *
- *  @brief: Applies the baseline partitioning to the TM1 tables
- *
- ********************************************************************/
-
-w_rc_t ShoreTM1Env::update_partitioning() 
-{
-    // *** Reminder: The numbering in TM1 starts from 1. 
-
-    // First configure
-    conf();
-
-    // Pulling this partitioning out of the thin air
-    uint mrbtparts = envVar::instance()->getVarInt("mrbt-partitions",10);
-    int minKeyVal = 1;
-    int maxKeyVal = (get_sf()*TM1_SUBS_PER_SF)+1;
-
-    char* minKey = (char*)malloc(sizeof(int));
-    memset(minKey,0,sizeof(int));
-    memcpy(minKey,&minKeyVal,sizeof(int));
-
-    char* maxKey = (char*)malloc(sizeof(int));
-    memset(maxKey,0,sizeof(int));
-    memcpy(maxKey,&maxKeyVal,sizeof(int));
-
-    // All the TM1 tables use the SUB_ID as the first column
-    _psub_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
-    _pai_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
-    _psf_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
-    _pcf_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
-
-    free (minKey);
-    free (maxKey);
-
-    return (RCOK);
-}
-
-
-
-/******************************************************************** 
- *
  *  @fn:    start/stop
  *
  *  @brief: Simply call the corresponding functions of shore_env 
@@ -277,16 +235,6 @@ int ShoreTM1Env::statistics()
            rval.attempted.get_sub_nbr,
            rval.failed.get_sub_nbr,
            rval.deadlocked.get_sub_nbr);
-
-    TRACE( TRACE_STATISTICS, "InsCallFwdBench. Att (%d). Abt (%d). Dld (%d)\n",
-           rval.attempted.ins_call_fwd_bench,
-           rval.failed.ins_call_fwd_bench,
-           rval.deadlocked.ins_call_fwd_bench);
-
-    TRACE( TRACE_STATISTICS, "DelCallFwdBench. Att (%d). Abt (%d). Dld (%d)\n",
-           rval.attempted.del_call_fwd_bench,
-           rval.failed.del_call_fwd_bench,
-           rval.deadlocked.del_call_fwd_bench);
 
     ShoreEnv::statistics();
 

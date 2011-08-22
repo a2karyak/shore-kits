@@ -95,60 +95,6 @@ w_rc_t ShoreTPCBEnv::load_schema()
 
 /******************************************************************** 
  *
- *  @fn:    update_partitioning()
- *
- *  @brief: Applies the baseline partitioning to the TPC-B tables
- *
- ********************************************************************/
-
-w_rc_t ShoreTPCBEnv::update_partitioning() 
-{
-    // *** Reminder: The TPC-B records start their numbering from 0 ***
-
-    // First configure
-    conf();
-
-    // Pulling this partitioning out of the thin air
-    uint mrbtparts = envVar::instance()->getVarInt("mrbt-partitions",10);
-    int minKeyVal = 0;
-    int maxKeyVal = get_sf();
-
-    char* minKey = (char*)malloc(sizeof(int));
-    memset(minKey,0,sizeof(int));
-    memcpy(minKey,&minKeyVal,sizeof(int));
-
-    char* maxKey = (char*)malloc(sizeof(int));
-    memset(maxKey,0,sizeof(int));
-    memcpy(maxKey,&maxKeyVal,sizeof(int));
-
-    // Branches: [ 0 .. #Branches )
-    _pbranch_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
-
-    // History: does not have account we use the same with Branches
-    _phistory_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);    
-
-    // Tellers:  [ 0 .. (#Branches*TPCB_TELLERS_PER_BRANCH) )
-    maxKeyVal = (get_sf()*TPCB_TELLERS_PER_BRANCH);
-    memset(maxKey,0,sizeof(int));
-    memcpy(maxKey,&maxKeyVal,sizeof(int));
-    _pteller_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
-
-    // Accounts: [ 0 .. (#Branches*TPCB_ACCOUNTS_PER_BRANCH) )
-    maxKeyVal = (get_sf()*TPCB_ACCOUNTS_PER_BRANCH);
-    memset(maxKey,0,sizeof(int));
-    memcpy(maxKey,&maxKeyVal,sizeof(int));
-    _paccount_desc->set_partitioning(minKey,sizeof(int),maxKey,sizeof(int),mrbtparts);
-
-    free (minKey);
-    free (maxKey);
-
-    return (RCOK);
-}
-
-
-
-/******************************************************************** 
- *
  *  @fn:    set_skew()
  *
  *  @brief: sets load imbalance for TPC-B
@@ -248,41 +194,6 @@ int ShoreTPCBEnv::statistics()
            rval.attempted.acct_update,
            rval.failed.acct_update,
            rval.deadlocked.acct_update);
-
-    TRACE( TRACE_STATISTICS, "MbenchInsertOnly. Att (%d). Abt (%d). Dld (%d)\n",
-           rval.attempted.mbench_insert_only,
-           rval.failed.mbench_insert_only,
-           rval.deadlocked.mbench_insert_only);
-
-    TRACE( TRACE_STATISTICS, "MbenchDeleteOnly. Att (%d). Abt (%d). Dld (%d)\n",
-           rval.attempted.mbench_delete_only,
-           rval.failed.mbench_delete_only,
-           rval.deadlocked.mbench_delete_only);
-
-    TRACE( TRACE_STATISTICS, "MbenchProbeOnly. Att (%d). Abt (%d). Dld (%d)\n",
-           rval.attempted.mbench_probe_only,
-           rval.failed.mbench_probe_only,
-           rval.deadlocked.mbench_probe_only);
-
-    TRACE( TRACE_STATISTICS, "MbenchInsertDelte. Att (%d). Abt (%d). Dld (%d)\n",
-           rval.attempted.mbench_insert_delete,
-           rval.failed.mbench_insert_delete,
-           rval.deadlocked.mbench_insert_delete);
-
-    TRACE( TRACE_STATISTICS, "MbenchInsertProbe. Att (%d). Abt (%d). Dld (%d)\n",
-           rval.attempted.mbench_insert_probe,
-           rval.failed.mbench_insert_probe,
-           rval.deadlocked.mbench_insert_probe);
-
-    TRACE( TRACE_STATISTICS, "MbenchDeleteProbe. Att (%d). Abt (%d). Dld (%d)\n",
-           rval.attempted.mbench_delete_probe,
-           rval.failed.mbench_delete_probe,
-           rval.deadlocked.mbench_delete_probe);
-
-    TRACE( TRACE_STATISTICS, "MbenchMix. Att (%d). Abt (%d). Dld (%d)\n",
-           rval.attempted.mbench_mix,
-           rval.failed.mbench_mix,
-           rval.deadlocked.mbench_mix);
 
     ShoreEnv::statistics();
 
@@ -429,8 +340,7 @@ struct ShoreTPCBEnv::table_creator_t : public thread_t
 
 void ShoreTPCBEnv::table_creator_t::work() 
 {
-    // Create the tables, if any partitioning is to be applied, that has already
-    // been set at update_partitioning()
+    // Create the tables
     W_COERCE(_env->db()->begin_xct());
     W_COERCE(_env->_pbranch_desc->create_physical_table(_env->db()));
     W_COERCE(_env->_pteller_desc->create_physical_table(_env->db()));
@@ -786,17 +696,9 @@ w_rc_t ShoreTPCBEnv::_pad_BRANCHES()
 		    int pnum = _pbranch_man->get_pnum(&br_idx[i], &row);
 		    stid_t fid = br_idx[i].fid(pnum);
 
-		    if(br_idx[i].is_mr()) {
-			W_DO(db->destroy_mr_assoc(fid, kvec, rvec));
-			// now put the entry back with the new rid
-			el_filler ef;
-			ef._el.put(nrvec);
-			W_DO(db->create_mr_assoc(fid, kvec, ef));
-		    } else {
-			W_DO(db->destroy_assoc(fid, kvec, rvec));
-			// now put the entry back with the new rid
-			W_DO(db->create_assoc(fid, kvec, nrvec));
-		    }
+		    W_DO(db->destroy_assoc(fid, kvec, rvec));
+		    // now put the entry back with the new rid
+		    W_DO(db->create_assoc(fid, kvec, nrvec));
 		    
 		}
                 fprintf(stderr, ".");
@@ -934,18 +836,10 @@ w_rc_t ShoreTPCBEnv::_pad_TELLERS()
 		    int pnum = _pteller_man->get_pnum(&te_idx[i], &row);
 		    stid_t fid = te_idx[i].fid(pnum);
 
-		    if(te_idx[i].is_mr()) {
-			W_DO(db->destroy_mr_assoc(fid, kvec, rvec));
-			// now put the entry back with the new rid
-			el_filler ef;
-			ef._el.put(nrvec);
-			W_DO(db->create_mr_assoc(fid, kvec, ef));
-		    } else {
-			W_DO(db->destroy_assoc(fid, kvec, rvec));
-			// now put the entry back with the new rid
-			W_DO(db->create_assoc(fid, kvec, nrvec));
-		    }
-
+		    W_DO(db->destroy_assoc(fid, kvec, rvec));
+		    // now put the entry back with the new rid
+		    W_DO(db->create_assoc(fid, kvec, nrvec));
+		    
 		}
                 fprintf(stderr, ".");
 	    }

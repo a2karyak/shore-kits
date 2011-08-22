@@ -46,20 +46,13 @@ LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -L$(READLINE_LIBS) -lreadline $(PROCSTAT
 
 # List of libraries
 
-if USE_DORA
-DORA_LIBS = lib/libdoraworkload.a lib/libdora.a
-else
-DORA_LIBS = 
-endif
-
 if USE_QPIPE
 QPIPE_LIBS = lib/libqpipe.a lib/libqpipeutil.a
 else
 QPIPE_LIBS =
 endif
 
-lib_LIBRARIES = $(DORA_LIBS) \
-      lib/libworkload.a $(QPIPE_LIBS) lib/libsm.a lib/libutil.a
+lib_LIBRARIES = lib/libworkload.a $(QPIPE_LIBS) lib/libsm.a lib/libutil.a
 
 FE = \
    shore_kits
@@ -257,76 +250,13 @@ WL_SSB_QPIPE = \
    $(SW)/ssb/qpipe/qpipe_qcustomer.cpp \
    $(SW)/ssb/qpipe/qpipe_qlineorder.cpp 
 
-WL_TPCE_SHORE = \
-   $(SW)/tpce/tpce_input.cpp \
-   $(SW)/tpce/shore_tpce_schema.cpp \
-   $(SW)/tpce/shore_tpce_schema_man.cpp \
-   $(SW)/tpce/shore_tpce_env.cpp \
-   $(SW)/tpce/shore_tpce_client.cpp
-
-WL_TPCE_SHORE_XCTS = \
-   $(SW)/tpce/shore_tpce_xct_populate.cpp \
-   $(SW)/tpce/shore_tpce_xct_trade_order.cpp \
-   $(SW)/tpce/shore_tpce_xct_trade_result.cpp \
-   $(SW)/tpce/shore_tpce_xct_trade_lookup.cpp \
-   $(SW)/tpce/shore_tpce_xct_customer_position.cpp \
-   $(SW)/tpce/shore_tpce_xct_market_feed.cpp \
-   $(SW)/tpce/shore_tpce_xct_trade_cleanup.cpp \
-   $(SW)/tpce/shore_tpce_xct_market_watch.cpp \
-   $(SW)/tpce/shore_tpce_xct_data_maintenance.cpp \
-   $(SW)/tpce/shore_tpce_xct_security_detail.cpp \
-   $(SW)/tpce/shore_tpce_xct_trade_status.cpp \
-   $(SW)/tpce/shore_tpce_xct_broker_volume.cpp \
-   $(SW)/tpce/shore_tpce_xct_trade_update.cpp
-
-WL_TPCE_SHORE_EGEN = \
-   $(SW)/tpce/egen/DateTime.cpp \
-   $(SW)/tpce/egen/error.cpp \
-   $(SW)/tpce/egen/Random.cpp \
-   $(SW)/tpce/egen/Money.cpp \
-   $(SW)/tpce/egen/EGenVersion.cpp \
-   $(SW)/tpce/egen/locking.cpp \
-   $(SW)/tpce/egen/threading.cpp \
-   $(SW)/tpce/egen/BaseLogger.cpp \
-   $(SW)/tpce/egen/EGenLogFormatterTab.cpp \
-   $(SW)/tpce/egen/EGenLoader.cpp \
-   $(SW)/tpce/egen/MEE.cpp \
-   $(SW)/tpce/egen/MEEPriceBoard.cpp \
-   $(SW)/tpce/egen/MEESecurity.cpp \
-   $(SW)/tpce/egen/MEETickerTape.cpp \
-   $(SW)/tpce/egen/MEETradingFloor.cpp \
-   $(SW)/tpce/egen/WheelTime.cpp \
-   $(SW)/tpce/egen/AddressTable.cpp \
-   $(SW)/tpce/egen/CustomerSelection.cpp \
-   $(SW)/tpce/egen/CustomerTable.cpp \
-   $(SW)/tpce/egen/InputFlatFilesStructure.cpp \
-   $(SW)/tpce/egen/Person.cpp \
-   $(SW)/tpce/egen/ReadRowFunctions.cpp \
-   $(SW)/tpce/egen/TradeGen.cpp \
-   $(SW)/tpce/egen/FlatFileLoader.cpp \
-   $(SW)/tpce/egen/CE.cpp \
-   $(SW)/tpce/egen/CETxnInputGenerator.cpp \
-   $(SW)/tpce/egen/CETxnMixGenerator.cpp \
-   $(SW)/tpce/egen/DM.cpp \
-   $(SW)/tpce/egen/EGenGenerateAndLoad.cpp \
-   $(SW)/tpce/egen/EGenValidate.cpp \
-   $(SW)/tpce/egen/strutil.cpp \
-   $(SW)/tpce/egen/progressmeter.cpp \
-   $(SW)/tpce/egen/progressmeterinterface.cpp \
-   $(SW)/tpce/egen/bucketsimulator.cpp
-
-
 lib_libworkload_a_SOURCES = \
    $(WL_SG_TPCC_SHORE) \
    $(WL_TPCC_SHORE) \
    $(WL_TM1_SHORE) \
    $(WL_TPCB_SHORE) \
    $(WL_TPCH_DBGEN_SHORE) \
-   $(WL_TPCH_SHORE) \
-   $(WL_TPCE_SHORE_EGEN) \
-   $(WL_TPCE_SHORE) \
-   $(WL_TPCE_SHORE_XCTS)
-
+   $(WL_TPCH_SHORE)
 
 if USE_QPIPE
 lib_libworkload_a_SOURCES += $(WL_TPCH_QPIPE)
@@ -423,81 +353,6 @@ lib_libqpipe_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/qpipe $(SHORE_INCL
 
 endif
 ##### EOF USE_QPIPE ######
-
-
-
-##### USE_DORA ######
-if USE_DORA
-
-################################################################################
-#
-# src/dora/
-#
-################################################################################
-
-SD=$(top_srcdir)/src/dora
-DO_BASE = \
-   $(SD)/dkey_ranges_map.cpp \
-   $(SD)/base_action.cpp \
-   $(SD)/rvp.cpp \
-   $(SD)/logical_lock.cpp \
-   $(SD)/base_partition.cpp \
-   $(SD)/partition.cpp \
-   $(SD)/dflusher.cpp \
-   $(SD)/worker.cpp \
-   $(SD)/part_table.cpp \
-   $(SD)/range_part_table.cpp \
-   $(SD)/dora_env.cpp
-
-lib_libdora_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
-
-lib_libdora_a_SOURCES = \
-   $(DO_BASE)
-
-
-
-################################################################################
-#
-# src/dora/{workload}/
-#
-################################################################################
-
-SDW=$(top_srcdir)/src/dora
-DW_TPCC = \
-   $(SDW)/tpcc/dora_payment.cpp \
-   $(SDW)/tpcc/dora_new_order.cpp \
-   $(SDW)/tpcc/dora_order_status.cpp \
-   $(SDW)/tpcc/dora_stock_level.cpp \
-   $(SDW)/tpcc/dora_delivery.cpp \
-   $(SDW)/tpcc/dora_mbench.cpp \
-   $(SDW)/tpcc/dora_tpcc.cpp \
-   $(SDW)/tpcc/dora_tpcc_xct.cpp \
-   $(SDW)/tpcc/dora_tpcc_client.cpp
-
-DW_TM1 = \
-   $(SDW)/tm1/dora_tm1_impl.cpp \
-   $(SDW)/tm1/dora_tm1.cpp \
-   $(SDW)/tm1/dora_tm1_xct.cpp \
-   $(SDW)/tm1/dora_tm1_client.cpp
-
-DW_TPCB = \
-   $(SDW)/tpcb/dora_tpcb_impl.cpp \
-   $(SDW)/tpcb/dora_tpcb.cpp \
-   $(SDW)/tpcb/dora_tpcb_xct.cpp \
-   $(SDW)/tpcb/dora_tpcb_client.cpp
-
-lib_libdoraworkload_a_SOURCES = \
-   $(DW_TPCC) \
-   $(DW_TM1) \
-   $(DW_TPCB)
-
-
-lib_libdoraworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/dora $(SHORE_INCLUDES)
-
-
-endif
-##### EOF USE_DORA ######
-
 
 
 

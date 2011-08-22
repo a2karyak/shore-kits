@@ -70,46 +70,18 @@ struct ShoreTPCBTrxCount
     uint acct_update;
     uint populate_db;
 
-    uint mbench_insert_only;
-    uint mbench_delete_only;
-    uint mbench_probe_only;
-    uint mbench_insert_delete;
-    uint mbench_insert_probe;
-    uint mbench_delete_probe;
-    uint mbench_mix;
-
     ShoreTPCBTrxCount& operator+=(ShoreTPCBTrxCount const& rhs) {
         acct_update += rhs.acct_update;        
-	
-	mbench_insert_only += rhs.mbench_insert_only;
-	mbench_delete_only += rhs.mbench_delete_only;
-	mbench_probe_only += rhs.mbench_probe_only;
-	mbench_insert_delete += rhs.mbench_insert_delete;
-	mbench_insert_probe += rhs.mbench_insert_probe;
-	mbench_delete_probe += rhs.mbench_delete_probe;
-	mbench_mix += rhs.mbench_mix;
-
 	return (*this);
     }
 
     ShoreTPCBTrxCount& operator-=(ShoreTPCBTrxCount const& rhs) {
         acct_update -= rhs.acct_update;
-
-	mbench_insert_only -= rhs.mbench_insert_only;
-	mbench_delete_only -= rhs.mbench_delete_only;
-	mbench_probe_only -= rhs.mbench_probe_only;
-	mbench_insert_delete -= rhs.mbench_insert_delete;
-	mbench_insert_probe -= rhs.mbench_insert_probe;
-	mbench_delete_probe -= rhs.mbench_delete_probe;
-	mbench_mix -= rhs.mbench_mix;
-
 	return (*this);
     }
 
     uint total() const {
-        return (acct_update+
-		mbench_insert_only+mbench_delete_only+mbench_probe_only+
-		mbench_insert_delete+mbench_insert_probe+mbench_delete_probe+mbench_mix);
+        return (acct_update);
     }
     
 }; // EOF: ShoreTPCBTrxCount
@@ -219,20 +191,8 @@ public:
     // Transactions
     DECLARE_TRX(acct_update);
   
-    // Microbenchmarks
-    DECLARE_TRX(mbench_insert_only);
-    DECLARE_TRX(mbench_delete_only);
-    DECLARE_TRX(mbench_probe_only);
-    DECLARE_TRX(mbench_insert_delete);
-    DECLARE_TRX(mbench_insert_probe);
-    DECLARE_TRX(mbench_delete_probe);
-    DECLARE_TRX(mbench_mix);
-
-    // Database population
+  // Database population
     DECLARE_TRX(populate_db);
-
-    // Update the partitioning info, if any needed
-    virtual w_rc_t update_partitioning();
 
     // for thread-local stats
     virtual void env_thread_init();

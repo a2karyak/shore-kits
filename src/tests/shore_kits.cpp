@@ -46,21 +46,8 @@
 #include "workload/ssb/shore_ssb_env.h"
 #include "workload/ssb/shore_ssb_client.h"
 
-#include "workload/tpce/shore_tpce_env.h"
-#include "workload/tpce/shore_tpce_client.h"
-
 #ifdef CFG_SIMICS
 #include "util/simics-magic-instruction.h"
-#endif
-
-#ifdef CFG_DORA
-#include "dora.h"
-#include "dora/tpcc/dora_tpcc.h"
-#include "dora/tpcc/dora_tpcc_client.h"
-#include "dora/tm1/dora_tm1.h"
-#include "dora/tm1/dora_tm1_client.h"
-#include "dora/tpcb/dora_tpcb.h"
-#include "dora/tpcb/dora_tpcb_client.h"
 #endif
 
 using namespace shore;
@@ -70,16 +57,10 @@ using namespace tm1;
 using namespace tpcb;
 using namespace tpch;
 using namespace ssb;
-using namespace tpce;
 
 
 //////////////////////////////
 // Prints out configuration info
-#ifdef CFG_DORA
-#warning Configuration: DORA enabled
-using namespace dora;
-#endif
-
 #ifdef CFG_FLUSHER
 #warning Configuration: FLUSHER/GROUPCOMMIT enabled
 #endif
@@ -107,9 +88,7 @@ using namespace dora;
 //////////////////////////////
 
 // Value-definitions of the different Sysnames
-enum SysnameValue { snBaseline = 0x1,
-                    snDORA     = 0x2,
-                    snPLP      = 0x4
+enum SysnameValue { snBaseline = 0x1
 };
 
 // Map to associate string with then enum values
@@ -119,15 +98,13 @@ static map<string,SysnameValue> mSysnameValue;
 void initsysnamemap() 
 {
     mSysnameValue["baseline"] = snBaseline;
-    mSysnameValue["dora"]     = snDORA;
-    mSysnameValue["plp"]      = snPLP;
 }
 
 //////////////////////////////
 
 
 // Value-definitions of the different Benchmarks
-enum BenchmarkValue { bmTPCC, bmTM1, bmTPCB, bmTPCH , bmSSB, bmTPCE };
+enum BenchmarkValue { bmTPCC, bmTM1, bmTPCB, bmTPCH , bmSSB };
 
 // Map to associate string with then enum values
 
@@ -140,7 +117,6 @@ void initbenchmarkmap()
     mBenchmarkValue["tpcb"]  = bmTPCB;
     mBenchmarkValue["tpch"]  = bmTPCH;
     mBenchmarkValue["ssb"]   = bmSSB;
-    mBenchmarkValue["tpce"]  = bmTPCE;
 }
 
 
@@ -520,29 +496,13 @@ typedef kit_t<baseline_tpch_client_t,ShoreTPCHEnv> baselineTPCHKit;
 typedef kit_t<baseline_ssb_client_t,ShoreSSBEnv> baselineSSBKit;
 #endif
 
-typedef kit_t<baseline_tpce_client_t,ShoreTPCEEnv> baselineTPCEKit;
 
-
-#ifdef CFG_DORA
-typedef kit_t<dora_tpcc_client_t,DoraTPCCEnv> doraTPCCKit;
-typedef kit_t<dora_tm1_client_t,DoraTM1Env> doraTM1Kit;
-typedef kit_t<dora_tpcb_client_t,DoraTPCBEnv> doraTPCBKit;
-#endif
 
 ////////////////////////////////
 
 bool validatePhysical(string physical)
 {   
     if (physical.compare("normal")==0) {
-        return (true);
-    }
-    if (physical.compare("mrbtnorm")==0) {
-        return (true);
-    }
-    if (physical.compare("mrbtpart")==0) {
-        return (true);
-    }
-    if (physical.compare("mrbtleaf")==0) {
         return (true);
     }
     return (false);
@@ -555,8 +515,8 @@ void usage()
            "-n            : Start in network mode (listens to port)\n"  \
            "-p <PORT>     : Listen to specific port\n"                  \
            "-c <CONFIG>   : Use specific configuration\n"               \
-           "-s <SYSTEM>   : Start specific system (baseline,dora,plp,plppart,plpleaf). Default: baseline\n" \
-           "-d <PHYSICAL> : Use specific physical design (normal,mrbtnorm,...). Default: normal\n" \
+           "-s <SYSTEM>   : Start specific system (baseline). Default: baseline\n" \
+           "-d <PHYSICAL> : Use specific physical design (normal). Default: normal\n" \
            "-x            : Enable physical design hacks\n"   \
            "-g <RANGE>    : Use specific range (in some workloads)\n"   \
            "-f <FILE>     : Use specific configuration file (ie. instead of shore.conf)\n" \
@@ -690,14 +650,6 @@ int main(int argc, char* argv[])
             dbname += "base) ";
             kit = new baselineTPCCKit(dbname.c_str(),netmode,netport);
             break;
-#ifdef CFG_DORA
-        case snDORA:
-            dbname += "dora) "; nameset=true;
-        case snPLP:
-            if (!nameset) dbname += "plp) ";
-            kit = new doraTPCCKit(dbname.c_str(),netmode,netport);
-            break;
-#endif
         default:
             TRACE( TRACE_ALWAYS, "Not supported configuration. Exiting...\n");
             return (3);
@@ -712,14 +664,6 @@ int main(int argc, char* argv[])
             dbname += "base) ";
             kit = new baselineTM1Kit(dbname.c_str(),netmode,netport);
             break;
-#ifdef CFG_DORA
-        case snDORA:
-            dbname += "dora) "; nameset=true;
-        case snPLP:
-            if (!nameset) dbname += "plp) ";
-            kit = new doraTM1Kit(dbname.c_str(),netmode,netport);
-            break;
-#endif
         default:
             TRACE( TRACE_ALWAYS, "Not supported configuration. Exiting...\n");
             return (4);
@@ -734,14 +678,6 @@ int main(int argc, char* argv[])
             dbname += "base) ";
             kit = new baselineTPCBKit(dbname.c_str(),netmode,netport);
             break;
-#ifdef CFG_DORA
-        case snDORA:
-            dbname += "dora) "; nameset=true;
-        case snPLP:
-            if (!nameset) dbname += "plp) ";
-            kit = new doraTPCBKit(dbname.c_str(),netmode,netport);
-            break;
-#endif
         default:
             TRACE( TRACE_ALWAYS, "Not supported configuration. Exiting...\n");
             return (5);
@@ -754,13 +690,6 @@ int main(int argc, char* argv[])
         case snBaseline:
             kit = new baselineTPCHKit("(tpch-base) ",netmode,netport);
             break;
-#ifdef CFG_DORA
-        case snDORA:
-            dbname += "dora) "; nameset=true;
-            assert (0); // TODO
-            //kit = new doraTPCHKit("(tpch-dora) ",netmode,netport);
-            break;
-#endif
         default:
             TRACE( TRACE_ALWAYS, "Not supported configuration. Exiting...\n");
             return (5);
@@ -774,39 +703,12 @@ int main(int argc, char* argv[])
         case snBaseline:
             kit = new baselineSSBKit("(ssb-base) ",netmode,netport);
             break;
-#ifdef CFG_DORA
-        case snDORA:
-            dbname += "dora) "; nameset=true;
-            assert (0); // TODO
-            //kit = new doraSSBKit("(ssb-dora) ",netmode,netport);
-            break;
-#endif
         default:
             TRACE( TRACE_ALWAYS, "Not supported configuration. Exiting...\n");
             return (5);
         }
     }
 #endif
-
-
-    // TPC-E
-    if (benchmarkname.compare("tpce")==0) {
-        switch (mSysnameValue[sysname]) {
-        case snBaseline:
-            kit = new baselineTPCEKit("(tpce-base) ",netmode,netport);
-            break;
-#ifdef CFG_DORA
-        case snDORA:
-            dbname += "dora) "; nameset=true;
-            assert (0); // TODO
-            //kit = new doraTPCEKit("(tpce-dora) ",netmode,netport);
-            break;
-#endif
-        default:
-            TRACE( TRACE_ALWAYS, "Not supported configurations. Exiting...\n");
-            return (5);
-        }
-    }
 
 
     assert (kit.get());

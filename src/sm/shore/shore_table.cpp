@@ -60,9 +60,7 @@ using namespace shore;
 table_desc_t::table_desc_t(const char* name, int fieldcnt, uint4_t pd)
     : file_desc_t(name, fieldcnt, pd), _db(NULL),
       _indexes(NULL), _primary_idx(NULL),
-      _maxsize(0),
-      _sMinKey(NULL),_sMinKeyLen(0),
-      _sMaxKey(NULL),_sMaxKeyLen(0)
+      _maxsize(0)
 {
     // Create placeholders for the field descriptors
     _desc = new field_desc_t[fieldcnt];
@@ -81,13 +79,6 @@ table_desc_t::~table_desc_t()
         _indexes = NULL;
     }
 
-    if (_sMinKey) {
-        delete _sMinKey;
-    }
-
-    if (_sMaxKey) {
-        delete _sMaxKey;
-    }
 }
 
 
@@ -118,12 +109,8 @@ w_rc_t table_desc_t::create_physical_table(ss_m* db)
     // Create the table
     index_desc_t* index = _indexes;
     
-    if (index && (index->get_pd() & (PD_MRBT_PART | PD_MRBT_LEAF))) {
-	// if it's plp-mrbtpart or mrbtleaf it should create and mrbt_file
-        W_DO(db->create_mrbt_file(vid(), _fid, smlevel_3::t_regular));
-    } else {
-	W_DO(db->create_file(vid(), _fid, smlevel_3::t_regular));
-    }
+    W_DO(db->create_file(vid(), _fid, smlevel_3::t_regular));
+    
     TRACE( TRACE_STATISTICS, "%s %d\n", name(), fid().store);
 
     // Add table entry to the metadata tree
@@ -170,41 +157,9 @@ w_rc_t table_desc_t::create_physical_index(ss_m* db, index_desc_t* index)
 
     // Update the type of index to create
     
-
-    if (index->is_mr()) {
-        uint4_t pd = index->get_pd();
-        if (index->is_primary()) {
-            // only the primary index can be something other than a normal MRBT
-            // the other two options affect how the heap pages are accessed so
-            // we cannot have two indexes determining how the heap pages are.
-
-            if (pd & PD_MRBT_NORMAL) {
-                // Normal MRBTree
-                smidx_type = index->is_unique() ? ss_m::t_uni_mrbtree : ss_m::t_mrbtree;
-            }
-            else {
-                if (pd & PD_MRBT_PART) {
-                    // MRBTree where heap pages belong to a single partition
-                    smidx_type = index->is_unique() ? ss_m::t_uni_mrbtree_p : ss_m::t_mrbtree_p;
-                }
-                else {
-                    assert (pd & PD_MRBT_LEAF);
-                    // MRBTree where heap pages belong to a single partition
-                    smidx_type = index->is_unique() ? ss_m::t_uni_mrbtree_l : ss_m::t_mrbtree_l;
-                }
-            }
-        }
-        else {
-            // Normal MRBTree for non-primary index
-            smidx_type = index->is_unique() ? ss_m::t_uni_mrbtree : ss_m::t_mrbtree;
-        }            
-    }
-    else {
-        // Regular BTree
-        smidx_type = index->is_unique() ? ss_m::t_uni_btree : ss_m::t_btree;
-    }
-
-
+    // Regular BTree
+    smidx_type = index->is_unique() ? ss_m::t_uni_btree : ss_m::t_btree;
+    
     // what kind of CC will be used
     smidx_cc = index->is_relaxed() ? ss_m::t_cc_none : ss_m::t_cc_im;
 
@@ -225,21 +180,11 @@ w_rc_t table_desc_t::create_physical_index(ss_m* db, index_desc_t* index)
     // create one index or multiple, if the index is partitioned
     if(index->is_partitioned()) {
         for(int i=0; i < index->get_partition_count(); i++) {
-            if (!index->is_mr()) {
-                W_DO(db->create_index(_vid, smidx_type, ss_m::t_regular,
-                                      index_keydesc(index), smidx_cc, iid));
-            }
-            else {
-                W_DO(db->create_mr_index(_vid, smidx_type, ss_m::t_regular,
-                                         index_keydesc(index), smidx_cc, iid,
-                                         index->is_latchless()));
 
-                // If we already know the partitioning set it up
-                vec_t minv(_sMinKey,_sMinKeyLen);
-                vec_t maxv(_sMaxKey,_sMaxKeyLen);
-                W_DO(db->make_equal_partitions(iid,minv,maxv,_numParts));
-            }
-            index->set_fid(i, iid);
+	    W_DO(db->create_index(_vid, smidx_type, ss_m::t_regular,
+				  index_keydesc(index), smidx_cc, iid));
+
+	    index->set_fid(i, iid);
 		
             // add index entry to the metadata tree		
             file.set_fid(iid);
@@ -252,20 +197,9 @@ w_rc_t table_desc_t::create_physical_index(ss_m* db, index_desc_t* index)
     }
     else {
 
-        if (!index->is_mr()) {
-            W_DO(db->create_index(_vid, smidx_type, ss_m::t_regular,
-                                  index_keydesc(index), smidx_cc, iid));
-        }
-        else {
-            W_DO(db->create_mr_index(_vid, smidx_type, ss_m::t_regular,
-                                     index_keydesc(index), smidx_cc, iid,
-                                     index->is_latchless()));
-
-            // If we already know the partitioning set it up                
-            vec_t minv(_sMinKey,_sMinKeyLen);
-            vec_t maxv(_sMaxKey,_sMaxKeyLen);
-            W_DO(db->make_equal_partitions(iid,minv,maxv,_numParts));
-        }                
+	W_DO(db->create_index(_vid, smidx_type, ss_m::t_regular,
+			      index_keydesc(index), smidx_cc, iid));
+                        
         index->set_fid(0, iid);
 
         // Add index entry to the metadata tree
@@ -286,42 +220,6 @@ w_rc_t table_desc_t::create_physical_index(ss_m* db, index_desc_t* index)
            
     return (RCOK);
 }
-
-
-
-/****************************************************************** 
- *  
- *  @fn:    create_physical_empty_primary_idx_desc
- *
- *  @brief: Creates the description of an empty MRBT index with the 
- *          partitioning information, and physically adds it to the
- *          sm
- *
- *  @note:  It is used for tables without any indexes or for tables
- *          whose ex-primary index is manually partitioned (hacked) 
- *
- ******************************************************************/
-
-w_rc_t table_desc_t::create_physical_empty_primary_idx()
-{
-    // The table should have already been physically created
-    assert (_db);
-
-    string idxname = string(this->name()) + string("MRHolder");
-    uint key[1]={0};
-    index_desc_t* p_index = new index_desc_t(idxname.c_str(),1,0,key,
-                                             false,false,PD_MRBT_NORMAL,
-                                             true);
-    assert(p_index);
-
-    // make it the primary index
-    _primary_idx = p_index;
-
-    W_DO(create_physical_index(_db,p_index));
-
-    return (RCOK);
-}
-
 
 
 
@@ -410,95 +308,6 @@ stid_t table_desc_t::get_primary_stid()
 {
     stid_t stid = ( _primary_idx ? _primary_idx->fid(0) : fid() );
     return (stid);
-}
-
-
-
-
-/* ---------------------------------------------------- */
-/* --- partitioning information, used with MRBTrees --- */
-/* ---------------------------------------------------- */
-
-w_rc_t table_desc_t::set_partitioning(const char* sMinKey, 
-                                      uint len1,
-                                      const char* sMaxKey,
-                                      uint len2,
-                                      uint numParts)
-{
-    // Allocate for the two boundaries
-    if (_sMinKeyLen < len1) {
-        if (_sMinKey) { free (_sMinKey); }
-        _sMinKey = (char*)malloc(len1+1);
-    }
-    memset(_sMinKey,0,len1+1);
-    memcpy(_sMinKey,sMinKey,len1);
-    _sMinKeyLen = len1;
-
-    if (_sMaxKeyLen < len2) {
-        if (_sMaxKey) { free (_sMaxKey); }        
-        _sMaxKey = (char*)malloc(len2+1);
-    }
-    memset(_sMaxKey,0,len2+1);
-    memcpy(_sMaxKey,sMaxKey,len2);
-    _sMaxKeyLen = len2;
-
-    _numParts = numParts;
-    return (RCOK);
-}
-
-
-// Accessing information about the main partitioning
-uint table_desc_t::pcnt() const
-{
-    return (_numParts);
-}
-
-char* table_desc_t::getMinKey() const
-{
-    return (_sMinKey);
-}
-
-uint table_desc_t::getMinKeyLen() const
-{
-    return (_sMinKeyLen);
-}
-
-char* table_desc_t::getMaxKey() const
-{
-    return (_sMaxKey);
-}
-
-uint table_desc_t::getMaxKeyLen() const
-{
-    return (_sMaxKeyLen);
-}
-
-
-/****************************************************************** 
- *  
- *  @fn:    get_main_rangemap
- *
- *  @brief: Returns a pointer to the RangeMap of the primary index. 
- *          If there is no primary index, it creates an empty index 
- *          with a RangeMap based on the partitioning info 
- *
- ******************************************************************/
-
-
-w_rc_t table_desc_t::get_main_rangemap(key_ranges_map*& rangemap)
-{
-    if (!_primary_idx || _primary_idx->is_partitioned()) {
-        // Create an empty "primary" index which is not manually partitioned
-        create_physical_empty_primary_idx();
-    }
-    assert (_primary_idx);
-
-    // Cannot have a manually (hacked) partitioned index as primary
-    // To do that, use an empty index as primary 
-    assert (!_primary_idx->is_partitioned());
-    
-    W_DO(ss_m::get_range_map(_primary_idx->fid(0),rangemap));
-    return (RCOK);
 }
 
 
@@ -944,15 +753,6 @@ w_rc_t table_man_t::index_probe(ss_m* db,
     bool     found = false;
     smsize_t len = sizeof(rid_t);
 
-    // if index created with NO-LOCK option (e.g., DORA) then:
-    // - ignore lock mode (use NL)
-    // - find_assoc ignoring any locks
-    bool bIgnoreLocks = false;
-    if (pindex->is_relaxed()) {
-        lock_mode   = NL;
-        bIgnoreLocks = true;
-    }
-
     // ensure valid index
     W_DO(pindex->check_fid(db));
 
@@ -962,38 +762,17 @@ w_rc_t table_man_t::index_probe(ss_m* db,
 
     int pnum = get_pnum(pindex, ptuple);
 
-    if (pindex->is_mr()) {
-
-        // Do the probe
-        W_DO(ss_m::find_mr_assoc(pindex->fid(pnum),
-                                 vec_t(ptuple->_rep->_dest, key_sz),
-                                 &(ptuple->_rid),
-                                 len,
-                                 found,
-                                 bIgnoreLocks,
-                                 pindex->is_latchless(),
-                                 root
-                                 ));
-    }
-    else {
-        W_DO(ss_m::find_assoc(pindex->fid(pnum),
+    W_DO(ss_m::find_assoc(pindex->fid(pnum),
                               vec_t(ptuple->_rep->_dest, key_sz),
                               &(ptuple->_rid),
                               len,
-                              found
-#ifdef CFG_DORA
-                              ,bIgnoreLocks
-#endif
-                              ));
-    }
+                              found));
 
     if (!found) return RC(se_TUPLE_NOT_FOUND);
 
     // read the tuple
     pin_i pin;
-    latch_mode_t heap_latch_mode = LATCH_SH;
-    if (system_mode & (PD_MRBT_PART | PD_MRBT_LEAF)) heap_latch_mode = LATCH_NL;
-    W_DO(pin.pin(ptuple->rid(), 0, lock_mode, heap_latch_mode));
+    W_DO(pin.pin(ptuple->rid(), 0, lock_mode, LATCH_SH));
 
     if (!load(ptuple, pin.body())) {
         pin.unpin();
@@ -1034,18 +813,8 @@ w_rc_t table_man_t::add_tuple(ss_m* db,
     assert (ptuple->_rep);
     uint4_t system_mode = _ptable->get_pd();
 
-    if ((system_mode & (PD_MRBT_PART | PD_MRBT_LEAF)) &&
-	(_ptable->primary_idx() && _ptable->primary_idx()->is_latchless())) {
-        return (add_plp_tuple(db,ptuple,lock_mode,system_mode,primary_root));
-    }
-
     // find the file
     W_DO(_ptable->check_fid(db));
-
-    // figure out what mode will be used
-    bool bIgnoreLocks = false;
-    if (lock_mode==NL) bIgnoreLocks = true;
-
 
     // append the tuple
     int tsz = format(ptuple, *ptuple->_rep);
@@ -1055,11 +824,7 @@ w_rc_t table_man_t::add_tuple(ss_m* db,
                         vec_t(), 
                         tsz,
                         vec_t(ptuple->_rep->_dest, tsz),
-                        ptuple->_rid
-#ifdef CFG_DORA
-                        ,bIgnoreLocks
-#endif
-                        ));
+                        ptuple->_rid));
 
     // update the indexes
     index_desc_t* index = _ptable->indexes();
@@ -1072,255 +837,14 @@ w_rc_t table_man_t::add_tuple(ss_m* db,
 	int pnum = get_pnum(index, ptuple);
         W_DO(index->find_fid(db, pnum));
 
-        if (index->is_mr()) {
-	    ss_m::RELOCATE_RECORD_CALLBACK_FUNC reloc_func = &relocate_records;
-            el_filler ef;
-            ef._el.put(vec_t(&(ptuple->_rid), sizeof(rid_t)));
-            W_DO(db->create_mr_assoc(index->fid(pnum),
-                                     vec_t(ptuple->_rep->_dest, ksz),
-                                     ef,
-                                     bIgnoreLocks,
-                                     index->is_latchless(),
-                                     reloc_func,
-                                     (index->is_primary() ? primary_root : lpid_t::null)
-                                     ));
-        }
-        else {
-            W_DO(db->create_assoc(index->fid(pnum),
-                                  vec_t(ptuple->_rep->_dest, ksz),
-                                  vec_t(&(ptuple->_rid), sizeof(rid_t))
-#ifdef CFG_DORA
-                                  ,bIgnoreLocks
-#endif
-                                  ));
-        }
+	W_DO(db->create_assoc(index->fid(pnum),
+			      vec_t(ptuple->_rep->_dest, ksz),
+			      vec_t(&(ptuple->_rid), sizeof(rid_t))));
         // move to next index
 	index = index->next();
     }
     return (RCOK);
 }
-
-
-
-
-/********************************************************************* 
- *
- *  @fn:    add_plp_tuple
- *
- *  @brief: Inserts a tuple to a PLP table and all the indexes of the table
- *
- *  @note:  This function should be called in the context of a trx.
- *          The passed tuple should be formed. If everything goes as
- *          expected the _rid of the tuple will be set. 
- *
- *  @note:  The process of inserting a record to a PLP table consists of the 
- *          following 6 steps:
- *
- *          1) Call the create_mr_assoc of the primary MRBTree index
- *          2) The create_mr_assoc will find the leaf where the key entry will go
- *          3) It will call the el_filler_* callback to insert the record into the heap
- *          4) Then, it will insert the entry into the MRBTree index
- *          5) The call to create_mr_assoc will return
- *          6) Insert the tuple to the remaining indexes
- *
- *********************************************************************/
-
-el_filler_part::el_filler_part(size_t indexentrysz,
-                               ss_m* db,
-                               table_man_t* ptableman,
-                               table_tuple* ptuple,
-                               index_desc_t* pindex,
-                               bool bIgnoreLocks) 
-    : _db(db),_ptableman(ptableman), _ptuple(ptuple), _pindex(pindex),
-      _bIgnoreLocks(bIgnoreLocks)
-{
-    _el_size = indexentrysz;
-    assert (db);
-    assert (ptableman);
-    assert (ptuple);
-    assert (pindex);
-}
-
-
-rc_t el_filler_part::fill_el(vec_t& el, const lpid_t& leaf) 
-{
-
-    // Insert tuple in the heap file
-    int tsz = _ptableman->format(_ptuple, *_ptuple->_rep);
-    assert (_ptuple->_rep->_dest); // if NULL invalid
-    
-    // It locates the correct page, as returned in the call back, and 
-    // inserts the tuple there
-    rc_t rc = _db->find_page_and_create_mrbt_rec(_ptableman->table()->fid(),
-                                                 leaf,
-                                                 vec_t(), 
-                                                 tsz,
-                                                 vec_t(_ptuple->_rep->_dest, tsz),
-                                                 _ptuple->_rid,
-                                                 _bIgnoreLocks,
-                                                 true);
-    el.put(vec_t(&(_ptuple->_rid), sizeof(rid_t)));
-    
-    return rc;
-}
-
-
-
-/********************************************************************* 
- *
- *  @fn:    relocate_records
- *
- *  @brief: It received a list of old and new rids and updates the secondary
- *          indexes.
- *
- *********************************************************************/
-
-w_rc_t table_man_t::relocate_records(vector<rid_t>&    old_rids, 
-				     vector<rid_t>&    new_rids)
-{
-    // TODO: pin: the stid you give is for the index not for the heap file
-    // but we need the heap file store id here, so if this works change this interface
-
-    assert(old_rids.size() == new_rids.size() && old_rids.size() > 0);
-
-    typedef vector<rid_t>::iterator RIDIt;
-
-    // Find the table_man_t object from the stid
-    RIDIt old_ridit = old_rids.begin(); 
-    RIDIt new_ridit = new_rids.begin();
-    table_man_t* my_table_man = table_man_t::stid_to_tableman[(*old_ridit).pid._stid];
-    
-    // if there is only one index there is nothing to update
-    if(my_table_man->table()->index_count() > 1) {
-        index_desc_t* pindex;
-	table_row_t* atuple = new table_row_t();
-	atuple->setup(my_table_man->table());
-	int ksz;
-	bool found = false;
-	rep_row_t areprow(my_table_man->ts());
-	areprow.set(my_table_man->table()->maxsize());
-	atuple->_rep = &areprow;
-	int pnum;
-
-	// Read each record into a table_tuple
-	for ( ;
-	      old_ridit != old_rids.end() && new_ridit != new_rids.end(); 
-	      old_ridit++,new_ridit++) {
-	    
-	    // Read record by using its new rid
-	    atuple->set_rid(*new_ridit);
-	    my_table_man->read_tuple(atuple);
-	    
-	    // Update the secondary indexes
-	    pindex = my_table_man->table()->indexes();
-	    while (pindex) {
-		if(!pindex->is_primary()) {
-		    found = false;
-		    pnum = my_table_man->get_pnum(pindex, atuple);
-		    W_DO(pindex->find_fid(my_table_man->table()->db(), pnum));
-		    // Update the old rid with the new one
-		    ksz = my_table_man->format_key(pindex, atuple, *atuple->_rep);
-		    assert (atuple->_rep->_dest);
-		    W_DO( ss_m::update_mr_assoc(pindex->fid(pnum),
-						vec_t(atuple->_rep->_dest, ksz),
-						vec_t(&(*old_ridit),sizeof(rid_t)),
-						vec_t(&(*new_ridit),sizeof(rid_t)),
-						found) );
-		    assert(found); 
-    		}
-		pindex = pindex->next();   
-	    }
-	}
-
-	// TODO: pin: try to do this with get_tuple in table_man_impl later
-	delete atuple;
-	atuple = NULL;
-    }
-    return (RCOK);
-}
-
-
-w_rc_t table_man_t::add_plp_tuple(ss_m* db, 
-                                  table_tuple* ptuple,
-                                  const lock_mode_t lock_mode,
-                                  const uint system_mode,
-                                  const lpid_t& primary_root)
-{
-    assert (system_mode & (PD_MRBT_PART | PD_MRBT_LEAF));
-
-    // find the file
-    W_DO(_ptable->check_fid(db));
-
-    // figure out what lock mode will be used
-    bool bIgnoreLocks = false;
-    if (lock_mode==NL) bIgnoreLocks = true;
-
-    // Insert corresponding record entry into the (primary) MRBTree
-    // The table should have a primary index and that index to be MRBT
-    index_desc_t* primary_index = _ptable->primary_idx();
-    assert (primary_index);
-    assert (primary_index->is_mr());
-    
-    int ksz = format_key(primary_index, ptuple, *ptuple->_rep_key);
-    assert (ptuple->_rep_key->_dest);
-
-    int pnum = get_pnum(primary_index, ptuple);
-    W_DO(primary_index->find_fid(db, pnum));
-
-    ss_m::RELOCATE_RECORD_CALLBACK_FUNC reloc_func = &relocate_records;
-    el_filler_part part_filler(sizeof(rid_t),db,this,ptuple,primary_index,bIgnoreLocks);
-    W_DO(db->create_mr_assoc(primary_index->fid(pnum),
-                             vec_t(ptuple->_rep_key->_dest, ksz), // VEC_T OF INDEX ENTRY
-                             part_filler,
-                             bIgnoreLocks,
-                             primary_index->is_latchless(),
-                             reloc_func,
-                             primary_root));
-
-    // Update the remaining indexes
-    index_desc_t* index = _ptable->indexes();
-    while (index) {
-
-        // Skip it is the primary, because the record entry has already been 
-        // inserted there
-        if (index->is_primary()) {
-            // move to next index
-            index = index->next();
-            continue;
-        }        
-
-        ksz = format_key(index, ptuple, *ptuple->_rep_key);
-        assert (ptuple->_rep_key->_dest); // if dest == NULL there is invalid key
-
-        pnum = get_pnum(index, ptuple);
-        W_DO(index->find_fid(db, pnum));
-
-        if (index->is_mr()) {
-            el_filler ef;
-            ef._el.put(vec_t(&(ptuple->_rid), sizeof(rid_t)));
-            W_DO(db->create_mr_assoc(index->fid(pnum),
-                                     vec_t(ptuple->_rep_key->_dest, ksz),
-                                     ef,
-                                     bIgnoreLocks,
-                                     false, //index->is_latchless(),
-                                     NULL, // No relocation
-                                     lpid_t::null));
-        }
-        else {
-            W_DO(db->create_assoc(index->fid(pnum),
-                                  vec_t(ptuple->_rep_key->_dest, ksz),
-                                  vec_t(&(ptuple->_rid), sizeof(rid_t))
-#ifdef CFG_DORA
-                                  ,bIgnoreLocks
-#endif
-                                  ));
-        }
-        // move to next index
-	index = index->next();
-    }
-    return (RCOK);
-}
-
 
 
 /********************************************************************* 
@@ -1349,10 +873,6 @@ w_rc_t table_man_t::delete_tuple(ss_m* db,
     uint4_t system_mode = _ptable->get_pd();
     rid_t todelete = ptuple->rid();
 
-    // figure out what mode will be used
-    bool bIgnoreLocks = false;
-    if (lock_mode==NL) bIgnoreLocks = true;
-
 
     // delete all the corresponding index entries
     index_desc_t* pindex = _ptable->indexes();
@@ -1365,43 +885,16 @@ w_rc_t table_man_t::delete_tuple(ss_m* db,
 	int pnum = get_pnum(pindex, ptuple);
 	W_DO(pindex->find_fid(db, pnum));
 
-        if (pindex->is_mr()) {
-            W_DO(db->destroy_mr_assoc(pindex->fid(pnum),
-                                      vec_t(ptuple->_rep->_dest, key_sz),
-                                      vec_t(&(todelete), sizeof(rid_t)),
-                                      bIgnoreLocks,
-                                      pindex->is_latchless(),
-                                      (pindex->is_primary() ? primary_root : lpid_t::null)));
-        }
-        else {
-            W_DO(db->destroy_assoc(pindex->fid(pnum),
+	W_DO(db->destroy_assoc(pindex->fid(pnum),
                                    vec_t(ptuple->_rep->_dest, key_sz),
-                                   vec_t(&(todelete), sizeof(rid_t))
-#ifdef CFG_DORA
-                                   ,bIgnoreLocks
-#endif
-                                   ));
-        }
+                                   vec_t(&(todelete), sizeof(rid_t))));
 
         // move to next index
 	pindex = pindex->next();
     }
 
 
-    // delete the tuple
-    if (system_mode & ( PD_MRBT_LEAF | PD_MRBT_PART) ) {
-        W_DO(db->destroy_mrbt_rec( todelete,
-                                   bIgnoreLocks,
-                                   true));
-
-    }
-    else {
-        W_DO(db->destroy_rec(todelete
-#ifdef CFG_DORA
-                             ,bIgnoreLocks
-#endif
-                             ));
-    }
+    W_DO(db->destroy_rec(todelete));
 
     // invalidate tuple
     ptuple->set_rid(rid_t::null);
@@ -1440,19 +933,10 @@ w_rc_t table_man_t::update_tuple(ss_m* /* db */,
     if (!ptuple->is_rid_valid()) return RC(se_NO_CURRENT_TUPLE);
 
     uint4_t system_mode = _ptable->get_pd();
-    bool bIgnoreLocks = false;
-    if (lock_mode==NL) bIgnoreLocks = true;
-
-    bool no_heap_latch = false;   
-    latch_mode_t heap_latch_mode = LATCH_EX;
-    if (system_mode & ( PD_MRBT_LEAF | PD_MRBT_PART) ) {
-        no_heap_latch = true;
-        heap_latch_mode = LATCH_NL;
-    }
 
     // pin record
     pin_i pin;
-    W_DO(pin.pin(ptuple->rid(), 0, lock_mode, heap_latch_mode));
+    W_DO(pin.pin(ptuple->rid(), 0, lock_mode, LATCH_EX));
     int current_size = pin.body_size();
 
 
@@ -1465,12 +949,7 @@ w_rc_t table_man_t::update_tuple(ss_m* /* db */,
     if (current_size < tsz) {
         zvec_t azv(tsz - current_size);
 
-        if (no_heap_latch) {
-            rc = pin.append_mrbt_rec(azv,heap_latch_mode);
-        }
-        else {
-            rc = pin.append_rec(azv);
-        }
+	rc = pin.append_rec(azv);
 
         // on error unpin 
         if (rc.is_error()) {
@@ -1482,15 +961,7 @@ w_rc_t table_man_t::update_tuple(ss_m* /* db */,
 
 
     // b. else, simply update
-    if (no_heap_latch) {
-        rc = pin.update_mrbt_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0, 
-                                 bIgnoreLocks, 
-                                 true);
-    }
-    else {
-        rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0,
-                            bIgnoreLocks);
-    }
+    rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0);
 
     if (rc.is_error()) TRACE( TRACE_DEBUG, "Error updating record\n");
 
@@ -1523,18 +994,9 @@ w_rc_t table_man_t::read_tuple(table_tuple* ptuple,
     if (!ptuple->is_rid_valid()) return RC(se_NO_CURRENT_TUPLE);
 
     uint4_t system_mode = _ptable->get_pd();
-    latch_mode_t heap_latch_mode = LATCH_EX;
-    if (system_mode & ( PD_MRBT_LEAF | PD_MRBT_PART) ) {
-        heap_latch_mode = LATCH_NL;
-	// pin: right now we don't have a case where mrbt_leaf & mrbt_part are used
-	//      without dora but i'm including the check here
-	if(system_mode & PD_NOLOCK) {
-	    //TODO: lock_mode = NL;
-	}
-    }
 
     pin_i  pin;
-    W_DO(pin.pin(ptuple->rid(), 0, lock_mode, heap_latch_mode));
+    W_DO(pin.pin(ptuple->rid(), 0, lock_mode, LATCH_EX));
     if (!load(ptuple, pin.body())) {
         pin.unpin();
         return RC(se_WRONG_DISK_DATA);

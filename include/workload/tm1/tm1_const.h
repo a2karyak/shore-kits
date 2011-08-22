@@ -39,8 +39,6 @@ ENTER_NAMESPACE(tm1);
 
 // Define the USE_DORA_EXT_IDX in order to create the "correct"
 // SUB_NBR_IDX (with the  
-#undef  USE_DORA_EXT_IDX
-//#define USE_DORA_EXT_IDX
 
 
 // the scaling factor unit (arbitrarily chosen)
@@ -117,10 +115,6 @@ const int XCT_TM1_DEL_CALL_FWD  = 28;
 
 const int XCT_TM1_GET_SUB_NBR   = 29;
 
-const int XCT_TM1_CALL_FWD_MIX_BENCH  = 30;
-const int XCT_TM1_INS_CALL_FWD_BENCH  = 31;
-const int XCT_TM1_DEL_CALL_FWD_BENCH  = 32;
-
 
 
 
@@ -136,8 +130,6 @@ const int PROB_TM1_UPD_SUB_DATA  = 2;
 const int PROB_TM1_UPD_LOCATION  = 14;
 const int PROB_TM1_INS_CALL_FWD  = 2;
 const int PROB_TM1_DEL_CALL_FWD  = 2;
-//const int PROB_TM1_INS_CALL_FWD_BENCH  = 2;
-//const int PROB_TM1_DEL_CALL_FWD_BENCH  = 2;
 
 EXIT_NAMESPACE(tm1);
 

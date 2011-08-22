@@ -125,14 +125,8 @@ account_t::account_t(const uint4_t& pd)
     _desc[3].setup(SQL_FIXCHAR,   "A_PADDING", 100-2*sizeof(int)-sizeof(double));  
 #endif
     
-#ifdef PLP_MBENCH
-#warning PLP MBench !!!!
-    uint keys1[3] = { 0, 1, 2};
-    uint nkeys = 3;
-#else
     uint keys1[1] = {0 }; // IDX { A_ID }
     uint nkeys = 1;
-#endif
 
     // create unique index a_idx on (a_id)    
     create_primary_idx_desc("A_IDX", 0, keys1, nkeys, pd);

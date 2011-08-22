@@ -115,15 +115,6 @@ ShoreEnv::ShoreEnv()
     if (physical.compare("normal")==0) {
         _pd = PD_NORMAL;
     }
-    if (physical.compare("mrbtnorm")==0) {
-        _pd = PD_MRBT_NORMAL;
-    }
-    if (physical.compare("mrbtpart")==0) {
-        _pd = PD_MRBT_PART;
-    }
-    if (physical.compare("mrbtleaf")==0) {
-        _pd = PD_MRBT_LEAF;
-    }
 
     // Check about the hacks option
     check_hacks_enabled();
@@ -442,13 +433,6 @@ int ShoreEnv::init()
         return (3);
     }
     
-    // Update partitioning information    
-    if (update_partitioning().is_error()) {
-        TRACE( TRACE_ALWAYS, "Error updating the partitioning info\n");
-        return (4);
-    }
-
-
     // Start the storage manager
     if (start_sm()) {
         TRACE( TRACE_ALWAYS, "Error starting Shore database\n");

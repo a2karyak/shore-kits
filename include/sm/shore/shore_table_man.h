@@ -258,12 +258,10 @@ public:
         if (!table_iter::_opened) {
             assert (db);
             W_DO(table_iter::_file->check_fid(db));
-            bool bIgnoreLatches = (table_iter::_file->get_pd() & (PD_MRBT_LEAF | PD_MRBT_PART) ? true : false);
             table_iter::_scan = new scan_file_i(table_iter::_file->fid(), 
                                                 ss_m::t_cc_record, 
                                                 false, 
-                                                table_iter::_lm,
-                                                bIgnoreLatches);
+                                                table_iter::_lm);
             table_iter::_opened = true;
         }
         return (RCOK);
@@ -381,8 +379,7 @@ public:
             index_iter::_scan = new scan_index_i(index_iter::_file->fid(pnum), 
                                                  c1, bound1, c2, bound2,
                                                  false, cc, 
-                                                 index_iter::_lm,
-                                                 index_iter::_file->is_latchless());
+                                                 index_iter::_lm);
             index_iter::_opened = true;
         }
 
@@ -418,7 +415,7 @@ public:
 
             if (_need_tuple) {
                 pin_i  pin;
-                W_DO(pin.pin(rid, 0, index_iter::_lm, index_iter::_file->is_latchless()));
+                W_DO(pin.pin(rid, 0, index_iter::_lm));
                 if (!_pmanager->load(&tuple, pin.body())) {
                     pin.unpin();
                     return RC(se_WRONG_DISK_DATA);

@@ -129,7 +129,7 @@ bool field_value_t::load_value_from_file(ifstream & is,
     case SQL_CHAR:      _value._char = atoi(string); break;
     case SQL_INT:       _value._int = atoi(string); break;
     case SQL_FLOAT:     _value._float = atof(string); break;
-    case SQL_LONG:     _value._float = atol(string); break;
+    case SQL_LONG:     _value._long = atol(string); break;
     case SQL_TIME:      break;
     case SQL_VARCHAR:   {
         if (string[0] == '\"') string[strlen(string)-1] = '\0';

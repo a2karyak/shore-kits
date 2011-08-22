@@ -55,10 +55,10 @@ load_db ()
     STAMP=$(date +"%F-%Hh%Mm%Ss")
     echo "[$STAMP]" | tee -a building-db
 
-    # System (baseline,dora,plp)
+    # System (baseline)
     SYSTEM=$1
 
-    # Design (normal,mrbtnorm,...)
+    # Design (normal)
     DESIGN=$2
 
     # Configuration (tm1-16,...)
@@ -100,8 +100,6 @@ check_dir databases
 
 ### The various databases that will be created
 load_db baseline normal tm1-10 
-load_db dora normal tm1-10 
-load_db dora mrbtnorm tm1-10 shore.conf.plp.$CPUS 
 
 # load_db baseline normal tm1-16
 # load_db baseline normal tm1-64
@@ -109,27 +107,3 @@ load_db dora mrbtnorm tm1-10 shore.conf.plp.$CPUS
 # load_db baseline normal tpcb-100
 # load_db baseline normal tpcc-20
 # load_db baseline normal tpcc-100
-
-# load_db dora normal tm1-16
-# load_db dora normal tm1-64
-# load_db dora normal tpcb-20
-# load_db dora normal tpcb-100
-# load_db dora normal tpcc-20
-# load_db dora normal tpcc-100
-
-
-# # Instead of plp we use dora-mrbtnorm
-# # load_db plp mrbtnorm tm1-16
-# # load_db plp mrbtnorm tm1-64
-# # load_db plp mrbtnorm tpcb-20
-# # load_db plp mrbtnorm tpcb-100
-# # load_db plp mrbtnorm tpcc-20
-# # load_db plp mrbtnorm tpcc-100
-
-# load_db dora mrbtnorm tm1-16 shore.conf.plp.$CPUS 
-# load_db dora mrbtnorm tm1-64 shore.conf.plp.$CPUS 
-# load_db dora mrbtnorm tpcb-20 shore.conf.plp.$CPUS 
-# load_db dora mrbtnorm tpcb-100 shore.conf.plp.$CPUS 
-# load_db dora mrbtnorm tpcc-20 shore.conf.plp.$CPUS 
-# load_db dora mrbtnorm tpcc-100 shore.conf.plp.$CPUS 
-
