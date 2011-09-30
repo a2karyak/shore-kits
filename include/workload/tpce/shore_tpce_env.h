@@ -227,7 +227,7 @@ protected:
     // scaling factors
     int             _customers;
     int             _working_days; 
-    int             _scaling_factor; 
+    int             _scaling_factor_tpce; 
 
 private:
     w_rc_t _post_init_impl();
@@ -337,11 +337,11 @@ public:
     void set_wd(const int awd);
     inline int get_wd() { return (_working_days); }
 
-    void set_sf(const int asf);
-    inline int get_sf() { return (_scaling_factor); }
+    void set_sfe(const int asf);
+    inline int get_sfe() { return (_scaling_factor_tpce); }
 
 
-    virtual void print_throughput(const double iQueriedSF, //?
+    virtual void print_throughput(const double iQueriedSF, 
                                   const int iSpread, 
                                   const int iNumOfThreads,
                                   const double delay,

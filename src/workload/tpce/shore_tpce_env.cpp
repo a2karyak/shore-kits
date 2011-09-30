@@ -249,48 +249,45 @@ void testInputs()
 
 
 /** Construction  */
-ShoreTPCEEnv::ShoreTPCEEnv(): ShoreEnv(), 
-			      _customers(1000), 
-			      _working_days(20),
-			      _scaling_factor(500)
+ShoreTPCEEnv::ShoreTPCEEnv():
+    ShoreEnv()
 {
     // read the scaling factor from the configuration file
     
     
 
     //INITIALIZE EGEN
-    _customers =envVar::instance()->getSysVarInt("cust");;
-    _working_days=envVar::instance()->getSysVarInt("wd");
-    _scaling_factor=envVar::instance()->getSysVarInt("sf");
+    _customers = upd_sf() * TPCE_CUSTS_PER_LU;
+    _working_days = envVar::instance()->getSysVarInt("wd");
+    _scaling_factor_tpce = envVar::instance()->getSysVarInt("sfe");
 
-    char sf_str[8], wd_str[8], cust_str[8];
-    memset(sf_str,0,8);
+    char sfe_str[8], wd_str[8], cust_str[8];
+    memset(sfe_str,0,8);
     memset(wd_str,0,8);
     memset(cust_str,0,8);
-    sprintf(sf_str, "%d",_scaling_factor);
+    sprintf(sfe_str, "%d",_scaling_factor_tpce);
     sprintf(wd_str, "%d",_working_days);
     sprintf(cust_str, "%d",_customers);
-    _queried_factor = _scaling_factor;
 
 
  
 #ifdef COMPILE_FLAT_FILE_LOAD 
      fssec = fopen("shoresecurity.txt","wt");
      fshs = fopen("shorehsummary.txt","wt");
-     const char * params[] = {"to_skip", "-i", "./src/workload/tpce/egen/flat/egen_flat_in/","-o", "./src/workload/tpce/egen/flat/egen_flat_out/", "-l", "FLAT", "-f", sf_str, "-w", wd_str, "-c", cust_str, "-t", cust_str  }; 
+     const char * params[] = {"to_skip", "-i", "./src/workload/tpce/egen/flat/egen_flat_in/","-o", "./src/workload/tpce/egen/flat/egen_flat_out/", "-l", "FLAT", "-f", sfe_str, "-w", wd_str, "-c", cust_str, "-t", cust_str  }; 
      egen_init(15,  (char **)params);  
 #else
-     const char * params[] = {"to_skip", "-i", "./src/workload/tpce/egen/flat/egen_flat_in/", "-l", "NULL", "-f", sf_str, "-w", wd_str, "-c", cust_str, "-t", cust_str }; 
+     const char * params[] = {"to_skip", "-i", "./src/workload/tpce/egen/flat/egen_flat_in/", "-l", "NULL", "-f", sfe_str, "-w", wd_str, "-c", cust_str, "-t", cust_str }; 
      egen_init(13,  (char **)params);      
 #endif
 
      //Initialize Client Transaction Input generator
-     m_TxnInputGenerator = transactions_input_init(_customers, _scaling_factor , _working_days);
+     m_TxnInputGenerator = transactions_input_init(_customers, _scaling_factor_tpce , _working_days);
 
      unsigned int seed = AutoRand();
      setRNGSeeds(m_TxnInputGenerator, seed);
   
-     m_CDM = data_maintenance_init(_customers, _scaling_factor, _working_days);
+     m_CDM = data_maintenance_init(_customers, _scaling_factor_tpce, _working_days);
 	
      //Initialize Market side
      MarketFeedInputBuffer = new MFBuffer();
@@ -488,6 +485,17 @@ void ShoreTPCEEnv::set_wd(const int aSF)
     }
     else {
         TRACE( TRACE_ALWAYS, "Invalid working_days input: %d\n", aSF);
+    }
+}
+
+void ShoreTPCEEnv::set_sfe(const int aSF)
+{
+    if (aSF > 0) {
+        TRACE( TRACE_ALWAYS, "New scaling_factor_tpce: %d\n", aSF);
+        _scaling_factor_tpce = aSF;
+    }
+    else {
+        TRACE( TRACE_ALWAYS, "Invalid scaling_factor_tpce input: %d\n", aSF);
     }
 }
 

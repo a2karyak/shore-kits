@@ -18,6 +18,10 @@ typedef long long myTime;
 
 ENTER_NAMESPACE(tpce);
 
+// the load unit
+// in kits when SF = 1 --> 1000 customers (1 load unit for tpce spec)
+const int TPCE_CUSTS_PER_LU = 1000;
+
 // --- useful constants --- //
 
 const TIdent MAX_ID    = UINT64(-1)/2;
