@@ -54,11 +54,11 @@ ENTER_NAMESPACE(ssb);
 /* -------------------------------------------------- */
 
 
-DECLARE_TABLE_SCHEMA(supplier_t);
-DECLARE_TABLE_SCHEMA(part_t);
-DECLARE_TABLE_SCHEMA(date_t);
-DECLARE_TABLE_SCHEMA(customer_t);
-DECLARE_TABLE_SCHEMA(lineorder_t);
+DECLARE_TABLE_SCHEMA_PD(supplier_t);
+DECLARE_TABLE_SCHEMA_PD(part_t);
+DECLARE_TABLE_SCHEMA_PD(date_t);
+DECLARE_TABLE_SCHEMA_PD(customer_t);
+DECLARE_TABLE_SCHEMA_PD(lineorder_t);
 
 
 EXIT_NAMESPACE(ssb);

@@ -68,8 +68,8 @@ using namespace shore;
 
 ENTER_NAMESPACE(ssb);
 
-supplier_t::supplier_t(string sysname) : 
-    table_desc_t("SUPPLIER", SSB_SUPPLIER_FCOUNT) 
+supplier_t::supplier_t(const uint4_t& pd) : 
+    table_desc_t("SUPPLIER", SSB_SUPPLIER_FCOUNT, pd) 
 {
     // table schema
     _desc[0].setup(SQL_INT,     "S_SUPPKEY");
@@ -84,7 +84,7 @@ supplier_t::supplier_t(string sysname) :
     uint keys[1] = {0}; // IDX { S_SUPPKEY}
 				
     // baseline - Regular
-    if (sysname.compare("baseline")==0) {
+    if ((pd & PD_NORMAL) && !(pd & PD_NOLOCK)) {
         TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
  
         // create unique index s_index on (s_suppkey)
@@ -93,8 +93,8 @@ supplier_t::supplier_t(string sysname) :
 }
 
 
-part_t::part_t(string sysname) : 
-    table_desc_t("PART", SSB_PART_FCOUNT) 
+part_t::part_t(const uint4_t& pd) : 
+    table_desc_t("PART", SSB_PART_FCOUNT, pd) 
 {
     // table schema
     _desc[0].setup(SQL_INT,     "P_PARTKEY");
@@ -109,7 +109,7 @@ part_t::part_t(string sysname) :
                                 
     uint keys[1] = { 0 }; // IDX { P_PARTKEY }
         
-    if (sysname.compare("baseline") == 0) {
+    if ((pd & PD_NORMAL) && !(pd & PD_NOLOCK)) {
         TRACE(TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
             
         create_primary_idx_desc("P_IDX", 0, keys, 1);
@@ -117,8 +117,8 @@ part_t::part_t(string sysname) :
 }
 
 
-customer_t::customer_t(string sysname) : 
-    table_desc_t("CUSTOMER", SSB_CUSTOMER_FCOUNT) 
+customer_t::customer_t(const uint4_t& pd) : 
+    table_desc_t("CUSTOMER", SSB_CUSTOMER_FCOUNT, pd) 
 {
     // table schema
     _desc[0].setup(SQL_INT,     "C_CUSTKEY");
@@ -136,7 +136,7 @@ customer_t::customer_t(string sysname) :
     //    uint fkeys[1] = { 3 }; // IDX { C_NATIONKEY }
 
     // baseline - regular indexes
-    if (sysname.compare("baseline")==0) {
+    if ((pd & PD_NORMAL) && !(pd & PD_NOLOCK)) {
         TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
  
         // create unique index c_index on (c_custkey)
@@ -144,8 +144,8 @@ customer_t::customer_t(string sysname) :
     }
 }
 
-date_t::date_t(string sysname) : 
-    table_desc_t("DATE", SSB_DATE_FCOUNT) 
+date_t::date_t(const uint4_t& pd) : 
+    table_desc_t("DATE", SSB_DATE_FCOUNT, pd) 
 {
     // table schema
      _desc[0].setup(SQL_INT,     "D_DATEKEY");
@@ -169,7 +169,7 @@ date_t::date_t(string sysname) :
     uint keys[1] = { 0 }; // IDX { C_CUSTKEY }
         
     // baseline - regular indexes
-    if (sysname.compare("baseline")==0) {
+    if ((pd & PD_NORMAL) && !(pd & PD_NOLOCK)) {
         TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
  
         // create unique index c_index on (c_custkey)
@@ -182,8 +182,8 @@ date_t::date_t(string sysname) :
 
 
 
-lineorder_t::lineorder_t(string sysname) : 
-    table_desc_t("LINEORDER", SSB_LINEORDER_FCOUNT) 
+lineorder_t::lineorder_t(const uint4_t& pd) : 
+    table_desc_t("LINEORDER", SSB_LINEORDER_FCOUNT, pd) 
 {
     // table schema
     _desc[0].setup(SQL_INT,     "LO_ORDERKEY");
@@ -209,7 +209,7 @@ lineorder_t::lineorder_t(string sysname) :
     uint fkeys1[1] = { 0 }; // IDX { L_ORDERKEY }
 
     // baseline - regular indexes
-    if (sysname.compare("baseline")==0) {
+    if ((pd & PD_NORMAL) && !(pd & PD_NOLOCK)) {
         TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
 
         // create unique index l_index on ()

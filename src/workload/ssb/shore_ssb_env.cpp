@@ -301,16 +301,12 @@ ShoreSSBEnv::~ShoreSSBEnv()
 
 w_rc_t ShoreSSBEnv::load_schema()
 {
-    // get the sysname type from the configuration
-    _sysname = "baseline";
-    TRACE( TRACE_ALWAYS, "Sysname (%s)\n", _sysname.c_str());
-
     // create the schema
-    _ppart_desc      = new part_t(_sysname);
-    _psupplier_desc  = new supplier_t(_sysname);
-    _pdate_desc      = new date_t(_sysname);
-    _pcustomer_desc  = new customer_t(_sysname);
-    _plineorder_desc = new lineorder_t(_sysname);
+    _ppart_desc      = new part_t(get_pd());
+    _psupplier_desc  = new supplier_t(get_pd());
+    _pdate_desc      = new date_t(get_pd());
+    _pcustomer_desc  = new customer_t(get_pd());
+    _plineorder_desc = new lineorder_t(get_pd());
 
     // initiate the table managers
     _ppart_man      = new part_man_impl(_ppart_desc.get());

@@ -310,19 +310,15 @@ ShoreTPCHEnv::~ShoreTPCHEnv()
 
 w_rc_t ShoreTPCHEnv::load_schema()
 {
-    // get the sysname type from the configuration
-    _sysname = "baseline";
-    TRACE( TRACE_ALWAYS, "Sysname (%s)\n", _sysname.c_str());
-
     // create the schema
-    _pnation_desc   = new nation_t(_sysname);
-    _pregion_desc   = new region_t(_sysname);
-    _ppart_desc     = new part_t(_sysname);
-    _psupplier_desc = new supplier_t(_sysname);
-    _ppartsupp_desc = new partsupp_t(_sysname);
-    _pcustomer_desc = new customer_t(_sysname);
-    _porders_desc   = new orders_t(_sysname);
-    _plineitem_desc = new lineitem_t(_sysname);
+    _pnation_desc   = new nation_t(get_pd());
+    _pregion_desc   = new region_t(get_pd());
+    _ppart_desc     = new part_t(get_pd());
+    _psupplier_desc = new supplier_t(get_pd());
+    _ppartsupp_desc = new partsupp_t(get_pd());
+    _pcustomer_desc = new customer_t(get_pd());
+    _porders_desc   = new orders_t(get_pd());
+    _plineitem_desc = new lineitem_t(get_pd());
 
     // initiate the table managers
     _pnation_man   = new nation_man_impl(_pnation_desc.get());

@@ -54,14 +54,14 @@ ENTER_NAMESPACE(tpch);
 /* -------------------------------------------------- */
 
 
-DECLARE_TABLE_SCHEMA(nation_t);
-DECLARE_TABLE_SCHEMA(region_t);
-DECLARE_TABLE_SCHEMA(supplier_t);
-DECLARE_TABLE_SCHEMA(part_t);
-DECLARE_TABLE_SCHEMA(partsupp_t);
-DECLARE_TABLE_SCHEMA(customer_t);
-DECLARE_TABLE_SCHEMA(orders_t);
-DECLARE_TABLE_SCHEMA(lineitem_t);
+DECLARE_TABLE_SCHEMA_PD(nation_t);
+DECLARE_TABLE_SCHEMA_PD(region_t);
+DECLARE_TABLE_SCHEMA_PD(supplier_t);
+DECLARE_TABLE_SCHEMA_PD(part_t);
+DECLARE_TABLE_SCHEMA_PD(partsupp_t);
+DECLARE_TABLE_SCHEMA_PD(customer_t);
+DECLARE_TABLE_SCHEMA_PD(orders_t);
+DECLARE_TABLE_SCHEMA_PD(lineitem_t);
 
 
 EXIT_NAMESPACE(tpch);

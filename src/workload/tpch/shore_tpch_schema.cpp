@@ -85,8 +85,8 @@ using namespace shore;
 
 ENTER_NAMESPACE(tpch);
 
-nation_t::nation_t(string sysname) : 
-    table_desc_t("NATION", TPCH_NATION_FCOUNT, PD_NORMAL) 
+nation_t::nation_t(const uint4_t& pd) : 
+    table_desc_t("NATION", TPCH_NATION_FCOUNT, pd) 
 {
     // table schema
     _desc[0].setup(SQL_INT,   "N_NATIONKEY");
@@ -101,7 +101,7 @@ nation_t::nation_t(string sysname) :
     // depending on the system name, create the corresponding indexes 
 
     // baseline - Regular 
-    if (sysname.compare("baseline")==0) {
+    if ((pd & PD_NORMAL) && !(pd & PD_NOLOCK)) {
         TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
         // create unique index n_index on (n_nationkey)
         create_primary_idx_desc("N_IDX", 0, keys, 1);
@@ -111,8 +111,8 @@ nation_t::nation_t(string sysname) :
 }
 
 
-region_t::region_t(string sysname) : 
-    table_desc_t("REGION", TPCH_REGION_FCOUNT, PD_NORMAL) 
+region_t::region_t(const uint4_t& pd) : 
+    table_desc_t("REGION", TPCH_REGION_FCOUNT, pd) 
 {
     // table schema
     _desc[0].setup(SQL_INT,   "R_REGIONKEY");     
@@ -122,7 +122,7 @@ region_t::region_t(string sysname) :
     uint keys[1] = { 0 }; // IDX { R_REGIONKEY }
 
     // baseline - Regular 
-    if (sysname.compare("baseline")==0) {
+    if ((pd & PD_NORMAL) && !(pd & PD_NOLOCK)) {
         TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name); 
         // create unique index r_index on (r_regionkey)
         create_primary_idx_desc("R_IDX", 0, keys, 1);
@@ -130,8 +130,8 @@ region_t::region_t(string sysname) :
 }
 
 
-supplier_t::supplier_t(string sysname) : 
-    table_desc_t("SUPPLIER", TPCH_SUPPLIER_FCOUNT, PD_NORMAL) 
+supplier_t::supplier_t(const uint4_t& pd) : 
+    table_desc_t("SUPPLIER", TPCH_SUPPLIER_FCOUNT, pd) 
 {
     // table schema
     _desc[0].setup(SQL_INT,   "S_SUPPKEY");
@@ -147,7 +147,7 @@ supplier_t::supplier_t(string sysname) :
     uint fkeys[1] = {3}; // IDX { S_NATIONKEY }
                                 
     // baseline - Regular
-    if (sysname.compare("baseline")==0) {
+    if ((pd & PD_NORMAL) && !(pd & PD_NOLOCK)) {
         TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
  
         // create unique index s_index on (s_suppkey)
@@ -158,8 +158,8 @@ supplier_t::supplier_t(string sysname) :
 }
 
 
-part_t::part_t(string sysname) : 
-    table_desc_t("PART", TPCH_PART_FCOUNT, PD_NORMAL) 
+part_t::part_t(const uint4_t& pd) : 
+    table_desc_t("PART", TPCH_PART_FCOUNT, pd) 
 {
     // table schema
     _desc[0].setup(SQL_INT,   "P_PARTKEY");
@@ -174,15 +174,15 @@ part_t::part_t(string sysname) :
                                 
     uint keys[1] = { 0 }; // IDX { P_PARTKEY }
         
-    if (sysname.compare("baseline") == 0) {
+    if ((pd & PD_NORMAL) && !(pd & PD_NOLOCK)) {
         TRACE(TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
             
         create_primary_idx_desc("P_IDX", 0, keys, 1);
     }
 }
 
-partsupp_t::partsupp_t(string sysname) : 
-    table_desc_t("PARTSUPP", TPCH_PARTSUPP_FCOUNT, PD_NORMAL) 
+partsupp_t::partsupp_t(const uint4_t& pd) : 
+    table_desc_t("PARTSUPP", TPCH_PARTSUPP_FCOUNT, pd) 
 {
     // table schema
     _desc[0].setup(SQL_INT,    "PS_PARTKEY");
@@ -198,7 +198,7 @@ partsupp_t::partsupp_t(string sysname) :
     uint fkeys2[1] = { 1 }; // IDX { PS_SUPPEKY }
 
     // baseline - regular indexes
-    if (sysname.compare("baseline")==0) {
+    if ((pd & PD_NORMAL) && !(pd & PD_NOLOCK)) {
         TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
             
         // create unique index ps_index on (ps_partkey)
@@ -211,8 +211,8 @@ partsupp_t::partsupp_t(string sysname) :
 }
 
 
-customer_t::customer_t(string sysname) : 
-    table_desc_t("CUSTOMER", TPCH_CUSTOMER_FCOUNT, PD_NORMAL) 
+customer_t::customer_t(const uint4_t& pd) : 
+    table_desc_t("CUSTOMER", TPCH_CUSTOMER_FCOUNT, pd) 
 {
     // table schema
     _desc[0].setup(SQL_INT,    "C_CUSTKEY");
@@ -229,7 +229,7 @@ customer_t::customer_t(string sysname) :
     uint fkeys[1] = { 3 }; // IDX { C_NATIONKEY }
 
     // baseline - regular indexes
-    if (sysname.compare("baseline")==0) {
+    if ((pd & PD_NORMAL) && !(pd & PD_NOLOCK)) {
         TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
  
         // create unique index c_index on (c_custkey)
@@ -240,8 +240,8 @@ customer_t::customer_t(string sysname) :
 }
 
 
-orders_t::orders_t(string sysname) : 
-    table_desc_t("ORDERS", TPCH_ORDERS_FCOUNT, PD_NORMAL) 
+orders_t::orders_t(const uint4_t& pd) : 
+    table_desc_t("ORDERS", TPCH_ORDERS_FCOUNT, pd) 
 {
     // table schema
     _desc[0].setup(SQL_INT,   "O_ORDERKEY");
@@ -260,7 +260,7 @@ orders_t::orders_t(string sysname) :
          
 
     // baseline - regular indexes
-    if (sysname.compare("baseline")==0) {
+    if ((pd & PD_NORMAL) && !(pd & PD_NOLOCK)) {
         TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
  
         // create unique index o_index on (o_orderkey)
@@ -271,8 +271,8 @@ orders_t::orders_t(string sysname) :
 }
 
 
-lineitem_t::lineitem_t(string sysname) : 
-    table_desc_t("LINEITEM", TPCH_LINEITEM_FCOUNT, PD_NORMAL) 
+lineitem_t::lineitem_t(const uint4_t& pd) : 
+    table_desc_t("LINEITEM", TPCH_LINEITEM_FCOUNT, pd) 
 {
     // table schema
     _desc[0].setup(SQL_INT,    "L_ORDERKEY");
@@ -302,7 +302,7 @@ lineitem_t::lineitem_t(string sysname) :
 
 
     // baseline - regular indexes
-    if (sysname.compare("baseline")==0) {
+    if ((pd & PD_NORMAL) && !(pd & PD_NOLOCK)) {
         TRACE( TRACE_DEBUG, "Regular idxs for (%s)\n", _name);
 
         // create unique index l_index on ()
