@@ -25,6 +25,7 @@
  *
  *  @brief:  Implementation of the client for the TPCH benchmark
  *
+ *  @author: Nastaran Nikparto, Summer 2011
  *  @author: Ippokratis Pandis, July 2008
  */
 
@@ -64,35 +65,50 @@ int baseline_tpch_client_t::load_sup_xct(mapSupTrxs& stmap)
 
     // Baseline TPC-H trxs
     stmap[XCT_TPCH_MIX]          = "TPCH-Mix";
+
     stmap[XCT_TPCH_Q1]           = "TPCH-Q1";
 
-//     stmap[XCT_TPCH_Q2]           = "TPCH-Q2";
-//     stmap[XCT_TPCH_Q3]           = "TPCH-Q3";
-//     stmap[XCT_TPCH_Q4]           = "TPCH-Q4";
-//     stmap[XCT_TPCH_Q5]           = "TPCH-Q5";
+    stmap[XCT_TPCH_Q2]           = "TPCH-Q2";
+
+    stmap[XCT_TPCH_Q3]           = "TPCH-Q3";
+
+    stmap[XCT_TPCH_Q4]           = "TPCH-Q4";
+
+    stmap[XCT_TPCH_Q5]           = "TPCH-Q5";
 
     stmap[XCT_TPCH_Q6]           = "TPCH-Q6";
 
-//     stmap[XCT_TPCH_Q7]           = "TPCH-Q7";
-//     stmap[XCT_TPCH_Q8]           = "TPCH-Q8";
-//     stmap[XCT_TPCH_Q9]           = "TPCH-Q9";
-//     stmap[XCT_TPCH_Q10]          = "TPCH-Q10";
-//     stmap[XCT_TPCH_Q11]          = "TPCH-Q11";
+    stmap[XCT_TPCH_Q7]           = "TPCH-Q7";
+
+     stmap[XCT_TPCH_Q8]           = "TPCH-Q8";
+
+     stmap[XCT_TPCH_Q9]           = "TPCH-Q9";
+     
+     stmap[XCT_TPCH_Q10]          = "TPCH-Q10";
+
+     stmap[XCT_TPCH_Q11]          = "TPCH-Q11";
 
     stmap[XCT_TPCH_Q12]          = "TPCH-Q12";
 
-//     stmap[XCT_TPCH_Q13]          = "TPCH-Q13";
+    stmap[XCT_TPCH_Q13]          = "TPCH-Q13";
 
     stmap[XCT_TPCH_Q14]          = "TPCH-Q14";
 
-//     stmap[XCT_TPCH_Q15]          = "TPCH-Q15";
-//     stmap[XCT_TPCH_Q16]          = "TPCH-Q16";
-//     stmap[XCT_TPCH_Q17]          = "TPCH-Q17";
-//     stmap[XCT_TPCH_Q18]          = "TPCH-Q18";
-//     stmap[XCT_TPCH_Q19]          = "TPCH-Q19";
-//     stmap[XCT_TPCH_Q20]          = "TPCH-Q20";
-//     stmap[XCT_TPCH_Q21]          = "TPCH-Q21";
-//     stmap[XCT_TPCH_Q22]          = "TPCH-Q22";
+     stmap[XCT_TPCH_Q15]          = "TPCH-Q15";
+     
+     stmap[XCT_TPCH_Q16]          = "TPCH-Q16";
+
+     stmap[XCT_TPCH_Q17]          = "TPCH-Q17";
+     
+     stmap[XCT_TPCH_Q18]          = "TPCH-Q18";
+     
+     stmap[XCT_TPCH_Q19]          = "TPCH-Q19";
+     
+     stmap[XCT_TPCH_Q20]          = "TPCH-Q20";
+     
+     stmap[XCT_TPCH_Q21]          = "TPCH-Q21";
+     
+     stmap[XCT_TPCH_Q22]          = "TPCH-Q22";
 
 
 

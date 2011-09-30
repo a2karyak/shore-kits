@@ -21,17 +21,18 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-/** @file:   shore_tpch_schema.h
+/** @file:   shore_tpch_schema_man.h
  *
  *  @brief:  Implementation of the workload-specific access methods 
  *           on TPC-H tables
  *
+ *  @author: Nastaran Nikparto, Summer 2011
  *  @author: Ippokratis Pandis, Jun 2009
  *
  */
 
 #include "workload/tpch/shore_tpch_schema_man.h"
-
+#include "util.h"
 
 using namespace shore;
 
@@ -118,7 +119,7 @@ w_rc_t partsupp_man_impl::ps_index_probe(ss_m* db,
     assert (ptuple);
     ptuple->set_value(0, ps_partkey);
     ptuple->set_value(1, ps_suppkey);
-    return (index_probe_by_name(db, "S_IDX", ptuple));
+    return (index_probe_by_name(db, "PS_IDX", ptuple));
 }
 
 /* ---------------- */
@@ -231,11 +232,127 @@ w_rc_t orders_man_impl::o_get_iter_by_index(ss_m* db,
     return (RCOK);
 }
 
+w_rc_t orders_man_impl::o_get_iter_by_findex(ss_m* db,
+                                             orders_index_iter* &iter,
+                                             orders_tuple* ptuple,
+                                             rep_row_t &replow,
+                                             rep_row_t &rephigh,
+                                             const int o_custkey,
+                                             lock_mode_t alm,
+                                             bool need_tuple)
+{
+    assert (ptuple);
+
+    /* find index */
+    assert (_ptable);
+    index_desc_t* pindex = _ptable->find_index("O_FK_CUSTKEY");
+    assert (pindex);
+
+    /* get the lowest key value */
+    ptuple->set_value(1, o_custkey);
+
+    int lowsz = format_key(pindex, ptuple, replow);
+    assert (replow._dest);
+
+    /* get the highest key value */
+    ptuple->set_value(1, o_custkey + 1);
+
+    int highsz  = format_key(pindex, ptuple, rephigh);
+    assert (rephigh._dest);
+
+    W_DO(get_iter_for_index_scan(db, pindex, iter,
+                                 alm, need_tuple,
+				 scan_index_i::ge, vec_t(replow._dest, lowsz),
+				 scan_index_i::lt, vec_t(rephigh._dest, highsz)));
+    return (RCOK);
+}
+
+w_rc_t orders_man_impl::o_get_range_iter_by_index(ss_m* db,
+				     orders_index_iter* &iter,
+				     orders_tuple* ptuple,
+				     rep_row_t &replow,
+				     rep_row_t &rephigh,
+				     const time_t low_o_orderdate,
+				     const time_t high_o_orderdate,
+				     lock_mode_t alm,
+				     bool need_tuple)
+{
+	assert(ptuple);
+
+	/*pointer to the index*/
+	assert (_ptable);
+	index_desc_t* pindex = _ptable->find_index("O_IDX_ORDERDATE");
+	assert (pindex);
+
+	/* get the lowest key value */
+	char low_date[15];
+	timet_to_str(low_date, low_o_orderdate);
+	ptuple->set_value(4, low_date);
+
+	int lowsz = format_key(pindex, ptuple, replow);
+	assert (replow._dest);
+
+	/* get the highest key value */
+	char high_date[15];
+	timet_to_str(high_date, high_o_orderdate+1);
+	ptuple->set_value(4, high_date);
+
+	int highsz = format_key(pindex, ptuple, rephigh);
+	assert (rephigh._dest);
+    
+	/* get the tuple iterator (not index only scan) */
+	W_DO(get_iter_for_index_scan(db, pindex, iter,
+                                 alm, need_tuple,
+				 scan_index_i::ge, vec_t(replow._dest, lowsz),
+				 scan_index_i::lt, vec_t(rephigh._dest, highsz)));
+	return (RCOK);
+}
+
 
 /* ---------------- */
 /* --- LINEITEM --- */
 /* ---------------- */
 
+w_rc_t lineitem_man_impl::l_get_range_iter_by_receiptdate_index(ss_m* db,
+                                                       lineitem_index_iter* &iter,
+                                                       lineitem_tuple* ptuple,
+                                                       rep_row_t &replow,
+                                                       rep_row_t &rephigh,
+                                                       const time_t low_l_receiptdate,
+                                                       const time_t high_l_receiptdate,
+                                                       lock_mode_t alm,
+                                                       bool need_tuple)
+{
+    assert (ptuple);
+
+    /* pointer to the index */
+    assert (_ptable);
+    index_desc_t* pindex = _ptable->find_index("L_IDX_RECEIPTDATE");
+    assert (pindex);
+
+    /* get the lowest key value */
+    char lowdate[15];
+    timet_to_str(lowdate, low_l_receiptdate);
+    ptuple->set_value(12, lowdate);
+
+    int lowsz = format_key(pindex, ptuple, replow);
+    assert (replow._dest);
+
+    /* get the highest key value */
+    char highdate[15];
+    timet_to_str(highdate, high_l_receiptdate+1);
+    ptuple->set_value(12,highdate );
+
+    int highsz = format_key(pindex, ptuple, rephigh);
+    assert (rephigh._dest);
+    
+    /* get the tuple iterator (not index only scan) */
+    W_DO(get_iter_for_index_scan(db, pindex, iter,
+                                 alm, need_tuple,
+				 scan_index_i::ge, vec_t(replow._dest, lowsz),
+				 scan_index_i::lt, vec_t(rephigh._dest, highsz)));
+    return (RCOK);
+}
 
 w_rc_t lineitem_man_impl::l_get_range_iter_by_index(ss_m* db,
                                                        lineitem_index_iter* &iter,
@@ -253,15 +370,19 @@ w_rc_t lineitem_man_impl::l_get_range_iter_by_index(ss_m* db,
     assert (_ptable);
     index_desc_t* pindex = _ptable->find_index("L_IDX_SHIPDATE");
     assert (pindex);
-
+ 
     /* get the lowest key value */
-    ptuple->set_value(10, low_l_shipdate);
+    char lowdate[15];
+    timet_to_str(lowdate, low_l_shipdate);
+    ptuple->set_value(10, lowdate);
 
     int lowsz = format_key(pindex, ptuple, replow);
     assert (replow._dest);
 
     /* get the highest key value */
-    ptuple->set_value(10, high_l_shipdate+1);
+    char highdate[15];
+    timet_to_str(highdate, high_l_shipdate+1);
+    ptuple->set_value(10, highdate);
 
     int highsz = format_key(pindex, ptuple, rephigh);
     assert (rephigh._dest);

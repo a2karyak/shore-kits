@@ -26,6 +26,7 @@
  *  @brief Declaration of the (common) inputs for the TPC-H trxs
  *  @brief Declaration of functions that generate the inputs for the TPCH TRXs
  *
+ *  @author: Nastaran Nikparto, Summer 2011
  *  @author Ippokratis Pandis (ipandis)
  */
 
@@ -40,39 +41,8 @@ ENTER_NAMESPACE(tpch);
 
 // Inputs for the Queries
 
-struct q2_input_t { };
-struct q3_input_t { };
-struct q5_input_t { };
-struct q7_input_t { };
-struct q8_input_t { };
-struct q9_input_t { };
-struct q10_input_t { };
-struct q11_input_t { };
-struct q15_input_t { };
-struct q16_input_t { };
-struct q17_input_t { };
-struct q18_input_t { };
-struct q19_input_t { };
-struct q20_input_t { };
-struct q21_input_t { };
-struct q22_input_t { };
 
-q2_input_t create_q2_input(const double sf, const int specificWH);
-q3_input_t create_q3_input(const double sf, const int specificWH);
-q5_input_t create_q5_input(const double sf, const int specificWH);
-q7_input_t create_q7_input(const double sf, const int specificWH);
-q8_input_t create_q8_input(const double sf, const int specificWH);
-q9_input_t create_q9_input(const double sf, const int specificWH);
-q10_input_t create_q10_input(const double sf, const int specificWH);
-q11_input_t create_q11_input(const double sf, const int specificWH);
-q15_input_t create_q15_input(const double sf, const int specificWH);
-q16_input_t create_q16_input(const double sf, const int specificWH);
-q17_input_t create_q17_input(const double sf, const int specificWH);
-q18_input_t create_q18_input(const double sf, const int specificWH); 
-q19_input_t create_q19_input(const double sf, const int specificWH); 
-q20_input_t create_q20_input(const double sf, const int specificWH); 
-q21_input_t create_q21_input(const double sf, const int specificWH);
-q22_input_t create_q22_input(const double sf, const int specificWH);
+
 
 
 /******************************************************************** 
@@ -91,7 +61,34 @@ struct q1_input_t
 q1_input_t    create_q1_input(const double sf, 
                               const int specificWH = 0);
 
+/******************************************************************** 
+ *
+ *  Q2
+ *
+ ********************************************************************/
 
+struct q2_input_t {
+    int p_size;
+    int p_types3;
+    int r_name;
+    
+    q2_input_t& operator=(const q2_input_t& rhs);
+};
+q2_input_t create_q2_input(const double sf, const int specificWH);
+
+/******************************************************************** 
+ *
+ *  Q3
+ *
+ ********************************************************************/
+
+struct q3_input_t {
+
+    time_t current_date;
+    int c_segment;
+     q3_input_t& operator=(const q3_input_t& rhs);
+};
+q3_input_t create_q3_input(const double sf, const int specificWH);
 
 /******************************************************************** 
  *
@@ -100,15 +97,25 @@ q1_input_t    create_q1_input(const double sf,
  ********************************************************************/
 
 struct q4_input_t 
-{
+{    
     time_t o_orderdate;
     q4_input_t& operator=(const q4_input_t& rhs);
 };
 
 q4_input_t    create_q4_input(const double sf, 
                               const int specificWH = 0);
+/******************************************************************** 
+ *
+ *  Q5
+ *
+ ********************************************************************/
 
-
+struct q5_input_t {
+    int r_name;
+    time_t o_orderdate;
+    q5_input_t& operator=(const q5_input_t& rhs);
+};
+q5_input_t create_q5_input(const double sf, const int specificWH);
 
 /******************************************************************** 
  *
@@ -127,6 +134,74 @@ struct q6_input_t
 
 q6_input_t    create_q6_input(const double sf, 
                               const int specificWH = 0);
+
+
+/******************************************************************** 
+ *
+ *  Q7
+ *
+ ********************************************************************/
+
+struct q7_input_t {
+    int n_name1;
+    int n_name2;
+    q7_input_t& operator=(const q7_input_t& rhs);
+};
+q7_input_t create_q7_input(const double sf, const int specificWH);
+
+/******************************************************************** 
+ *
+ *  Q8
+ *
+ ********************************************************************/
+struct q8_input_t {
+    int n_name;
+    int r_name;
+
+    tpch_p_type p_type;
+    
+    q8_input_t& operator=(const q8_input_t& rhs);
+};
+q8_input_t create_q8_input(const double sf, const int specificWH);
+
+/******************************************************************** 
+ *
+ *  Q9
+ *
+ ********************************************************************/
+
+struct q9_input_t {
+    int p_name;
+
+    q9_input_t& operator=(const q9_input_t& rhs);
+};
+q9_input_t create_q9_input(const double sf, const int specificWH);
+
+/******************************************************************** 
+ *
+ *  Q10
+ *
+ ********************************************************************/
+
+struct q10_input_t {
+    time_t o_orderdate;
+    q10_input_t& operator=(const q10_input_t& rhs);
+};
+q10_input_t create_q10_input(const double sf, const int specificWH);
+
+/******************************************************************** 
+ *
+ *  Q11
+ *
+ ********************************************************************/
+
+struct q11_input_t {
+    int n_name;
+    double fraction;
+    
+    q11_input_t& operator=(const q11_input_t& rhs);
+};
+q11_input_t create_q11_input(const double sf, const int specificWH);
 
 
 
@@ -185,8 +260,106 @@ struct q14_input_t
 q14_input_t    create_q14_input(const double sf, 
                                 const int specificWH = 0);
 
+/******************************************************************** 
+ *
+ *  Q15
+ *
+ ********************************************************************/
+struct q15_input_t {
+
+    time_t l_shipdate;
+    q15_input_t& operator=(const q15_input_t& rhs);
+};
+q15_input_t create_q15_input(const double sf, const int specificWH);
 
 
+/******************************************************************** 
+ *
+ *  Q16
+ *
+ ********************************************************************/
+struct q16_input_t {
+    int p_brand;
+    int p_type;
+
+    int p_size[9];
+    q16_input_t& operator=(const q16_input_t& rhs);
+};
+q16_input_t create_q16_input(const double sf, const int specificWH);
+
+/******************************************************************** 
+ *
+ *  Q17
+ *
+ ********************************************************************/
+struct q17_input_t {
+    int p_brand;
+    int p_container;
+    q17_input_t& operator=(const q17_input_t& rhs);
+};
+q17_input_t create_q17_input(const double sf, const int specificWH);
+
+/******************************************************************** 
+ *
+ *  Q18
+ *
+ ********************************************************************/
+struct q18_input_t {
+    int l_quantity;
+    q18_input_t& operator=(const q18_input_t& rhs);
+};
+q18_input_t create_q18_input(const double sf, const int specificWH);
+
+/******************************************************************** 
+ *
+ *  Q19
+ *
+ ********************************************************************/
+struct q19_input_t {
+
+    int l_quantity[3];
+    int p_brand[3];
+    
+    q19_input_t& operator=(const q19_input_t& rhs);
+};
+q19_input_t create_q19_input(const double sf, const int specificWH);
+
+/******************************************************************** 
+ *
+ *  Q20
+ *
+ ********************************************************************/
+struct q20_input_t {
+    int n_name;
+    int p_color;
+    time_t l_shipdate;
+    
+    q20_input_t& operator=(const q20_input_t& rhs);
+};
+q20_input_t create_q20_input(const double sf, const int specificWH);
+
+/******************************************************************** 
+ *
+ *  Q21
+ *
+ ********************************************************************/
+struct q21_input_t {
+    int n_name;
+    q21_input_t& operator=(const q21_input_t& rhs);
+};
+q21_input_t create_q21_input(const double sf, const int specificWH);
+
+/******************************************************************** 
+ *
+ *  Q22
+ *
+ ********************************************************************/
+struct q22_input_t {
+    int cntrycode[8];
+
+    q22_input_t& operator=(const q22_input_t& rhs);
+};
+q22_input_t create_q22_input(const double sf, const int specificWH);
 
 /******************************************************************** 
  *

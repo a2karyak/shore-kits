@@ -25,6 +25,7 @@
  *
  *  @brief:  Definition of the Shore TPC-H environment
  *
+ *  @author: Nastaran Nikparto, Summer 2011
  *  @author: Ippokratis Pandis (ipandis)
  */
 
@@ -68,6 +69,20 @@ const double TPCH_SCALING_FACTOR = 1;
 // For the population
 const long CUST_POP_UNIT = 10;
 const long PART_POP_UNIT = 10;
+
+/* ---------------------------------------------------------------
+ *
+ * @struct : row_data_t 
+ *
+ * @brief : this struct is for keep intermediate result of the join operation
+ *
+ * --------------------------------------------------------------- */
+
+class row_data_t
+{
+public:
+    vector<table_row_t *> rows;
+};
 
 /****************************************************************** 
  *
@@ -225,7 +240,6 @@ private:
     w_rc_t _gen_one_cust_based(const int id, rep_row_t& areprow);
     
 public:    
-
     ShoreTPCHEnv();
     virtual ~ShoreTPCHEnv();
 
@@ -310,6 +324,23 @@ public:
     DECLARE_TRX(populate_some_parts);
     DECLARE_TRX(populate_some_custs);
 
+    //nasi
+
+    template<class T1_man, class T2_man, class T1_desc, class T2_desc>
+    w_rc_t
+    join_1_table(guard<T1_man> , guard<T2_man> ,
+		 guard<T1_desc>, guard<T2_desc>,
+		 vector<row_data_t*>& );
+
+
+    template<class T_man, class T_desc>
+    w_rc_t
+    join_2_table(guard<T_man> , guard<T_desc> ,
+		 vector<row_data_t *> ,
+		 vector<row_data_t*> );
+
+    template<class T> void f() {}
+    //
 
 #ifdef CFG_QPIPE
 private:
@@ -359,7 +390,144 @@ public:
     ShoreTPCHTrxStats _get_stats();
     
 }; // EOF ShoreTPCHEnv
- 
+
+
+template<class T_man, class T_desc>
+w_rc_t
+ShoreTPCHEnv::join_2_table(guard<T_man> _t_m, guard<T_desc> _t_d, vector<row_data_t *> setOfRow, vector<row_data_t *> result)
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+
+    //we need to touch t1
+   
+    table_row_t* t_r = _t_m->get_tuple();
+    assert(t_r);
+    
+    w_rc_t e =RCOK;
+    
+    //allocate space for t1 represenration
+    rep_row_t areprow(_t_m->ts());
+    areprow.set(_t_d->maxsize());
+
+    t_r->_rep = &areprow;
+    guard< table_scan_iter_impl<T_desc> > l_iter;
+    { 
+	table_scan_iter_impl<T_desc>* t;
+        e = _t_m->get_iter_for_file_scan(_pssm, t);
+        l_iter = t;
+        if (e.is_error()) { goto done; }
+    }
+    bool eof;
+   
+    e = l_iter->next(_pssm, eof, *t_r);
+
+    while(!eof){
+       for(int r = 0; r < setOfRow.size(); r++){
+	//join setOfRow[r] with t
+	   
+	   row_data_t * joined_row = new  row_data_t(*setOfRow[r]);
+	   joined_row->rows.push_back(t_r);
+	   result.push_back(joined_row);
+
+       }
+    e = l_iter->next(_pssm, eof, *t_r);
+    if (e.is_error()) {goto done;}
+    
+    }
+    
+    return (RCOK);
+}
+
+template<class T1_man, class T2_man, class T1_desc, class T2_desc>
+ w_rc_t
+ShoreTPCHEnv::join_1_table(guard<T1_man> _t1_m, guard<T2_man> _t2_m, guard<T1_desc>_t1_d, guard<T2_desc>_t2_d, vector<row_data_t*>& result)
+{
+
+    
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+
+    //we need to touch t1
+    table_row_t* t1_r = _t1_m->get_tuple();
+    assert(t1_r);
+    
+    w_rc_t e1 =RCOK;
+    
+    //allocate space for t1 represenration
+    rep_row_t areprow1(_t1_m->ts());
+    areprow1.set(_t1_d->maxsize());
+
+    t1_r->_rep = &areprow1;
+
+    //now we need to touch t2
+    table_row_t* t2_r = _t2_m->get_tuple();
+    assert(t2_r);
+    w_rc_t e2 =RCOK;
+        
+    //allocate space for t2 represenration
+    rep_row_t areprow2(_t2_m->ts());
+    areprow2.set(_t2_d->maxsize());
+
+    t2_r->_rep = &areprow2;
+    int c =0;
+    guard< table_scan_iter_impl<T1_desc> > l_iter1;
+    { 
+	table_scan_iter_impl<T1_desc>* t1;
+        e1 = _t1_m->get_iter_for_file_scan(_pssm, t1);
+        l_iter1 = t1;
+        if (e1.is_error()) { goto done; }
+    }
+    bool eof1;
+   
+   e1 = l_iter1->next(_pssm, eof1, *t1_r);
+   
+   while(!eof1){
+
+       guard< table_scan_iter_impl<T2_desc> > l_iter2;
+	{ 
+	   table_scan_iter_impl<T2_desc>* t2;
+           e2 = _t2_m->get_iter_for_file_scan(_pssm, t2);
+           l_iter2 = t2;
+           if (e2.is_error()) { goto done; }
+	}
+	bool eof2;
+   
+	e2 = l_iter2->next(_pssm, eof2, *t2_r);
+
+	while(!eof2){
+		// now we have t1_r and t2_row, so lets make instance of row_data
+	    
+	    c++;
+	    table_row_t* r1 = new table_row_t(*t1_r);
+	    table_row_t* r2 = new table_row_t(*t2_r);
+
+	    row_data_t* j = new row_data_t;
+	    j->rows.push_back(r1);
+	    j->rows.push_back(r2);
+
+	    result.push_back(j);
+	    
+	    e2 = l_iter2->next(_pssm, eof2, *t2_r);
+	    if (e2.is_error()) {goto done;}
+	}
+
+	e1 = l_iter1->next(_pssm, eof1, *t1_r);
+	if (e1.is_error()) {goto done;}
+   }
+   
+ done:
+   cout<<"*******num of tuple : "<<c<<endl;
+   _t1_m->give_tuple(t1_r);
+   _t2_m->give_tuple(t2_r);
+   return (RCOK); //pin: maybe return an error here if things aren't ok  
+
+}
+
 
 EXIT_NAMESPACE(tpch);
 

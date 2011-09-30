@@ -25,6 +25,7 @@
  *
  *  @brief Data structures for the TPC-H database
  *
+ *  @author: Nastaran Nikparto, Summer 2011
  *  @author Ippokratis Pandis (ipandis)
  *
  */
@@ -57,6 +58,122 @@ enum tpch_l_shipmode {
     SHIP,
     END_SHIPMODE
 };
+
+enum tpch_r_name{
+    AFRICA,
+    AMERICA,
+    ASIA,
+    EUROPE,
+    MIDDLE_EAST,
+    END_R_NAME
+};
+
+enum tpch_n_name{
+    ALGERIA,
+     ARGENTINA,
+     BRAZIL,
+     CANADA,
+     EGYPT,
+    ETHIOPIA,
+    FRANCE,
+    GERMANY,
+    INDIA,
+    INDONESIA,
+    IRAN,
+    IRAQ,
+    JAPAN,
+    JORDAN,
+    KENYA,
+    MOROCCO,
+    MOZAMBIQUE,
+    PERU,
+    CHINA,
+    ROMANIA,
+    SAUDI_ARABIA,
+    VIETNAM,
+    RUSSIA,
+    UNITED_KINGDOM,
+    UNITED_STATEs,
+    END_N_NAME
+};
+
+enum tpch_p_type_s1{
+    STANDARD,
+    SMALL,
+    MEDIUM,
+    LARGE,
+    ECONOMY,
+    PROMO,
+    END_TYPE_S1
+};
+
+enum tpch_p_type_s2{
+    ANODIZED,
+    BURNISHED,
+    PLATED,
+    POLISHED,
+    BRUSHED,
+    END_TYPE_S2
+};
+
+enum tpch_p_type_s3{
+    TIN,
+    NICKEL,
+    BRASS,
+    STEEL,
+    COPPER,
+    END_TYPE_S3
+};
+
+enum tpch_p_container_s1{
+    SM,
+    LG,
+    MED,
+    JUMBO,
+    WRAP,
+    END_P_CONTAINER_S1
+};
+
+enum tpch_p_container_s2{
+
+    CASE,
+    BOX,
+    BAG,
+    JAR,
+    PKG,
+    PACK,
+    CAN,
+    DRUM,
+    END_P_contAINER_S2
+};
+
+enum tpch_o_priority{
+
+    O_URGENT,
+    O_HIGH,
+    O_MEDIUM,
+    O_NOT_SPECIFIED,
+    O_LOW,
+    END_O_PRIORITY
+};
+
+enum tpch_c_segment{
+    AUTOMOBILE,
+    BUILDING,
+    FURNITURE,
+    MACHINERY,
+    HOUSEHOLD,
+    END_SEGMENT
+};
+
+struct tpch_p_type{
+    int s1;
+    int s2;
+    int s3;
+};
+
+enum tpch_pname{
+    almond, antique, aquamarine, azure, beige, bisque, black, blanched, blue, blush, brown, burlywood, burnished, chartreuse, chiffon, chocolate, coral, cornflower, cornsilk, cream, cyan, dark, deep, dim, dodger, drab, firebrick, floral, forest, frosted, gainsboro, ghost, goldenrod, green, grey, honeydew, hot, indian, ivory, khaki, lace, lavender, lawn, lemon, light, lime, linen, magenta, maroon, medium, metallic, midnight, mint, misty, moccasin, navajo, navy, olive, orange, orchid, pale, papaya, peach, peru, pink, plum, powder, puff, purple, red, rose, rosy, royal, saddle, salmon, sandy, seashell, sienna, sky, slate, smoke, snow, spring, steel, tan, thistle, tomato, turquoise, violet, wheat, white, yellow, END_P_NAME};
 
 
 // TPC-H constants

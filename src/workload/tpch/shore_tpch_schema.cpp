@@ -25,6 +25,7 @@
  *
  *  @brief:  Declaration of the TPC-H tables
  *
+ *  @author: Nastaran Nikparto, Summer 2011
  *  @author: Ippokratis Pandis, June 2009
  *
  */
@@ -70,12 +71,14 @@
  * 7. ORDERS
  * a. primary (unique) index on orders(o_orderkey)
  * b. secondary index on orders(o_custkey)
+ * c. secondary index on orders(o_orderdate)
  *
  * 8. LINEITEM
  * a. primary (unique) index on lineitem(l_orderkey, l_linenumber)
  * b. secondary index on lineitem(l_orderkey)
  * c. secondary index on lineitem(l_partkey, l_suppkey)
  * d. secondary index on lineitem(l_shipdate)
+ * d. secondary index on lineitem(l_receiptdate)
  */
 
 
@@ -257,7 +260,8 @@ orders_t::orders_t(const uint4_t& pd) :
     uint keys[1] = { 0 }; // IDX { O_ORDERKEY }
         
     uint fkeys[1] = { 1 }; // IDX { O_CUSTKEY }
-         
+
+    uint keys2[1] = { 4 }; // IDX { O_ORDERDATE }
 
     // baseline - regular indexes
     if ((pd & PD_NORMAL) && !(pd & PD_NOLOCK)) {
@@ -267,6 +271,8 @@ orders_t::orders_t(const uint4_t& pd) :
         create_primary_idx_desc("O_IDX", 0, keys, 1);
              
         create_index_desc("O_FK_CUSTKEY", 0, fkeys, 1, false);
+
+	create_index_desc("O_IDX_ORDERDATE", 0, keys2, 1, false);
     }
 }
 
@@ -300,6 +306,8 @@ lineitem_t::lineitem_t(const uint4_t& pd) :
 
     uint keys2[1] = {10}; // IDX { L_SHIPDATE }
 
+    uint keys3[1] = {12}; // IDX { L_RECEIPTDATE }
+
 
     // baseline - regular indexes
     if ((pd & PD_NORMAL) && !(pd & PD_NOLOCK)) {
@@ -309,9 +317,10 @@ lineitem_t::lineitem_t(const uint4_t& pd) :
         create_primary_idx_desc("L_IDX", 0, keys, 2);
 
         create_index_desc("L_FK_ORDERKEY", 0, fkeys1, 1, false);
-        create_index_desc("L_FK_PARKSUPP", 0, fkeys2, 2, false);
+        create_index_desc("L_FK_PARTSUPP", 0, fkeys2, 2, false);
 
         create_index_desc("L_IDX_SHIPDATE", 0, keys2, 1, false);
+	create_index_desc("L_IDX_RECEIPTDATE", 0, keys3, 1, false);
     }
 }
 

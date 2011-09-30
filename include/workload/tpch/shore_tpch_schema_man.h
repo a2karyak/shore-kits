@@ -25,6 +25,7 @@
  *
  *  @brief:  Declaration of the TPC-H table managers
  *
+ *  @author: Nastaran Nikparto, Summer 2011
  *  @author: Ippokratis Pandis, June 2009
  *
  */
@@ -219,6 +220,26 @@ public:
                                const int c_orderkey,
                                lock_mode_t alm = SH,
                                bool need_tuple = true);
+    
+    w_rc_t o_get_iter_by_findex(ss_m* db,
+				orders_index_iter* &iter,
+                                orders_tuple* ptuple,
+                                rep_row_t &replow,
+                                rep_row_t &rephigh,
+                                const int o_custkey,
+                                lock_mode_t alm = SH,
+                                bool need_tuple = true);
+    
+    w_rc_t o_get_range_iter_by_index(ss_m* db,
+				     orders_index_iter* &iter,
+				     orders_tuple* ptuple,
+				     rep_row_t &replow,
+				     rep_row_t &rephigh,
+				     const time_t low_o_orderdate,
+				     const time_t high_o_orderdate,
+				     lock_mode_t alm = SH,
+				     bool need_tuple = true);
+	
 
 }; // EOF: orders_man_impl
 
@@ -262,6 +283,15 @@ public:
     //                                      lock_mode_t alm = SH,
     //                                      bool need_tuple = true);
 
+    w_rc_t l_get_range_iter_by_receiptdate_index(ss_m* db,
+                                                       lineitem_index_iter* &iter,
+                                                       lineitem_tuple* ptuple,
+                                                       rep_row_t &replow,
+                                                       rep_row_t &rephigh,
+                                                       const time_t low_l_receiptdate,
+                                                       const time_t high_l_receiptdate,
+                                                       lock_mode_t alm = SH,
+						 bool need_tuple = true);
 }; // EOF: lineitem_man_impl
 
 EXIT_NAMESPACE(tpch);
