@@ -435,6 +435,7 @@ w_rc_t ShoreTPCHEnv::_gen_one_cust_based(const int id,
             // 2. Orders            
             dbgentpch::order_t ao;
             mk_order(id, &ao, 0);
+	    //mk_order(id*10+i, &ao, 0);
 
 #ifdef DO_PRINT_TPCH_RECS
             if (id%100==0) {
@@ -4434,7 +4435,7 @@ w_rc_t ShoreTPCHEnv::xct_q16(const int /* xct_id */,
 	    
 	    if( p1!= NULL && p2 != NULL){
 		if( p2 - p1 > 0 )
-		    suppkeybl[asupplier.S_SUPPKEY] = TRUE;
+		    suppkeybl[asupplier.S_SUPPKEY] = true;
 	    }
 	    	
 	    e = s_iter->next(_pssm, eof, *prsupp);

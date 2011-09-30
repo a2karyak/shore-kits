@@ -90,6 +90,7 @@ q2_input_t& q2_input_t::operator=(const q2_input_t& rhs){
     p_types3 = rhs.p_types3;
     r_name = rhs.r_name;
 
+    return (*this);
 };
 
 q2_input_t create_q2_input(const double /* sf */, 
@@ -118,6 +119,8 @@ q3_input_t& q3_input_t::operator=(const q3_input_t& rhs){
 
     current_date = rhs.current_date;
     c_segment = rhs.c_segment;
+
+    return (*this);
 };    
 
 
@@ -638,6 +641,8 @@ q16_input_t& q16_input_t::operator=(const q16_input_t& rhs){
 
     for(int i=0; i<8; i++)
 	p_size[i] = rhs.p_size[i];
+
+    return (*this);
 };
 
 q16_input_t create_q16_input(const double /* sf */, const int /* specificWH */) {
@@ -667,6 +672,7 @@ q17_input_t& q17_input_t::operator=(const q17_input_t& rhs){
     p_brand = rhs.p_brand;
     p_container = rhs.p_container;
 
+    return (*this);
 };
 
 q17_input_t create_q17_input(const double /* sf */, const int /* specificWH */) {
@@ -692,6 +698,7 @@ q17_input_t create_q17_input(const double /* sf */, const int /* specificWH */) 
 
 q18_input_t& q18_input_t::operator=(const q18_input_t& rhs){
     l_quantity = rhs.l_quantity;
+    return (*this);
 }
 
 q18_input_t create_q18_input(const double /* sf */, const int /* specificWH */) {
@@ -718,6 +725,8 @@ q19_input_t& q19_input_t::operator=(const q19_input_t& rhs){
 	l_quantity[i] = rhs.l_quantity[i];
 	p_brand[i] = rhs.p_brand[i];
     }
+
+    return (*this);
 }
 
 q19_input_t create_q19_input(const double /* sf */, const int /* specificWH */) {
@@ -748,7 +757,8 @@ q20_input_t& q20_input_t::operator=(const q20_input_t& rhs){
     n_name = rhs.n_name; 
     p_color = rhs. p_color;
     l_shipdate = rhs.l_shipdate;
- 
+
+    return (*this);
 }
 
 q20_input_t create_q20_input(const double /* sf */, const int /* specificWH */) {
@@ -784,6 +794,8 @@ q20_input_t create_q20_input(const double /* sf */, const int /* specificWH */) 
 q21_input_t& q21_input_t::operator=(const q21_input_t& rhs){
 
     n_name = rhs.n_name;
+
+    return (*this);
 }
 
 q21_input_t create_q21_input(const double sf, const int specificWH){
@@ -819,6 +831,7 @@ q22_input_t& q22_input_t::operator=(const q22_input_t& rhs){
     for(int i = 0; i < 7; i++)
 	cntrycode[i] = rhs.cntrycode[i];
 
+    return (*this);
 }
 
 EXIT_NAMESPACE(tpch);
