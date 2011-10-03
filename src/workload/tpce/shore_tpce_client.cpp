@@ -48,12 +48,12 @@ baseline_tpce_client_t::baseline_tpce_client_t(c_str tname, const int id,
                                                const int trxid, 
                                                const int numOfTrxs, 
                                                processorid_t aprsid, 
-                                               const int sWH, const double qf) 
+                                               const int selID, const double qf) 
     : base_client_t(tname,id,env,aType,trxid,numOfTrxs,aprsid),
-      _wh(sWH), _qf(qf)
+      _selid(selID), _qf(qf)
 {
     assert (env);
-    assert (_wh>=0 && _qf>0);
+    assert (_id>=0 && _qf>0);
     
     // pick worker thread
     _worker = _env->worker(_id);
@@ -86,7 +86,7 @@ const int baseline_tpce_client_t::load_sup_xct(mapSupTrxs& stmap)
 
 /********************************************************************* 
  *
- *  @fn:    run_one_xct
+ *  @fn:    submit_one
  *
  *  @brief: Baseline client - Entry point for running one trx 
  *
@@ -105,15 +105,15 @@ w_rc_t baseline_tpce_client_t::submit_one(int xct_type, int xctid)
         bWake = true;
     }
 
-    // Pick a valid WH
-    int whid = _wh;
-    // if (_wh==0) 
-    //     whid = URand(1,_qf); 
+    // Pick a valid ID
+    int selid = _selid;
+    // if (_selid==0) 
+    //     selid = URand(1,_qf); 
 
     // Get one action from the trash stack
     trx_request_t* arequest = new (_env->_request_pool) trx_request_t;
     tid_t atid;
-    arequest->set(NULL,atid,xctid,atrt,xct_type,whid);    
+    arequest->set(NULL,atid,xctid,atrt,xct_type,selid);    
 
     // Enqueue to worker thread
     assert (_worker);

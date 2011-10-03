@@ -224,7 +224,14 @@ public:
     struct checkpointer_t;
 
 protected:       
-    // scaling factors
+    /*
+     * note: PIN: the definition of the scaling factor in tpce is different from
+     *            the one we have been using so far.
+     *            scaling factor means the ratio of the cardinality of the customer
+     *            table to throughput (measured as tpsE) according to TPCE-E spec
+     *            the "load unit" term from the TPC-E spec is the same as the
+     *            "scaling factor" term we have been using in the kits.
+     */
     int             _customers;
     int             _working_days; 
     int             _scaling_factor_tpce; 
@@ -507,7 +514,10 @@ public:
     virtual void reset_stats();
     ShoreTPCETrxStats _get_stats();
 
+    //print the current tables into files
+    w_rc_t db_print(int lines);
 
+    
 }; // EOF ShoreTPCEEnv
    
 

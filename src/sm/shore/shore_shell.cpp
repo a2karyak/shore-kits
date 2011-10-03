@@ -767,6 +767,7 @@ int shore_shell_t::register_commands()
     REGISTER_CMD_PARAM(freq_cmd_t,_freqer,_env);
     REGISTER_CMD_PARAM(skew_cmd_t,_skewer,_env);
     REGISTER_CMD_PARAM(stats_verbose_cmd_t,_stats_verboser,_env);
+    REGISTER_CMD_PARAM(db_print_cmd_t,_db_printer,_env);
 
     REGISTER_CMD_PARAM(log_cmd_t,_logger,_env);
     REGISTER_CMD_PARAM(asynch_cmd_t,_asyncher,_env);
@@ -1140,7 +1141,7 @@ string skew_cmd_t::desc() const
  *
  *  "stats_verbose" command
  *
- *  Sets the load imbalance related values
+ *  More statistics printed during the measurement
  *
  *********************************************************************/
 
@@ -1188,6 +1189,53 @@ void stats_verbose_cmd_t::usage(void)
 string stats_verbose_cmd_t::desc() const 
 { 
     return (string("To start-stop printing more statistics during a measurement.")); 
+}
+
+
+/*********************************************************************
+ *
+ *  "db_print" command
+ *
+ *  Prints the contents of the current db tables into files 
+ *
+ *********************************************************************/
+
+void db_print_cmd_t::setaliases() 
+{ 
+    _name = string("db_print"); 
+    _aliases.push_back("db_print"); 
+}
+
+int db_print_cmd_t::handle(const char* cmd)
+{
+    char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];
+    char lines_c[SERVER_COMMAND_BUFFER_SIZE];
+
+    if ( sscanf(cmd, "%s %s", cmd_tag, lines_c) < 1) {
+        // prints all the env
+        usage();
+        return (SHELL_NEXT_CONTINUE);
+    }
+    assert (_env);
+
+    int lines_i = atoi(lines_c);
+    _env->db_print_init(lines_i);
+	
+    return (SHELL_NEXT_CONTINUE);
+}
+
+
+void db_print_cmd_t::usage(void)
+{
+    TRACE( TRACE_ALWAYS, "DB_PRINT Usage:\n\n"				\
+	   "*** db_print <NUM_LINES>\n"					\
+	   "\nParamaters:\n"						\
+	   "<NUM_LINES> - Number of lines to be written to a table's file before passing to another file\n\n");
+}
+
+string db_print_cmd_t::desc() const 
+{ 
+    return (string("To print the contents of the current db tables into files.")); 
 }
 
 

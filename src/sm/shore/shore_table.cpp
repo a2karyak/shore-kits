@@ -1547,6 +1547,33 @@ w_rc_t table_man_t::read_tuple(table_tuple* ptuple,
 
 
 
+/* ------------------- */
+/* --- db printer  --- */
+/* ------------------- */
+
+
+table_printer_t::table_printer_t(ShoreEnv* env, int lines)
+    : thread_t("DB_PRINTER"),
+      _env(env), _lines(lines)
+{
+}
+
+table_printer_t::~table_printer_t()
+{
+}
+
+void table_printer_t::work()
+{
+    assert(_env);
+    w_rc_t e = _env->db_print(_lines);
+    if(e.is_error()) {
+	cerr << "Error while printing db!" << endl << e << endl;
+    }
+}
+
+
+
+
 
 
 

@@ -90,6 +90,7 @@ DECLARE_ENV_CMD(dump);
 DECLARE_ENV_CMD(fake_iodelay);
 DECLARE_ENV_CMD(freq);
 DECLARE_ENV_CMD(skew);
+DECLARE_ENV_CMD(db_print);
 DECLARE_ENV_CMD(stats_verbose);
 DECLARE_ENV_CMD(fake_logdelay);
 DECLARE_ENV_CMD(log);
@@ -204,12 +205,13 @@ protected:
     guard<restart_cmd_t>        _restarter;
     guard<info_cmd_t>           _informer;
     guard<stats_cmd_t>          _stater;
-    guard<smstats_cmd_t>          _smstater;
+    guard<smstats_cmd_t>        _smstater;
     guard<dump_cmd_t>           _dumper;
     guard<fake_iodelay_cmd_t>   _fakeioer;   
     guard<freq_cmd_t>           _freqer;
     guard<skew_cmd_t>           _skewer;
     guard<stats_verbose_cmd_t>  _stats_verboser;
+    guard<db_print_cmd_t>       _db_printer;
 
     guard<log_cmd_t>            _logger;
     guard<asynch_cmd_t>         _asyncher;

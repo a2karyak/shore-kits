@@ -52,7 +52,7 @@ class baseline_tpce_client_t : public base_client_t
 {
 private:
     // workload parameters
-    int _wh;
+    int _selid;
     trx_worker_t* _worker;
     double _qf;
     

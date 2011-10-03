@@ -474,11 +474,22 @@ public:
     virtual w_rc_t scan_index(ss_m* db, index_desc_t* pidx)=0;
 
 
+    /* -------------------------------- */
+    /* - population related if needed - */
+    /* -------------------------------- */
+    virtual w_rc_t populate(ss_m* db, bool& hasNext) { return (RCOK); }
+
+
     /* ----------------- */
     /* --- debugging --- */
     /* ----------------- */
 
-    virtual w_rc_t print_table(ss_m* db)=0; /* print the table on screen */
+    /*
+     * print the table on screen or to files
+     * @note: PIN: right now it prints to files,
+     *             with slight modification it can print to the screen as well
+     */
+    virtual w_rc_t print_table(ss_m* db, int num_lines)=0; 
 
 
     /* ---------------------------------------------------------------
@@ -649,6 +660,35 @@ inline uint_t table_desc_t::maxsize()
     atomic_swap_uint(&_maxsize, size);
     return (*&_maxsize);
 }
+
+
+
+
+
+
+
+/* ---------------------------------------------------------------
+ *
+ * @class: table_printer_t
+ *
+ * @brief: Thread to print the table contents
+ *
+ * --------------------------------------------------------------- */
+
+class table_printer_t : public thread_t
+{
+private:
+    
+    ShoreEnv* _env;
+    int _lines;
+
+public:
+
+    table_printer_t(ShoreEnv* _env, int lines);
+    ~table_printer_t();
+    void work();
+    
+}; // EOF: table_printer_t
 
 
 EXIT_NAMESPACE(shore);

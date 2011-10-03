@@ -195,15 +195,15 @@ public:
     {
         _pcache->giveback(ptt);
     }
-
-
+    
+    
     /* ----------------- */
     /* --- debugging --- */
     /* ----------------- */
 
-    w_rc_t print_table(ss_m* db); /* print the table on screen */
+    w_rc_t print_table(ss_m* db, int num_lines);
 
-
+    
 }; // EOF: table_man_impl
 
 
@@ -788,41 +788,76 @@ w_rc_t table_man_impl<TableDesc>::scan_index(ss_m* db,
 /* --- debugging --- */
 /* ----------------- */
 
+/********************************************************************* 
+ *
+ *  @fn:    print_table
+ *
+ *  @brief: prints the table to a file
+ *          the user can specify the number of lines written to a file
+ *          with "num_lines" argument if s/he wants to write the contents
+ *          to multiple files for parallel loading
+ *          if this argument is passed as 0 or something smaller than that
+ *          then all the table is going to be written to a single file
+ *
+ *********************************************************************/
+
 template <class TableDesc>
-w_rc_t table_man_impl<TableDesc>::print_table(ss_m* db)
+w_rc_t table_man_impl<TableDesc>::print_table(ss_m* db, int num_lines)
 {
     assert (_ptable);
 
     char   filename[MAX_FILENAME_LEN];
     strcpy(filename, _ptable->name());
-    strcat(filename, ".tbl.tmp");
+    if(num_lines > 0) {
+	strcat(filename, c_str("_%d",0));
+    }
+    strcat(filename, ".tbl");
     ofstream fout(filename);
 
     W_DO(db->begin_xct());
 
     table_iter* iter;
-    int count = 0;
+    int cardinality = 0;
+    int lines = 0;
+    int num_files = 1;
     W_DO(get_iter_for_file_scan(db, iter));
 
     bool eof = false;
     table_tuple row(_ptable);
     W_DO(iter->next(db, eof, row));
     while (!eof) {
-        //	row.print_value(fout);
-        //        row.print_tuple();
-        count++;
+	if(num_lines != 0 && lines == num_lines) {
+	    fout.flush();
+	    fout.close();
+	    TRACE( TRACE_ALWAYS, "%s closed!\n", filename);
+	    char* pos = strrchr(filename, '_');
+	    pos++;
+	    strcpy(pos, c_str("%d.tbl",num_files));
+	    fout.open(filename);
+	    num_files++;
+	    lines = 0;
+	}
+	row.print_values(fout);
+        // row.print_tuple();
+        cardinality++;
+	lines++;
 	W_DO(iter->next(db, eof, row));
     }
     delete iter;
 
     W_DO(db->commit_xct());
 
-    fout << "Table : " << _ptable->name() << endl;
-    fout << "Tuples: " << count << endl;
+    TRACE( TRACE_ALWAYS, "%s closed!\n", filename);
 
-    TRACE( TRACE_DEBUG, "Table (%s) printed (%d) tuples\n",
-           _ptable->name(), count);
+    //fout << "Table : " << _ptable->name() << endl;
+    //fout << "Tuples: " << cardinality << endl;
 
+    TRACE( TRACE_ALWAYS, "Table (%s) printed (%d) tuples\n",
+           _ptable->name(), cardinality);
+
+    fout.flush();
+    fout.close();
+    
     return (RCOK);
 }
 

@@ -1280,4 +1280,20 @@ void ShoreEnv::to_base_flusher(Request* ar)
 }
 
 
+/****************************************************************** 
+ *
+ *  @fn:    db_print_init
+ *
+ *  @brief: Starts the db printer thread and then deletes it
+ *
+ ******************************************************************/
+
+void ShoreEnv::db_print_init(int num_lines)
+{
+    table_printer_t* db_printer = new table_printer_t(this, num_lines);
+    db_printer->fork();
+    db_printer->join();
+    delete (db_printer);
+}
+
 EXIT_NAMESPACE(shore);

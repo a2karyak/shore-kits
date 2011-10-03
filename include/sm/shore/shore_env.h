@@ -496,6 +496,7 @@ protected:
     // TM1:  SF=1 --> 15B   (10K Subscribers)
     // TPCB: SF=1 --> 20MB  (1 Branch)
     // TPCC: SF=1 --> 130MB (1 Warehouse)
+    // TPCE: SF=1 --> 6.5GB   (1K Customers)
     // TPCH: SF=1 --> 250MB (1 Warehouse)
     //       
     double             _scaling_factor; 
@@ -631,6 +632,10 @@ public:
     virtual void set_skew(int area, int load, int start_imbalance);
     virtual void reset_skew();
     virtual void start_load_imbalance();
+
+    // printing the current db to files
+    virtual void db_print_init(int num_lines);
+    virtual w_rc_t db_print(int num_lines) { return(RCOK); }
     
     // Environment workers
     uint upd_worker_cnt();
