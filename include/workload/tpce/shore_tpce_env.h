@@ -58,7 +58,7 @@ using namespace shore;
 using namespace TPCE;
 
 
-#define TESTING_TPCE
+//#define TESTING_TPCE
 
 int egen_init(int argc, char* argv[]);
 void egen_release();
