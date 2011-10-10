@@ -35,7 +35,7 @@
 #include "util.h"
 
 #include "sm/shore/shore_env.h"
-#include "sm/shore/shore_sort_buf.h"
+#include "sm/shore/shore_asc_sort_buf.h"
 #include "sm/shore/shore_trx_worker.h"
 
 #include "workload/ssb/ssb_const.h"

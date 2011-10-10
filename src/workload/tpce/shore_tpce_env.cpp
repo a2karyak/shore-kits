@@ -31,13 +31,8 @@
 
 #include "workload/tpce/shore_tpce_env.h"
 #include "sm/shore/shore_helper_loader.h"
-#include "sm/shore/shore_env.h"
-#include "sm/shore/shore_sort_buf.h"
-#include "sm/shore/shore_trx_worker.h"
-
 
 #include <w_defines.h>
-#include "workload/tpce/shore_tpce_egen.h"
 #include "workload/tpce/egen/CE.h"
 #include <stdio.h>
 
