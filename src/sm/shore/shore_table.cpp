@@ -1105,6 +1105,74 @@ w_rc_t table_man_t::add_tuple(ss_m* db,
 
 /********************************************************************* 
  *
+ *  @fn:    add_index_entry
+ *
+ *  @brief: Inserts a tuple's entry to the given index
+ *
+ *  @note:  This function should be called in the context of a trx.
+ *
+ *********************************************************************/
+
+w_rc_t table_man_t::add_index_entry(ss_m* db,
+				    const char* idx_name,
+				    table_tuple* ptuple,
+				    const lock_mode_t lock_mode,
+				    const lpid_t& primary_root)
+{
+    assert (_ptable);
+    assert (ptuple);
+    assert (ptuple->_rep);
+
+    // get the index
+    index_desc_t* pindex = _ptable->find_index(idx_name);
+    assert (pindex);
+	    
+    if (!ptuple->is_rid_valid()) return RC(se_NO_CURRENT_TUPLE);
+
+    uint4_t system_mode = _ptable->get_pd();
+
+    // figure out what mode will be used
+    bool bIgnoreLocks = false;
+    if (lock_mode==NL) bIgnoreLocks = true;
+
+    // update the index
+    int ksz = format_key(pindex, ptuple, *ptuple->_rep);
+    assert (ptuple->_rep->_dest); // if dest == NULL there is invalid key
+    
+    int pnum = get_pnum(pindex, ptuple);
+    W_DO(pindex->find_fid(db, pnum));
+
+    if (pindex->is_mr()) {
+	ss_m::RELOCATE_RECORD_CALLBACK_FUNC reloc_func = &relocate_records;
+	el_filler ef;
+	ef._el.put(vec_t(&(ptuple->_rid), sizeof(rid_t)));
+	W_DO(db->create_mr_assoc(pindex->fid(pnum),
+				 vec_t(ptuple->_rep->_dest, ksz),
+				 ef,
+				 bIgnoreLocks,
+				 pindex->is_latchless(),
+				 reloc_func,
+				 (pindex->is_primary() ? primary_root : lpid_t::null)
+				 ));
+    }
+    else {
+	W_DO(db->create_assoc(pindex->fid(pnum),
+			      vec_t(ptuple->_rep->_dest, ksz),
+			      vec_t(&(ptuple->_rid), sizeof(rid_t))
+#ifdef CFG_DORA
+			      ,bIgnoreLocks
+#endif
+			      ));
+    }
+    
+    return (RCOK);
+}
+
+
+
+
+/********************************************************************* 
+ *
  *  @fn:    add_plp_tuple
  *
  *  @brief: Inserts a tuple to a PLP table and all the indexes of the table
@@ -1323,6 +1391,7 @@ w_rc_t table_man_t::add_plp_tuple(ss_m* db,
 
 
 
+
 /********************************************************************* 
  *
  *  @fn:    delete_tuple
@@ -1408,6 +1477,69 @@ w_rc_t table_man_t::delete_tuple(ss_m* db,
     return (RCOK);
 }
 
+
+
+
+/********************************************************************* 
+ *
+ *  @fn:    delete_index_entry
+ *
+ *  @brief: Deletes a tuple's entry from the given index
+ *
+ *  @note:  This function should be called in the context of a trx
+ *          The passed tuple should be valid.
+ *
+ *********************************************************************/
+
+w_rc_t table_man_t::delete_index_entry(ss_m* db,
+				       const char* idx_name,
+				       table_tuple* ptuple,
+				       const lock_mode_t lock_mode,
+				       const lpid_t& primary_root)
+{
+    assert (_ptable);
+    assert (ptuple);
+    assert (ptuple->_rep);
+
+    index_desc_t* pindex = _ptable->find_index(idx_name);
+    assert (pindex);
+    
+    if (!ptuple->is_rid_valid()) return RC(se_NO_CURRENT_TUPLE);
+
+    uint4_t system_mode = _ptable->get_pd();
+    rid_t todelete = ptuple->rid();
+
+    // figure out what mode will be used
+    bool bIgnoreLocks = false;
+    if (lock_mode==NL) bIgnoreLocks = true;
+
+    // delete the index entry
+    int key_sz = format_key(pindex, ptuple, *ptuple->_rep);
+    assert (ptuple->_rep->_dest); // if NULL invalid key
+
+    int pnum = get_pnum(pindex, ptuple);
+    W_DO(pindex->find_fid(db, pnum));
+
+    if (pindex->is_mr()) {
+	W_DO(db->destroy_mr_assoc(pindex->fid(pnum),
+				  vec_t(ptuple->_rep->_dest, key_sz),
+				  vec_t(&(todelete), sizeof(rid_t)),
+				  bIgnoreLocks,
+				  pindex->is_latchless(),
+				  (pindex->is_primary() ? primary_root : lpid_t::null)));
+    }
+    else {
+	W_DO(db->destroy_assoc(pindex->fid(pnum),
+			       vec_t(ptuple->_rep->_dest, key_sz),
+			       vec_t(&(todelete), sizeof(rid_t))
+#ifdef CFG_DORA
+			       ,bIgnoreLocks
+#endif
+			       ));
+    }
+
+    return (RCOK);
+}
 
 
 

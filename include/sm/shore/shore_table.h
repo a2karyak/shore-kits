@@ -399,16 +399,28 @@ public:
                         const lock_mode_t   lock_mode = EX,
                         const lpid_t& primary_root = lpid_t::null);
 
+    w_rc_t    add_index_entry(ss_m* db,
+			      const char* idx_name,
+			      table_tuple* ptuple, 
+			      const lock_mode_t lock_mode = EX,
+			      const lpid_t& primary_root = lpid_t::null);
+    
     w_rc_t    add_plp_tuple(ss_m* db, 
                             table_tuple*  ptuple, 
                             const lock_mode_t lock_mode,
                             const uint system_mode,
                             const lpid_t& primary_root = lpid_t::null);
-    
+
     w_rc_t    delete_tuple(ss_m* db, 
                            table_tuple* ptuple, 
                            const lock_mode_t lock_mode = EX,
                            const lpid_t& primary_root = lpid_t::null);
+
+    w_rc_t    delete_index_entry(ss_m* db,
+				 const char* idx_name,
+				 table_tuple* ptuple, 
+				 const lock_mode_t lock_mode = EX,
+				 const lpid_t& primary_root = lpid_t::null);
 
 
     // Direct access through the rid

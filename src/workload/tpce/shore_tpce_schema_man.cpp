@@ -721,11 +721,19 @@ w_rc_t customer_taxrate_man_impl::cx_update_txid(ss_m* db,
                                                  lock_mode_t lm)
 {
     // 1. idx probe for update the cx
-    // 2. update taxrate and update table
     W_DO(index_probe_forupdate_by_name(db, "CX_INDEX", ptuple));
 
+    // 2. delete the old entry from the index
+    W_DO(delete_index_entry(db, "CX_INDEX", ptuple));
+
+    // 3. update the tuple
     ptuple->set_value(0, new_tax_rate);
-    return (update_tuple(db, ptuple, lm));
+    W_DO(update_tuple(db, ptuple, lm));
+
+    // 4. add the updated entry to the index
+    W_DO(add_index_entry(db, "CX_INDEX", ptuple));
+
+    return (RCOK);
 }
 
 /* -----------------------*/
@@ -1754,14 +1762,32 @@ w_rc_t trade_man_impl::t_update_dts_stdid_by_index(ss_m* db,
 {
     assert (ptuple);
 
+    /* @note: PIN: since one of the updated columns (dts) is a part of
+     * the secondary indexes for this table,
+     * we cannot simply go and update this column,
+     * we need to update the secondary indexes as well,
+     * the simplest way to do this is to first delete this tuple's entry from
+     * the secondary indexes and insert it again with the updated columns
+     */
+    
     // 1. idx probe for update the trade
-    // 2. update now_dts and status_id and update table
     ptuple->set_value(0, req_trade_id);
     W_DO(index_probe_forupdate_by_name(db, "T_INDEX", ptuple));
 
+    // 2. delete the old entry from the secondary indexes
+    W_DO(delete_index_entry(db, "T_INDEX_2", ptuple));
+    W_DO(delete_index_entry(db, "T_INDEX_3", ptuple));
+
+    // 3. update the tuple
     ptuple->set_value(1, now_dts);
     ptuple->set_value(2, status_submitted);
-    return (update_tuple(db, ptuple, lm));
+    W_DO(update_tuple(db, ptuple, lm));
+
+    // 4. add the updated entry to the secondary indexes
+    W_DO(add_index_entry(db, "T_INDEX_2", ptuple));
+    W_DO(add_index_entry(db, "T_INDEX_3", ptuple));
+
+    return (RCOK);
 }
 
 w_rc_t trade_man_impl::t_update_ca_td_sci_tp_by_index(ss_m* db,
@@ -1776,15 +1802,25 @@ w_rc_t trade_man_impl::t_update_ca_td_sci_tp_by_index(ss_m* db,
     assert (ptuple);
 
     // 1. idx probe for update the trade
-    // 2. update table
     ptuple->set_value(0, trade_id);
     W_DO(index_probe_forupdate_by_name(db, "T_INDEX", ptuple));
 
+    // 2. delete the old entry from the secondary indexes
+    W_DO(delete_index_entry(db, "T_INDEX_2", ptuple));
+    W_DO(delete_index_entry(db, "T_INDEX_3", ptuple));
+
+    // 3. update the tuple
     ptuple->set_value(12, comm_amount);
     ptuple->set_value(1, trade_dts);
     ptuple->set_value(2, st_completed_id);
     ptuple->set_value(10, trade_price);
-    return (update_tuple(db, ptuple, lm));
+    W_DO(update_tuple(db, ptuple, lm));
+    
+    // 4. add the updated entry to the secondary indexes
+    W_DO(add_index_entry(db, "T_INDEX_2", ptuple));
+    W_DO(add_index_entry(db, "T_INDEX_3", ptuple));
+
+    return (RCOK);
 }
 
 w_rc_t trade_man_impl::t_get_iter_by_index2(ss_m* db,
@@ -2139,13 +2175,21 @@ w_rc_t watch_item_man_impl::wi_get_table_iter(ss_m* db, table_iter* &iter)
 
 w_rc_t watch_item_man_impl::wi_update_symb(ss_m* db, watch_item_tuple* ptuple, const TIdent wl_id, const char* old_symbol, const char* new_symbol, lock_mode_t lm)
 {
+    // 1. find the tuple from the index
     assert (ptuple);    
     ptuple->set_value(0, wl_id);
     ptuple->set_value(1, old_symbol);
     W_DO(index_probe_forupdate_by_name(db, "WI_INDEX", ptuple));
-    
+
+    // 2. delete the old entry from the index
+    W_DO(delete_index_entry(db, "WI_INDEX", ptuple));
+
+    // 3. update the tuple
     ptuple->set_value(1, new_symbol);
-    return (update_tuple(db, ptuple, lm));
+    W_DO(update_tuple(db, ptuple, lm));
+
+    // 4. add the updated entry to the index
+    W_DO(add_index_entry(db, "WI_INDEX", ptuple));
 }
 
 w_rc_t watch_item_man_impl::wi_get_iter_by_index(ss_m* db,

@@ -523,7 +523,7 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 
 		    TRACE( TRACE_TRX_FLOW, "App: %d DM:cx-update (%s) \n", xct_id, new_tax_rate);
 		    e = _pcustomer_taxrate_man->cx_update_txid(_pssm, prcustomertaxrate, new_tax_rate);
-		    if (e.is_error()) {  goto done; } //buggy, I suppose there is problem when trying to update a FIXCHAR field which is in index
+		    if (e.is_error()) {  goto done; }
 		}
 		TRACE( TRACE_TRX_FLOW, "App: %d DM:cx-iter-next \n", xct_id);
 		e = cx_iter->next(_pssm, eof, *prcustomertaxrate);
