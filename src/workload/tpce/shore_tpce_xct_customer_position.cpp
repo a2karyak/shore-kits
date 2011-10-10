@@ -239,14 +239,14 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
 	    //ascending order
 	    rep_row_t sortrep(_pcustomer_man->ts());
 	    sortrep.set(_pcustomer_desc->maxsize());
-	    sort_buffer_t ca_list(3);
+	    asc_sort_buffer_t ca_list(3);
 
 	    ca_list.setup(0, SQL_FLOAT);
 	    ca_list.setup(1, SQL_FLOAT);
 	    ca_list.setup(2, SQL_LONG);
 
 	    table_row_t rsb(&ca_list);
-	    sort_man_impl ca_sorter(&ca_list, &sortrep);
+	    asc_sort_man_impl ca_sorter(&ca_list, &sortrep);
 
 	    int i = 0;
 	    bool eof;
@@ -311,7 +311,7 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
 	    double cash_bal[10];
 	    double assets_total[10];
 
-	    sort_iter_impl ca_list_sort_iter(_pssm, &ca_list, &ca_sorter);
+	    asc_sort_iter_impl ca_list_sort_iter(_pssm, &ca_list, &ca_sorter);
 	    TRACE( TRACE_TRX_FLOW, "App: %d CP:ca-sorter-iter-next \n", xct_id);
 	    e = ca_list_sort_iter.next(_pssm, eof, rsb);
 	    if (e.is_error()) { goto done; }
@@ -439,7 +439,7 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
 	    desc_sort_buffer_t t_list(5);
 	    t_list.setup(0, SQL_LONG); //th_dts
 	    t_list.setup(1, SQL_LONG);
-	    t_list.setup(2, SQL_FIXCHAR, 15);
+	    t_list.setup(2, SQL_FIXCHAR, 16);
 	    t_list.setup(3, SQL_INT);
 	    t_list.setup(4, SQL_FIXCHAR, 10);
 

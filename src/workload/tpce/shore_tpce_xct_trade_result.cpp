@@ -270,7 +270,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 		}
 		if (hs_qty > 0) {
 		    guard<index_scan_iter_impl<holding_t> > h_iter;
-		    sort_scan_t* h_list_sort_iter;
+		    asc_sort_scan_t* h_list_sort_iter;
 		    if (is_lifo){
 			/**
 			 *
@@ -652,7 +652,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 
 		    if(hs_qty < 0){
 			guard<index_scan_iter_impl<holding_t> > h_iter;
-			sort_scan_t* h_list_sort_iter;
+			asc_sort_scan_t* h_list_sort_iter;
 			if(is_lifo){
 			    /**
 			     * 	SELECT	H_T_ID, H_QTY, H_PRICE

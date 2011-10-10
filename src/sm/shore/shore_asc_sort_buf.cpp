@@ -47,9 +47,6 @@ const int MIN_TUPLES_FOR_SORT = 250;
  *
  * @return: 1 iff obj1>obj2, 0 iff obj1==obj2, -1 iff obj1<obj2
  * 
- * @note:   Currently only INT and SMALLINT types supported (both fixed 
- *          legnth)
- *
  **********************************************************************/
 
 
@@ -57,9 +54,9 @@ int compare_smallint_asc(const void* d1, const void* d2)
 {
     short data1 = *((short*)d1);
     short data2 = *((short*)d2);
-    if (data1 > data2) return (-1);
+    if (data1 > data2) return (1);
     if (data1 == data2) return (0);
-    return (1);
+    return (-1);
 }
 
 
@@ -67,9 +64,9 @@ int compare_int_asc(const void* d1, const void* d2)
 {
     int data1 = *((int*)d1);
     int data2 = *((int*)d2);
-    if (data1 > data2) return (-1);
+    if (data1 > data2) return (1);
     if (data1 == data2) return (0);
-    return (1);
+    return (-1);
 }
 
 
@@ -77,31 +74,31 @@ int compare_bit_asc(const void* d1, const void* d2)
 {
     int data1 = *((bool*)d1);
     int data2 = *((bool*)d2);
-    if (data1 > data2) return (-1);
+    if (data1 > data2) return (1);
     if (data1 == data2) return (0);
-    return (1);
+    return (-1);
 }
 
 int compare_long_asc(const void* d1, const void* d2)
 {
-    int data1 = *((long long*)d1);
-    int data2 = *((long long*)d2);
-    if (data1 > data2) return (-1);
+    long data1 = *((long long*)d1);
+    long data2 = *((long long*)d2);
+    if (data1 > data2) return (1);
     if (data1 == data2) return (0);
-    return (1);
+    return (-1);
 }
 
 int compare_double_asc(const void* d1, const void* d2)
 {
-    int data1 = *((double*)d1);
-    int data2 = *((double*)d2);
-    if (data1 > data2) return (-1);
+    double data1 = *((double*)d1);
+    double data2 = *((double*)d2);
+    if (data1 > data2) return (1);
     if (data1 == data2) return (0);
-    return (1);
+    return (-1);
 }
 
 int compare_fixchar_asc(const void* d1, const void* d2){
-    return -(strcmp((char*)d1, (char*)d2));
+    return (strcmp((char*)d1, (char*)d2));
 }
 
 template <typename T>
@@ -109,9 +106,9 @@ int compare_asc(const void* d1, const void* d2)
 {
     T data1 = *((T*)d1);
     T data2 = *((T*)d2);
-    if (data1 > data2) return (-1);
+    if (data1 > data2) return (1);
     if (data1 == data2) return (0);
-    return (1);
+    return (-1);
 }
 
 /**********************************************************************
@@ -141,6 +138,11 @@ void asc_sort_man_impl::init()
     for (uint_t i=0; i<_ptable->field_count(); i++)
         _tuple_size += _ptable->desc(i)->fieldmaxsize();
 
+    // @note: PIN: for alignment
+    if((_tuple_size % _ptable->desc(0)->fieldmaxsize()) != 0) {
+	_tuple_size = ((_tuple_size / _ptable->desc(0)->fieldmaxsize()) + 1) * _ptable->desc(0)->fieldmaxsize();
+    }
+    
     /* allocate size for MIN_TUPLES_FOR_SORT tuples */
     assert (!_sort_buf); // ensure that it will be init only once 
     assert (_tuple_count==0);

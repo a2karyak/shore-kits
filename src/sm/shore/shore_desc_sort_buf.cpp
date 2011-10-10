@@ -45,10 +45,8 @@ const int MIN_TUPLES_FOR_SORT = 250;
  *
  * @input:  obj1, obj2 of the same type, casted to (const void*)
  *
- * @return: 1 iff obj1>obj2, 0 iff obj1==obj2, -1 iff obj1<obj2
+ * @return: -1 iff obj1>obj2, 0 iff obj1==obj2, 1 iff obj1<obj2
  * 
- * @note:   Currently only INT and SMALLINT types supported (both fixed 
- *          legnth)
  *
  **********************************************************************/
 
@@ -84,8 +82,8 @@ int compare_bit_desc(const void* d1, const void* d2)
 
 int compare_long_desc(const void* d1, const void* d2)
 {
-    int data1 = *((long long*)d1);
-    int data2 = *((long long*)d2);
+    long data1 = *((long long*)d1);
+    long data2 = *((long long*)d2);
     if (data1 > data2) return (-1);
     if (data1 == data2) return (0);
     return (1);
@@ -93,8 +91,8 @@ int compare_long_desc(const void* d1, const void* d2)
 
 int compare_double_desc(const void* d1, const void* d2)
 {
-    int data1 = *((double*)d1);
-    int data2 = *((double*)d2);
+    double data1 = *((double*)d1);
+    double data2 = *((double*)d2);
     if (data1 > data2) return (-1);
     if (data1 == data2) return (0);
     return (1);
@@ -141,6 +139,11 @@ void desc_sort_man_impl::init()
     for (uint_t i=0; i<_ptable->field_count(); i++)
         _tuple_size += _ptable->desc(i)->fieldmaxsize();
 
+    // @note: PIN: for alignment
+    if((_tuple_size % _ptable->desc(0)->fieldmaxsize()) != 0) {
+	_tuple_size = ((_tuple_size / _ptable->desc(0)->fieldmaxsize()) + 1) * _ptable->desc(0)->fieldmaxsize();
+    }
+    
     /* allocate size for MIN_TUPLES_FOR_SORT tuples */
     assert (!_sort_buf); // ensure that it will be init only once 
     assert (_tuple_count==0);

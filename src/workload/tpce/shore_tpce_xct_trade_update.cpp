@@ -265,13 +265,13 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 		//ascending order
 		rep_row_t sortrep(_psecurity_man->ts());
 		sortrep.set(_psecurity_desc->maxsize());
-		sort_buffer_t th_list(2);
+		asc_sort_buffer_t th_list(2);
 
 		th_list.setup(0, SQL_LONG);
 		th_list.setup(1, SQL_FIXCHAR, 4);
 
 		table_row_t rsb(&th_list);
-		sort_man_impl th_sorter(&th_list, &sortrep);
+		asc_sort_man_impl th_sorter(&th_list, &sortrep);
 		bool eof;
 		TRACE( TRACE_TRX_FLOW, "App: %d TU:th-iter-next \n", xct_id);
 		e = th_iter->next(_pssm, eof, *prtradehist);
@@ -295,7 +295,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 		}
 		assert (th_sorter.count());
 
-		sort_iter_impl th_list_sort_iter(_pssm, &th_list, &th_sorter);
+		asc_sort_iter_impl th_list_sort_iter(_pssm, &th_list, &th_sorter);
 		TRACE( TRACE_TRX_FLOW, "App: %d TU:th-sort-next \n", xct_id);
 		e = th_list_sort_iter.next(_pssm, eof, rsb);
 		if (e.is_error()) { goto done; }
@@ -487,13 +487,13 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 		//ascending order
 		rep_row_t sortrep(_psecurity_man->ts());
 		sortrep.set(_psecurity_desc->maxsize());
-		sort_buffer_t th_list(2);
-
+		asc_sort_buffer_t th_list(2);
+		
 		th_list.setup(0, SQL_LONG);
 		th_list.setup(1, SQL_FIXCHAR, 4);
 
 		table_row_t rsb(&th_list);
-		sort_man_impl th_sorter(&th_list, &sortrep);
+		asc_sort_man_impl th_sorter(&th_list, &sortrep);
 		bool eof;
 		TRACE( TRACE_TRX_FLOW, "App: %d TU:th-iter-next \n", xct_id);
 		e = th_iter->next(_pssm, eof, *prtradehist);
@@ -517,7 +517,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 		}
 		assert (th_sorter.count());
 
-		sort_iter_impl th_list_sort_iter(_pssm, &th_list, &th_sorter);
+		asc_sort_iter_impl th_list_sort_iter(_pssm, &th_list, &th_sorter);
 		TRACE( TRACE_TRX_FLOW, "App: %d TL:th-sort-iter \n", xct_id);
 		e = th_list_sort_iter.next(_pssm, eof, rsb);
 		if (e.is_error()) { goto done; }
@@ -740,13 +740,13 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 		//ascending order
 		rep_row_t sortrep(_psecurity_man->ts());
 		sortrep.set(_psecurity_desc->maxsize());
-		sort_buffer_t th_list(2);
+		asc_sort_buffer_t th_list(2);
 
 		th_list.setup(0, SQL_LONG);
 		th_list.setup(1, SQL_FIXCHAR, 4);
 
 		table_row_t rsb(&th_list);
-		sort_man_impl th_sorter(&th_list, &sortrep);
+		asc_sort_man_impl th_sorter(&th_list, &sortrep);
 		bool eof;
 		TRACE( TRACE_TRX_FLOW, "App: %d TU:th-iter-next \n", xct_id);
 		e = th_iter->next(_pssm, eof, *prtradehist);
@@ -770,7 +770,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 		}
 		assert (th_sorter.count());
 
-		sort_iter_impl th_list_sort_iter(_pssm, &th_list, &th_sorter);
+		asc_sort_iter_impl th_list_sort_iter(_pssm, &th_list, &th_sorter);
 		TRACE( TRACE_TRX_FLOW, "App: %d TU:th-sort-iter-next \n", xct_id);
 		e = th_list_sort_iter.next(_pssm, eof, rsb);
 		if (e.is_error()) { goto done; }

@@ -600,7 +600,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 	    else{
 		desc_sort_buffer_t h_list(3);
 		guard<index_scan_iter_impl<holding_t> > h_iter;
-		sort_scan_t* h_list_sort_iter;
+		asc_sort_scan_t* h_list_sort_iter;
 		if(hs_qty < 0){
 		    if(ptoin._is_lifo){
 			/**

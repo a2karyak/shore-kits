@@ -1987,12 +1987,12 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(const int xct_id,
 	    if (e.is_error()) { goto done; }
 	}
 
-        sort_buffer_t ol_list(4);
+        asc_sort_buffer_t ol_list(4);
         ol_list.setup(0, SQL_INT);  /* OL_I_ID */
         ol_list.setup(1, SQL_INT);  /* OL_W_ID */
         ol_list.setup(2, SQL_INT);  /* OL_D_ID */
         ol_list.setup(3, SQL_INT);  /* OL_O_ID */
-        sort_man_impl ol_sorter(&ol_list, &sortrep);
+        asc_sort_man_impl ol_sorter(&ol_list, &sortrep);
         table_row_t rsb(&ol_list);
 
         // iterate over all selected orderlines and add them to the sorted buffer
@@ -2026,7 +2026,7 @@ w_rc_t ShoreTPCCEnv::xct_stock_level(const int xct_id,
         assert (ol_sorter.count());
 
         /* 2b. Sort orderline tuples on i_id */
-        sort_iter_impl ol_list_sort_iter(_pssm, &ol_list, &ol_sorter);
+        asc_sort_iter_impl ol_list_sort_iter(_pssm, &ol_list, &ol_sorter);
         int last_i_id = -1;
         int count = 0;
 

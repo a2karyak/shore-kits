@@ -230,12 +230,12 @@ w_rc_t r_ol_stock_action::trx_exec()
     rep_row_t sortrep(_penv->order_line_man()->ts());
     sortrep.set(_penv->order_line_desc()->maxsize()); 
 
-    sort_buffer_t ol_list(4);
+    asc_sort_buffer_t ol_list(4);
     ol_list.setup(0, SQL_INT);  /* OL_I_ID */
     ol_list.setup(1, SQL_INT);  /* OL_W_ID */
     ol_list.setup(2, SQL_INT);  /* OL_D_ID */
     ol_list.setup(3, SQL_INT);  /* OL_O_ID */
-    sort_man_impl ol_sorter(&ol_list, &sortrep);
+    asc_sort_man_impl ol_sorter(&ol_list, &sortrep);
     table_row_t rsb(&ol_list);
 
     w_rc_t e = RCOK;
@@ -313,7 +313,7 @@ w_rc_t r_ol_stock_action::trx_exec()
 
 
         // 2b. Sort orderline tuples on i_id
-        sort_iter_impl ol_list_sort_iter(_penv->db(), &ol_list, &ol_sorter);
+        asc_sort_iter_impl ol_list_sort_iter(_penv->db(), &ol_list, &ol_sorter);
         
         // 2c. Load the vector with pairs of w_id, and i_it notify rvp
         assert (_prvp->_in._pvwi == NULL);
