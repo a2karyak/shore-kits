@@ -135,13 +135,6 @@ w_rc_t ShoreTPCEEnv::xct_broker_volume(const int xct_id, broker_volume_input_t& 
 	table_row_t rsb(&tr_list);
 	desc_sort_man_impl tr_sorter(&tr_list, &sortrep);
 
-	unsigned int i;
-	unsigned int size = 0;
-
-	for(i = 0; strcmp(pbvin._broker_list[i], "\0") != 0; i++){
-	    size++;
-	}
-
 	TRACE( TRACE_TRX_FLOW, "App: %d BV:sc-idx2-probe (%s) \n", xct_id, pbvin._sector_name);
 	e =  _psector_man->sc_index2_probe(_pssm, prsector, pbvin._sector_name);
 	if(e.is_error()) { goto done; }
@@ -149,7 +142,7 @@ w_rc_t ShoreTPCEEnv::xct_broker_volume(const int xct_id, broker_volume_input_t& 
 	char sc_id[3];
 	prsector->get_value(0, sc_id, 3);
 
-	for(i = 0; i < size ; i++){
+	for(uint i = 0; i < max_broker_list_len && strcmp(pbvin._broker_list[i], "\0") != 0; i++){
 	    TRACE( TRACE_TRX_FLOW, "App: %d BV:b-idx4-probe (%s) \n", xct_id, pbvin._broker_list[i]);
 	    e =  _pbroker_man->b_index_4_probe(_pssm, prbroker, pbvin._broker_list[i]);
 	    if (e.is_error()) { goto done; }
@@ -253,27 +246,36 @@ w_rc_t ShoreTPCEEnv::xct_broker_volume(const int xct_id, broker_volume_input_t& 
 	    if(volume != 0){
 		rsb.set_value(0, volume);
 		rsb.set_value(1, pbvin._broker_list[i]);
-		//printf("Volume: %4.2  %s \n", volume, pbvin._broker_list[i]);//DELETE_ME
 		tr_sorter.add_tuple(rsb);
 	    }
 	}
-	assert (tr_sorter.count()); //harness control
 
-	array_guard_t< char[50] > broker_name = new char[size][50]; //49
-	array_guard_t<double> volume = new double[size];
+	/* @note: PIN: 
+	 * "// row_count will frequently be zero near the start of a Test Run when
+	 *  // TRADE_REQUEST table is mostly empty."
+	 * The below quote us taken from TPC-E spec and it's very true.
+	 * This means we cannot run this harness control as it is at the beginning no matter what.
+	 * We should either have a variable indicating turn_on_harness_control or should just run the
+	 * the slightly changed version of this control (like the one below).
+	 */
+	unsigned int list_len = tr_sorter.count();
+	// assert (( list_len > 0) && (list_len <= max_broker_list_len)); // real harness control
+	assert (list_len <= max_broker_list_len); // modified harness control
 
-	desc_sort_iter_impl tr_list_sort_iter(_pssm, &tr_list, &tr_sorter);
-	bool eof;
-	e = tr_list_sort_iter.next(_pssm, eof, rsb);
-	if (e.is_error()) { goto done; }
-	for(int j = 0; j < i && !eof; j++){
-	    rsb.get_value(0, volume[j]);
-	    rsb.get_value(1, broker_name[j], 50);
-
-	    //printf(" Volume %4.2f Broker %s \n", volume[j], broker_name[j]);
-
+	if(list_len > 0) {
+	    array_guard_t< char[50] > broker_name = new char[list_len][50]; //49
+	    array_guard_t<double> volume = new double[list_len];
+	    
+	    desc_sort_iter_impl tr_list_sort_iter(_pssm, &tr_list, &tr_sorter);
+	    bool eof;
 	    e = tr_list_sort_iter.next(_pssm, eof, rsb);
 	    if (e.is_error()) { goto done; }
+	    for(int j = 0; j < max_broker_list_len && !eof; j++){
+		rsb.get_value(0, volume[j]);
+		rsb.get_value(1, broker_name[j], 50);
+		e = tr_list_sort_iter.next(_pssm, eof, rsb);
+		if (e.is_error()) { goto done; }
+	    }
 	}
     
     }
@@ -291,7 +293,7 @@ w_rc_t ShoreTPCEEnv::xct_broker_volume(const int xct_id, broker_volume_input_t& 
 #endif
 
  done:
-
+    
 #ifdef TESTING_TPCE           
     int exec=++trxs_cnt_executed[XCT_TPCE_BROKER_VOLUME - XCT_TPCE_MIX - 1];
     if(e.is_error()) trxs_cnt_failed[XCT_TPCE_BROKER_VOLUME - XCT_TPCE_MIX-1]++;

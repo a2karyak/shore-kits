@@ -100,8 +100,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
     highrep.set(_psecurity_desc->maxsize());
 
     {
-	//ptuin.print();
-	unsigned int max_trades = 20; //instead of ptuin._max_trades
+	//unsigned int max_trades = 20; //instead of ptuin._max_trades 	// PIN: why????????????????
+	unsigned int max_trades = ptuin._max_trades;
 	int num_found = 0;
 	int num_updated = 0;
 
@@ -191,6 +191,10 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 		e = _ptrade_man->t_index_probe(_pssm, prtrade, ptuin._trade_id[i]);
 		if (e.is_error()) { goto done; }
 
+		prtrade->get_value(7, bid_price[i]);
+		prtrade->get_value(9, exec_name[i], 50);
+		prtrade->get_value(4, is_cash[i]);
+		prtrade->get_value(10, trade_price[i]);
 		char tt_id[4]; //3
 		prtrade->get_value(3, tt_id, 4);
 
@@ -198,11 +202,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 		e = _ptrade_type_man->tt_index_probe(_pssm, prtradetype, tt_id);
 		if (e.is_error()) { goto done; }
 
-		prtrade->get_value(7, bid_price[i]);
-		prtrade->get_value(9, exec_name[i], 50);
-		prtrade->get_value(4, is_cash[i]);
 		prtradetype->get_value(3, is_market[i]);
-		prtrade->get_value(10, trade_price[i]);
 
 		/**
 		   select
@@ -258,7 +258,9 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 		{
 		    index_scan_iter_impl<trade_history_t>* tmp_th_iter;
 		    TRACE( TRACE_TRX_FLOW, "App: %d TU:th-iter-by-trade-idx \n", xct_id);
-		    e = _ptrade_history_man->th_get_iter_by_index(_pssm, tmp_th_iter, prtradehist, lowrep, highrep, ptuin._trade_id[i]);
+		    e = _ptrade_history_man->th_get_iter_by_index(_pssm, tmp_th_iter,
+								  prtradehist, lowrep, highrep,
+								  ptuin._trade_id[i]);
 		    if (e.is_error()) { goto done; }
 		    th_iter = tmp_th_iter;
 		}
@@ -351,7 +353,9 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 	    {
 		index_scan_iter_impl<trade_t>* tmp_t_iter;
 		TRACE( TRACE_TRX_FLOW, "App: %d TL:t-iter-by-idx2 %ld %ld %ld \n", xct_id, ptuin._acct_id, ptuin._start_trade_dts, ptuin._end_trade_dts);
-		e = _ptrade_man->t_get_iter_by_index2(_pssm, tmp_t_iter, prtrade, lowrep, highrep, ptuin._acct_id, ptuin._start_trade_dts, ptuin._end_trade_dts);
+		e = _ptrade_man->t_get_iter_by_index2(_pssm, tmp_t_iter,
+						      prtrade, lowrep, highrep,
+						      ptuin._acct_id, ptuin._start_trade_dts, ptuin._end_trade_dts);
 		if (e.is_error()) { goto done; }
 		t_iter = tmp_t_iter;
 	    }
@@ -479,7 +483,9 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 		{
 		    index_scan_iter_impl<trade_history_t>* tmp_th_iter;
 		    TRACE( TRACE_TRX_FLOW, "App: %d TU:th-iter-by-trade-idx \n", xct_id);
-		    e = _ptrade_history_man->th_get_iter_by_index(_pssm, tmp_th_iter, prtradehist, lowrep, highrep, trade_list[i]);
+		    e = _ptrade_history_man->th_get_iter_by_index(_pssm, tmp_th_iter,
+								  prtradehist, lowrep, highrep,
+								  trade_list[i]);
 		    if (e.is_error()) { goto done; }
 		    th_iter = tmp_th_iter;
 		}
@@ -587,7 +593,9 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 	    {
 		index_scan_iter_impl<trade_t>* tmp_t_iter;
 		TRACE( TRACE_TRX_FLOW, "App: %d TL:t-iter-by-idx3 %s %ld %ld \n", xct_id,  ptuin._symbol, ptuin._start_trade_dts, ptuin._end_trade_dts);
-		e = _ptrade_man->t_get_iter_by_index3(_pssm, tmp_t_iter, prtrade, lowrep, highrep, ptuin._symbol, ptuin._start_trade_dts, ptuin._end_trade_dts); 
+		e = _ptrade_man->t_get_iter_by_index3(_pssm, tmp_t_iter,
+						      prtrade, lowrep, highrep,
+						      ptuin._symbol, ptuin._start_trade_dts, ptuin._end_trade_dts); 
 		if (e.is_error()) { goto done; }
 		t_iter = tmp_t_iter;
 	    }
@@ -602,7 +610,9 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 		prtrade->get_value(4, is_cash[j]);
 		prtrade->get_value(10, price[j]);
 		prtrade->get_value(6, quantity[j]);
-
+		prtrade->get_value(1, trade_dts[j]);
+		prtrade->get_value(0, trade_list[j]);
+		prtrade->get_value(3, trade_type[j], 4);
 		char t_s_symb[16]; //15
 		prtrade->get_value(5, t_s_symb, 16);
 
@@ -611,10 +621,6 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 		if(e.is_error()) { goto done; }
 
 		prsecurity->get_value(3, s_name[j], 71);
-
-		prtrade->get_value(1, trade_dts[j]);
-		prtrade->get_value(0, trade_list[j]);
-		prtrade->get_value(3, trade_type[j], 4);
 
 		TRACE( TRACE_TRX_FLOW, "App: %d TU:tt-idx-probe (%s) \n", xct_id,  trade_type[j]);
 		e =  _ptrade_type_man->tt_index_probe(_pssm, prtradetype, trade_type[j]);
@@ -732,7 +738,9 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 		{
 		    index_scan_iter_impl<trade_history_t>* tmp_th_iter;
 		    TRACE( TRACE_TRX_FLOW, "App: %d TU:th-iter-by-trade-idx %ld \n", xct_id, trade_list[i]);
-		    e = _ptrade_history_man->th_get_iter_by_index(_pssm, tmp_th_iter, prtradehist, lowrep, highrep, trade_list[i]);
+		    e = _ptrade_history_man->th_get_iter_by_index(_pssm, tmp_th_iter,
+								  prtradehist, lowrep, highrep,
+								  trade_list[i]);
 		    if (e.is_error()) { goto done; }
 		    th_iter = tmp_th_iter;
 		}
@@ -785,6 +793,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 	    }
 	}		
     }
+    
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction
     // dumps the status of all the table rows used

@@ -63,7 +63,7 @@ public:
       }
       T* get(){
 	    {
-   //  	      CRITICAL_SECTION(cs, a_lock);
+		CRITICAL_SECTION(cs, a_lock);
 		if (size==0) return NULL;
 		T* tmp=buffer[first];
 		size--;
@@ -75,7 +75,7 @@ public:
 
        void put(T* tmp){
 	    {
-     //	      CRITICAL_SECTION(cs, a_lock);
+		CRITICAL_SECTION(cs, a_lock);
 		assert(size<max_buffer);
 		buffer[last]=tmp;
 		last=(last+1)%max_buffer;

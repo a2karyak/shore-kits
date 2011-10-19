@@ -146,7 +146,9 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 	    {
 		index_scan_iter_impl<account_permission_t>* tmp_ap_iter;
 		TRACE( TRACE_TRX_FLOW, "App: %d DM:ap-get-iter-by-idx %ld \n", xct_id, pdmin._acct_id);
-		e = _paccount_permission_man->ap_get_iter_by_index(_pssm, tmp_ap_iter, pracctperm, lowrep, highrep, pdmin._acct_id);
+		e = _paccount_permission_man->ap_get_iter_by_index(_pssm, tmp_ap_iter,
+								   pracctperm, lowrep, highrep,
+								   pdmin._acct_id);
 		if (e.is_error()) { goto done; }
 		ap_iter = tmp_ap_iter;
 	    }
@@ -192,7 +194,7 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		   update
 		   ACCOUNT_PERMISSION
 		   set
-		   AP_ACL=”1111”
+		   AP_ACL="0011"
 		   where
 		   AP_CA_ID = acct_id and
 		   AP_ACL = acl
@@ -200,7 +202,9 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		{
 		    index_scan_iter_impl<account_permission_t>* tmp_ap_iter;
 		    TRACE( TRACE_TRX_FLOW, "App: %d DM:ap-get-iter-by-idx %ld \n", xct_id, pdmin._acct_id);
-		    e = _paccount_permission_man->ap_get_iter_by_index(_pssm, tmp_ap_iter, pracctperm, lowrep, highrep, pdmin._acct_id);
+		    e = _paccount_permission_man->ap_get_iter_by_index(_pssm, tmp_ap_iter,
+								       pracctperm, lowrep, highrep,
+								       pdmin._acct_id);
 		    if (e.is_error()) {   goto done; }
 		    ap_iter = tmp_ap_iter;
 		}

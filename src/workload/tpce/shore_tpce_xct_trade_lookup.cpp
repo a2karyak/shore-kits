@@ -100,19 +100,11 @@ w_rc_t ShoreTPCEEnv::xct_trade_lookup(const int xct_id, trade_lookup_input_t& pt
     lowrep.set(_ptrade_desc->maxsize());
     highrep.set(_ptrade_desc->maxsize());
 
-    {
-	/*
-	  TRACE( TRACE_TRX_FLOW, "TL: %d SE:se-idx-probe (%ld) \n", xct_id,  8932182);
-	  e = _psettlement_man->se_index_probe(_pssm, prsettlement, 8932182);
-	  if (e.is_error()) { goto done; }
-	*/
-    }
-
-    unsigned int max_trades = 20; //instead of ptlin._max_trades
+    // PIN: WTF?
+    //unsigned int max_trades = 20; //instead of ptlin._max_trades
+    int max_trades = ptlin._max_trades;
 
     {
-	//ptlin.print();
-
 	array_guard_t<double> bid_price = new double[max_trades];
 	array_guard_t< char[50] > exec_name = new char[max_trades][50]; //49
 	array_guard_t<bool> is_cash = new bool[max_trades];
@@ -139,580 +131,560 @@ w_rc_t ShoreTPCEEnv::xct_trade_lookup(const int xct_id, trade_lookup_input_t& pt
 
 	//BEGIN FRAME1
 	int num_found = 0;
-	if(ptlin._frame_to_execute == 1)
-	    {
-		int i;
-		for (i = 0; i < max_trades; i++){
+	if(ptlin._frame_to_execute == 1) {
+	    for (num_found = 0; num_found < max_trades; num_found++){
+		/**
+		 *	select
+		 *		bid_price[i] = T_BID_PRICE,
+		 *		exec_name[i] = T_EXEC_NAME,
+		 *		is_cash[i] = T_IS_CASH,
+		 *		is_market[i] = TT_IS_MRKT,
+		 *		trade_price[i] = T_TRADE_PRICE
+		 *	from
+		 *		TRADE,
+		 *		TRADE_TYPE
+		 *	where
+		 *		T_ID = trade_id[i] and
+		 *		T_TT_ID = TT_ID
+		 */
+		
+		TRACE( TRACE_TRX_FLOW, "App: %d TL:t-idx-probe (%ld) \n", xct_id,  ptlin._trade_id[num_found]);
+		e = _ptrade_man->t_index_probe(_pssm, prtrade, ptlin._trade_id[num_found]);
+		if (e.is_error()) { goto done; }
+		
+		char tt_id[4]; //3
+		prtrade->get_value(3, tt_id, 4);
+		    
+		TRACE( TRACE_TRX_FLOW, "App: %d TL:tt-idx-probe (%s) \n", xct_id,  tt_id);
+		e = _ptrade_type_man->tt_index_probe(_pssm, prtradetype, tt_id);
+		if (e.is_error()) { goto done; }
+
+		prtrade->get_value(7, bid_price[num_found]);
+		prtrade->get_value(9, exec_name[num_found], 50); //49
+		prtrade->get_value(4, is_cash[num_found]);
+		prtradetype->get_value(3, is_market[num_found]);
+		prtrade->get_value(10, trade_price[num_found]);
+
+		/**
+		 *	select
+		 *		settlement_amount[i] = SE_AMT,
+		 *		settlement_cash_due_date[i] = SE_CASH_DUE_DATE,
+		 *		settlement_cash_type[i] = SE_CASH_TYPE
+		 *	from
+		 *		SETTLEMENT
+		 *	where
+		 *		SE_T_ID = trade_id[i]
+		 */
+
+		TRACE( TRACE_TRX_FLOW, "App: %d TL:se-idx-probe (%ld) \n", xct_id,  ptlin._trade_id[num_found]);
+		e = _psettlement_man->se_index_probe(_pssm, prsettlement, ptlin._trade_id[num_found]);
+		if (e.is_error()) { goto done; }
+
+		prsettlement->get_value(3, settlement_amount[num_found]);
+		prsettlement->get_value(2, settlement_cash_due_date[num_found]);
+		prsettlement->get_value(1, settlement_cash_type[num_found], 41); //40
+
+		// get cash information if this is a cash transaction
+		// Should only return one row for each trade that was a cash transaction
+		if(is_cash[num_found]){
 		    /**
 		     *	select
-		     *		bid_price[i] = T_BID_PRICE,
-		     *		exec_name[i] = T_EXEC_NAME,
-		     *		is_cash[i] = T_IS_CASH,
-		     *		is_market[i] = TT_IS_MRKT,
-		     *		trade_price[i] = T_TRADE_PRICE
+		     *		cash_transaction_amount[i] = CT_AMT,
+		     *		cash_transaction_dts[i] = CT_DTS,
+		     *		cash_transaction_name[i] = CT_NAME
 		     *	from
-		     *		TRADE,
-		     *		TRADE_TYPE
+		     *		CASH_TRANSACTION
 		     *	where
-		     *		T_ID = trade_id[i] and
-		     *		T_TT_ID = TT_ID
+		     *		CT_T_ID = trade_id[i]
+		     *
 		     */
 
-		    TRACE( TRACE_TRX_FLOW, "App: %d TL:t-idx-probe (%ld) \n", xct_id,  ptlin._trade_id[i]);
-		    e = _ptrade_man->t_index_probe(_pssm, prtrade, ptlin._trade_id[i]);
+		    TRACE( TRACE_TRX_FLOW, "App: %d TL:ct-idx-probe (%ld) \n", xct_id,  ptlin._trade_id[num_found]);
+		    e = _pcash_transaction_man->ct_index_probe(_pssm, prcashtrans, ptlin._trade_id[num_found]);
 		    if (e.is_error()) { goto done; }
 
-		    char tt_id[4]; //3
-		    prtrade->get_value(3, tt_id, 4);
-
-		    TRACE( TRACE_TRX_FLOW, "App: %d TL:tt-idx-probe (%s) \n", xct_id,  tt_id);
-		    e = _ptrade_type_man->tt_index_probe(_pssm, prtradetype, tt_id);
-		    if (e.is_error()) { goto done; }
-
-		    prtrade->get_value(7, bid_price[i]);
-		    prtrade->get_value(9, exec_name[i],50); //49
-		    prtrade->get_value(4, is_cash[i]);
-		    prtrade->get_value(10, trade_price[i]);
-
-		    prtradetype->get_value(3, is_market[i]);
-
-		    num_found++;
-
-		    /**
-		     *	select
-		     *		settlement_amount[i] = SE_AMT,
-		     *		settlement_cash_due_date[i] = SE_CASH_DUE_DATE,
-		     *		settlement_cash_type[i] = SE_CASH_TYPE
-		     *	from
-		     *		SETTLEMENT
-		     *	where
-		     *		SE_T_ID = trade_id[i]
-		     */
-
-		    TRACE( TRACE_TRX_FLOW, "App: %d TL:se-idx-probe (%ld) \n", xct_id,  ptlin._trade_id[i]);
-		    e = _psettlement_man->se_index_probe(_pssm, prsettlement, ptlin._trade_id[i]);
-		    if (e.is_error()) { goto done; }
-
-		    prsettlement->get_value(3, settlement_amount[i]);
-		    prsettlement->get_value(2, settlement_cash_due_date[i]);
-		    prsettlement->get_value(1, settlement_cash_type[i], 41); //40
-
-		    // get cash information if this is a cash transaction
-		    // Should only return one row for each trade that was a cash transaction
-		    if(is_cash[i]){
-			/**
-			 *	select
-			 *		cash_transaction_amount[i] = CT_AMT,
-			 *		cash_transaction_dts[i] = CT_DTS,
-			 *		cash_transaction_name[i] = CT_NAME
-			 *	from
-			 *		CASH_TRANSACTION
-			 *	where
-			 *		CT_T_ID = trade_id[i]
-			 *
-			 */
-
-			TRACE( TRACE_TRX_FLOW, "App: %d TL:ct-idx-probe (%ld) \n", xct_id,  ptlin._trade_id[i]);
-			e = _pcash_transaction_man->ct_index_probe(_pssm, prcashtrans, ptlin._trade_id[i]);
-			if (e.is_error()) { goto done; }
-
-			prcashtrans->get_value(2, cash_transaction_amount[i]);
-			prcashtrans->get_value(1, cash_transaction_dts[i]);
-			prcashtrans->get_value(3, cash_transaction_name[i], 101); //100
-
-			/**
-			 *	select first 3 rows
-			 *		trade_history_dts[i][] = TH_DTS,
-			 *		trade_history_status_id[i][] = TH_ST_ID
-			 *	from
-			 *		TRADE_HISTORY
-			 *	where
-			 *		TH_T_ID = trade_id[i]
-			 *	order by
-			 *		TH_DTS
-			 */
-
-			guard<index_scan_iter_impl<trade_history_t> > th_iter;
-			{
-			    index_scan_iter_impl<trade_history_t>* tmp_th_iter;
-			    TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-by-trade-idx (%ld) \n", xct_id, ptlin._trade_id[i]);
-			    e = _ptrade_history_man->th_get_iter_by_index(_pssm, tmp_th_iter, prtradehist, lowrep, highrep, ptlin._trade_id[i]);
-			    if (e.is_error()) { goto done; }
-			    th_iter = tmp_th_iter;
-			}
-
-			//ascending order
-			rep_row_t sortrep(_ptrade_man->ts());
-			sortrep.set(_ptrade_desc->maxsize());
-			asc_sort_buffer_t th_list(2);
-			th_list.setup(0, SQL_LONG);
-			th_list.setup(1, SQL_FIXCHAR, 4);
-
-			table_row_t rsb(&th_list);
-			asc_sort_man_impl th_sorter(&th_list, &sortrep);
-
-			bool eof;
-			TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-next \n", xct_id);
-			e = th_iter->next(_pssm, eof, *prtradehist);
-			if (e.is_error()) { goto done; }
-			while (!eof) {
-			    /* put the value into the sorted buffer */
-			    myTime temp_dts;
-			    char temp_stid[5]; //4
-
-			    prtradehist->get_value(1, temp_dts);
-			    prtradehist->get_value(2, temp_stid, 5);
-
-			    rsb.set_value(0, temp_dts);
-			    rsb.set_value(1, temp_stid);
-
-			    th_sorter.add_tuple(rsb);
-
-			    TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-next \n", xct_id);
-			    e = th_iter->next(_pssm, eof, *prtradehist);
-			    if (e.is_error()) { goto done; }
-			}
-			assert (th_sorter.count());
-
-			asc_sort_iter_impl th_list_sort_iter(_pssm, &th_list, &th_sorter);
-			TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-next \n", xct_id);
-			e = th_list_sort_iter.next(_pssm, eof, rsb);
-			if (e.is_error()) { goto done; }
-			for(int j = 0; j < 3 && !eof; j++) {
-			    rsb.get_value(0, trade_history_dts[i][j]);
-			    rsb.get_value(1, trade_history_status_id[i][j], 5);
-
-			    //printf("DTS %ld, ID %ld \n", trade_history_dts[i][j], trade_history_status_id[i][j]);
-
-			    TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-next \n", xct_id);
-			    e = th_list_sort_iter.next(_pssm, eof, rsb);
-			    if (e.is_error()) { goto done; }
-			}
-		    }
+		    prcashtrans->get_value(2, cash_transaction_amount[num_found]);
+		    prcashtrans->get_value(1, cash_transaction_dts[num_found]);
+		    prcashtrans->get_value(3, cash_transaction_name[num_found], 101); //100
 		}
-		assert(num_found == max_trades); //Harness control
+
+		/**
+		 *	select first 3 rows
+		 *		trade_history_dts[i][] = TH_DTS,
+		 *		trade_history_status_id[i][] = TH_ST_ID
+		 *	from
+		 *		TRADE_HISTORY
+		 *	where
+		 *		TH_T_ID = trade_id[i]
+		 *	order by
+		 *		TH_DTS
+		 */
+		
+		guard<index_scan_iter_impl<trade_history_t> > th_iter;
+		{
+		    index_scan_iter_impl<trade_history_t>* tmp_th_iter;
+		    TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-by-trade-idx (%ld) \n", xct_id, ptlin._trade_id[num_found]);
+		    e = _ptrade_history_man->th_get_iter_by_index(_pssm, tmp_th_iter,
+								  prtradehist, lowrep, highrep,
+								  ptlin._trade_id[num_found]);
+		    if (e.is_error()) { goto done; }
+		    th_iter = tmp_th_iter;
+		}
+
+		//ascending order
+		rep_row_t sortrep(_ptrade_man->ts());
+		sortrep.set(_ptrade_desc->maxsize());
+
+		asc_sort_buffer_t th_list(2);
+		th_list.setup(0, SQL_LONG);
+		th_list.setup(1, SQL_FIXCHAR, 4);
+
+		table_row_t rsb(&th_list);
+		asc_sort_man_impl th_sorter(&th_list, &sortrep);
+
+		bool eof;
+		TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-next \n", xct_id);
+		e = th_iter->next(_pssm, eof, *prtradehist);
+		if (e.is_error()) { goto done; }
+		while (!eof) {
+		    /* put the value into the sorted buffer */
+		    myTime temp_dts;
+		    char temp_stid[5]; //4
+
+		    prtradehist->get_value(1, temp_dts);
+		    prtradehist->get_value(2, temp_stid, 5);
+		    
+		    rsb.set_value(0, temp_dts);
+		    rsb.set_value(1, temp_stid);
+		    
+		    th_sorter.add_tuple(rsb);
+		    
+		    TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-next \n", xct_id);
+		    e = th_iter->next(_pssm, eof, *prtradehist);
+		    if (e.is_error()) { goto done; }
+		}
+		assert (th_sorter.count());
+		
+		asc_sort_iter_impl th_list_sort_iter(_pssm, &th_list, &th_sorter);
+		TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-next \n", xct_id);
+		e = th_list_sort_iter.next(_pssm, eof, rsb);
+		if (e.is_error()) { goto done; }
+		for(int j = 0; j < 3 && !eof; j++) {
+		    rsb.get_value(0, trade_history_dts[num_found][j]);
+		    rsb.get_value(1, trade_history_status_id[num_found][j], 5);
+		    TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-next \n", xct_id);
+		    e = th_list_sort_iter.next(_pssm, eof, rsb);
+		    if (e.is_error()) { goto done; }
+		}
 	    }
+	    assert(num_found == max_trades); //Harness control
+	}
 	//END FRAME1
 
 	//BEGIN FRAME2
-	else if(ptlin._frame_to_execute == 2)
+	else if(ptlin._frame_to_execute == 2) {
+	    // Get trade information
+	    // Should return between 0 and max_trades rows
+
+	    /**
+	     *	select first max_trades rows
+	     *		bid_price[] = T_BID_PRICE,
+	     *		exec_name[] = T_EXEC_NAME,
+	     *		is_cash[] = T_IS_CASH,
+	     *		trade_list[] = T_ID,
+	     *		trade_price[] = T_TRADE_PRICE
+	     *	from
+	     *		TRADE
+	     *	where
+	     *		T_CA_ID = acct_id and
+	     *		T_DTS >= start_trade_dts and
+	     *		T_DTS <= end_trade_dts
+	     *	order by
+	     *		T_DTS asc
+	     */
+
+	    guard<index_scan_iter_impl<trade_t> > t_iter;
 	    {
-		int i;
-		// Get trade information
-		// Should return between 0 and max_trades rows
+		index_scan_iter_impl<trade_t>* tmp_t_iter;
+		TRACE( TRACE_TRX_FLOW, "App: %d TL:t-iter-by-idx2 %ld %ld %ld \n", xct_id, ptlin._acct_id, ptlin._start_trade_dts, ptlin._end_trade_dts);
+		e = _ptrade_man->t_get_iter_by_index2(_pssm, tmp_t_iter, prtrade, lowrep, highrep, ptlin._acct_id, ptlin._start_trade_dts, ptlin._end_trade_dts);
+		t_iter = tmp_t_iter;
+		if (e.is_error()) { goto done; }
+	    }
+	    //already sorted in ascending order because of index
 
-		/**
-		 *	select first max_trades rows
-		 *		bid_price[] = T_BID_PRICE,
-		 *		exec_name[] = T_EXEC_NAME,
-		 *		is_cash[] = T_IS_CASH,
-		 *		trade_list[] = T_ID,
-		 *		trade_price[] = T_TRADE_PRICE
-		 *	from
-		 *		TRADE
-		 *	where
-		 *		T_CA_ID = acct_id and
-		 *		T_DTS >= start_trade_dts and
-		 *		T_DTS <= end_trade_dts
-		 *	order by
-		 *		T_DTS asc
-		 */
+	    bool eof;
+	    TRACE( TRACE_TRX_FLOW, "App: %d TL:t-iter-next \n", xct_id);
+	    e = t_iter->next(_pssm, eof, *prtrade);
+	    if (e.is_error()) { goto done; }
+	    for(num_found = 0 ; num_found < max_trades && !eof ; num_found++){
+		prtrade->get_value(7, bid_price[num_found]);
+		prtrade->get_value(9, exec_name[num_found], 50); //49
+		prtrade->get_value(4, is_cash[num_found]);
+		prtrade->get_value(0, trade_list[num_found]);
+		prtrade->get_value(10, trade_price[num_found]);
 
-		guard<index_scan_iter_impl<trade_t> > t_iter;
-		{
-		    index_scan_iter_impl<trade_t>* tmp_t_iter;
-		    TRACE( TRACE_TRX_FLOW, "App: %d TL:t-iter-by-idx2 %ld %ld %ld \n", xct_id, ptlin._acct_id, ptlin._start_trade_dts, ptlin._end_trade_dts);
-		    e = _ptrade_man->t_get_iter_by_index2(_pssm, tmp_t_iter, prtrade, lowrep, highrep, ptlin._acct_id, ptlin._start_trade_dts, ptlin._end_trade_dts);
-		    t_iter = tmp_t_iter;
-		    if (e.is_error()) { goto done; }
-		}
-		//already sorted in ascending order because of index
-
-		bool eof;
 		TRACE( TRACE_TRX_FLOW, "App: %d TL:t-iter-next \n", xct_id);
 		e = t_iter->next(_pssm, eof, *prtrade);
 		if (e.is_error()) { goto done; }
-		int j;
-		for(j = 0; j < max_trades && !eof ; j++){
-		    prtrade->get_value(7, bid_price[j]);
-		    prtrade->get_value(9, exec_name[j], 50); //49
-		    prtrade->get_value(4, is_cash[j]);
-		    prtrade->get_value(0, trade_list[j]);
-		    prtrade->get_value(10, trade_price[j]);
+	    }
+	
+	    for(int i = 0; i < num_found; i++){
+		/**
+		 *	select
+		 *		settlement_amount[i] = SE_AMT,
+		 *		settlement_cash_due_date[i] = SE_CASH_DUE_DATE,
+		 *		settlement_cash_type[i] = SE_CASH_TYPE
+		 *	from
+		 *		SETTLEMENT
+		 *	where
+		 *		SE_T_ID = trade_list[i]
+		 */
 
-		    TRACE( TRACE_TRX_FLOW, "App: %d TL:t-iter-next \n", xct_id);
-		    e = t_iter->next(_pssm, eof, *prtrade);
-		    if (e.is_error()) { goto done; }
-		}
-		int num_found = j;
+		TRACE( TRACE_TRX_FLOW, "App: %d TL:se-idx-probe (%ld) \n", xct_id,  trade_list[i]);
+		e = _psettlement_man->se_index_probe(_pssm, prsettlement, trade_list[i]);
+		if (e.is_error()) { goto done; }
 
-		for(i = 0; i < num_found; i++){
+		prsettlement->get_value(3, settlement_amount[i]);
+		prsettlement->get_value(2, settlement_cash_due_date[i]);
+		prsettlement->get_value(1, settlement_cash_type[i], 41); //40
+
+		if(is_cash[i]){
 		    /**
 		     *	select
-		     *		settlement_amount[i] = SE_AMT,
-		     *		settlement_cash_due_date[i] = SE_CASH_DUE_DATE,
-		     *		settlement_cash_type[i] = SE_CASH_TYPE
+		     *		cash_transaction_amount[i] = CT_AMT,
+		     *		cash_transaction_dts[i] = CT_DTS,
+		     *		cash_transaction_name[i] = CT_NAME
 		     *	from
-		     *		SETTLEMENT
+		     *		CASH_TRANSACTION
 		     *	where
-		     *		SE_T_ID = trade_list[i]
+		     *		CT_T_ID = trade_list[i]
+		     *
 		     */
-
-		    TRACE( TRACE_TRX_FLOW, "App: %d TL:se-idx-probe (%ld) \n", xct_id,  trade_list[i]);
-		    e = _psettlement_man->se_index_probe(_pssm, prsettlement, trade_list[i]);
+		    TRACE( TRACE_TRX_FLOW, "App: %d TL:ct-idx-probe (%ld) \n", xct_id,  trade_list[i]);
+		    e = _pcash_transaction_man->ct_index_probe(_pssm, prcashtrans, trade_list[i]);
 		    if (e.is_error()) { goto done; }
 
-		    prsettlement->get_value(3, settlement_amount[i]);
-		    prsettlement->get_value(2, settlement_cash_due_date[i]);
-		    prsettlement->get_value(1, settlement_cash_type[i], 41); //40
-
-		    if(is_cash[i]){
-			/**
-			 *	select
-			 *		cash_transaction_amount[i] = CT_AMT,
-			 *		cash_transaction_dts[i] = CT_DTS,
-			 *		cash_transaction_name[i] = CT_NAME
-			 *	from
-			 *		CASH_TRANSACTION
-			 *	where
-			 *		CT_T_ID = trade_list[i]
-			 *
-			 */
-			TRACE( TRACE_TRX_FLOW, "App: %d TL:ct-idx-probe (%ld) \n", xct_id,  trade_list[i]);
-			e = _pcash_transaction_man->ct_index_probe(_pssm, prcashtrans, trade_list[i]);
-			if (e.is_error()) { goto done; }
-
-			prcashtrans->get_value(2, cash_transaction_amount[i]);
-			prcashtrans->get_value(1, cash_transaction_dts[i]);
-			prcashtrans->get_value(3, cash_transaction_name[i], 101); //100
-
-			/**
-			 *
-			 *	select first 3 rows
-			 *		trade_history_dts[i][] = TH_DTS,
-			 *		trade_history_status_id[i][] = TH_ST_ID
-			 *	from
-			 *		TRADE_HISTORY
-			 *	where
-			 *		TH_T_ID = trade_list[i]
-			 *	order by
-			 *		TH_DTS
-			 */
-
-			guard<index_scan_iter_impl<trade_history_t> > th_iter;
-			{
-			    index_scan_iter_impl<trade_history_t>* tmp_th_iter;
-			    TRACE( TRACE_TRX_FLOW, "App: %d TL:th-get-iter-by-idx %ld \n", xct_id, trade_list[i]);
-			    e = _ptrade_history_man->th_get_iter_by_index(_pssm, tmp_th_iter, prtradehist, lowrep, highrep, trade_list[i]);
-			    if (e.is_error()) { goto done; }
-			    th_iter = tmp_th_iter;
-			}
-			//ascending order
-			rep_row_t sortrep(_ptrade_man->ts());
-			sortrep.set(_ptrade_desc->maxsize());
-			asc_sort_buffer_t th_list(2);
-
-			th_list.setup(0, SQL_LONG);
-			th_list.setup(1, SQL_FIXCHAR, 4);
-
-			table_row_t rsb(&th_list);
-			asc_sort_man_impl th_sorter(&th_list, &sortrep);
-
-			TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-next \n", xct_id);
-			e = th_iter->next(_pssm, eof, *prtradehist);
-			if (e.is_error()) { goto done; }
-			while (!eof) {
-			    /* put the value into the sorted buffer */
-			    myTime temp_dts;
-			    char temp_stid[5]; //4
-
-			    prtradehist->get_value(1, temp_dts);
-			    prtradehist->get_value(2, temp_stid, 5);
-
-			    rsb.set_value(0, temp_dts);
-			    rsb.set_value(1, temp_stid);
-
-			    th_sorter.add_tuple(rsb);
-
-			    TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-next \n", xct_id);
-			    e = th_iter->next(_pssm, eof, *prtradehist);
-			    if (e.is_error()) { goto done; }
-			}
-			assert (th_sorter.count());
-
-			asc_sort_iter_impl th_list_sort_iter(_pssm, &th_list, &th_sorter);
-			TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-next \n", xct_id);
-			e = th_list_sort_iter.next(_pssm, eof, rsb);
-			if (e.is_error()) { goto done; }
-			for(int j = 0; j < 3 && !eof; j++) {
-			    rsb.get_value(0, trade_history_dts[i][j]);
-			    rsb.get_value(1, trade_history_status_id[i][j], 5);
-		    
-			    //printf("DTS %ld, ID %ld \n", trade_history_dts[i][j], trade_history_status_id[i][j]);
-
-			    TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-next \n", xct_id);
-			    e = th_list_sort_iter.next(_pssm, eof, rsb);
-			    if (e.is_error()) { goto done; }
-			}
-		    }
+		    prcashtrans->get_value(2, cash_transaction_amount[i]);
+		    prcashtrans->get_value(1, cash_transaction_dts[i]);
+		    prcashtrans->get_value(3, cash_transaction_name[i], 101); //100
 		}
-		assert(num_found >= 0); //Harness control
+		
+		/**
+		 *
+		 *	select first 3 rows
+		 *		trade_history_dts[i][] = TH_DTS,
+		 *		trade_history_status_id[i][] = TH_ST_ID
+		 *	from
+		 *		TRADE_HISTORY
+		 *	where
+		 *		TH_T_ID = trade_list[i]
+		 *	order by
+		 *		TH_DTS
+		 */
+
+		guard<index_scan_iter_impl<trade_history_t> > th_iter;
+		{
+		    index_scan_iter_impl<trade_history_t>* tmp_th_iter;
+		    TRACE( TRACE_TRX_FLOW, "App: %d TL:th-get-iter-by-idx %ld \n", xct_id, trade_list[i]);
+		    e = _ptrade_history_man->th_get_iter_by_index(_pssm, tmp_th_iter, prtradehist, lowrep, highrep, trade_list[i]);
+		    if (e.is_error()) { goto done; }
+		    th_iter = tmp_th_iter;
+		}
+		//ascending order
+		rep_row_t sortrep(_ptrade_man->ts());
+		sortrep.set(_ptrade_desc->maxsize());
+
+		asc_sort_buffer_t th_list(2);
+		th_list.setup(0, SQL_LONG);
+		th_list.setup(1, SQL_FIXCHAR, 4);
+
+		table_row_t rsb(&th_list);
+		asc_sort_man_impl th_sorter(&th_list, &sortrep);
+		
+		TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-next \n", xct_id);
+		e = th_iter->next(_pssm, eof, *prtradehist);
+		if (e.is_error()) { goto done; }
+		while (!eof) {
+		    /* put the value into the sorted buffer */
+		    myTime temp_dts;
+		    char temp_stid[5]; //4
+		    
+		    prtradehist->get_value(1, temp_dts);
+		    prtradehist->get_value(2, temp_stid, 5);
+		    
+		    rsb.set_value(0, temp_dts);
+		    rsb.set_value(1, temp_stid);
+		    
+		    th_sorter.add_tuple(rsb);
+		    
+		    TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-next \n", xct_id);
+		    e = th_iter->next(_pssm, eof, *prtradehist);
+		    if (e.is_error()) { goto done; }
+		}
+		assert (th_sorter.count());
+
+		asc_sort_iter_impl th_list_sort_iter(_pssm, &th_list, &th_sorter);
+		TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-next \n", xct_id);
+		e = th_list_sort_iter.next(_pssm, eof, rsb);
+		if (e.is_error()) { goto done; }
+		for(int j = 0; j < 3 && !eof; j++) {
+		    rsb.get_value(0, trade_history_dts[i][j]);
+		    rsb.get_value(1, trade_history_status_id[i][j], 5);
+		    TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-next \n", xct_id);
+		    e = th_list_sort_iter.next(_pssm, eof, rsb);
+		    if (e.is_error()) { goto done; }
+		}
 	    }
+	    assert(num_found >= 0 && num_found <= max_trades); //Harness control
+	}
 	//END FRAME2
 
 	//BEGIN FRAME3
-	else if(ptlin._frame_to_execute == 3)
+	else if(ptlin._frame_to_execute == 3) {  
+	    // Should return between 0 and max_trades rows.
+	    /**
+	     *
+	     *	select first max_trades rows
+	     *		acct_id[] = T_CA_ID,
+	     *		exec_name[] = T_EXEC_NAME,
+	     *		is_cash[] = T_IS_CASH,
+	     *		price[] = T_TRADE_PRICE,
+	     *		quantity[] = T_QTY,
+	     *		trade_dts[] = T_DTS,
+	     *		trade_list[] = T_ID,
+	     *		trade_type[] = T_TT_ID
+	     *	from
+	     *		TRADE
+	     *	where
+	     *		T_S_SYMB = symbol and
+	     *		T_DTS >= start_trade_dts and
+	     *		T_DTS <= end_trade_dts
+	     *	order by
+	     *		T_DTS asc
+	     *
+	     */
+	    
+	    guard<index_scan_iter_impl<trade_t> > t_iter;
 	    {
-		// Should return between 0 and max_trades rows.
-		/**
-		 *
-		 *	select first max_trades rows
-		 *		acct_id[] = T_CA_ID,
-		 *		exec_name[] = T_EXEC_NAME,
-		 *		is_cash[] = T_IS_CASH,
-		 *		price[] = T_TRADE_PRICE,
-		 *		quantity[] = T_QTY,
-		 *		trade_dts[] = T_DTS,
-		 *		trade_list[] = T_ID,
-		 *		trade_type[] = T_TT_ID
-		 *	from
-		 *		TRADE
-		 *	where
-		 *		T_S_SYMB = symbol and
-		 *		T_DTS >= start_trade_dts and
-		 *		T_DTS <= end_trade_dts
-		 *	order by
-		 *		T_DTS asc
-		 *
-		 */
+		index_scan_iter_impl<trade_t>* tmp_t_iter;
+		TRACE( TRACE_TRX_FLOW, "App: %d TL:t-get-iter-by-idx3 %s %ld %ld \n", xct_id, ptlin._symbol,
+		       ptlin._start_trade_dts, ptlin._end_trade_dts);
+		e = _ptrade_man->t_get_iter_by_index3(_pssm, tmp_t_iter, prtrade, lowrep, highrep, ptlin._symbol, ptlin._start_trade_dts, ptlin._end_trade_dts);
+		if (e.is_error()) { goto done; }
+		t_iter = tmp_t_iter;
+	    }
 
-		guard<index_scan_iter_impl<trade_t> > t_iter;
-		{
-		    index_scan_iter_impl<trade_t>* tmp_t_iter;
-		    TRACE( TRACE_TRX_FLOW, "App: %d TL:t-get-iter-by-idx3 %s %ld %ld \n", xct_id, ptlin._symbol,
-			   ptlin._start_trade_dts, ptlin._end_trade_dts);
-		    e = _ptrade_man->t_get_iter_by_index3(_pssm, tmp_t_iter, prtrade, lowrep, highrep, ptlin._symbol, ptlin._start_trade_dts, ptlin._end_trade_dts);
-		    if (e.is_error()) { goto done; }
-		    t_iter = tmp_t_iter;
-		}
-
-		//already sorted in ascending order because of index
-		bool eof;
+	    //already sorted in ascending order because of index
+	    bool eof;
+	    TRACE( TRACE_TRX_FLOW, "App: %d TL:t-iter-next \n", xct_id);
+	    e = t_iter->next(_pssm, eof, *prtrade);
+	    if (e.is_error()) { goto done; }
+	    for(num_found = 0; num_found < max_trades && !eof; num_found++){
+		prtrade->get_value(1, trade_dts[num_found]);
+		prtrade->get_value(8, acct_id[num_found]);
+		prtrade->get_value(9, exec_name[num_found], 50); //49
+		prtrade->get_value(4, is_cash[num_found]);
+		prtrade->get_value(10, trade_price[num_found]);
+		prtrade->get_value(6, quantity[num_found]);
+		prtrade->get_value(0, trade_list[num_found]);
+		prtrade->get_value(3, trade_type[num_found], 4);
 		TRACE( TRACE_TRX_FLOW, "App: %d TL:t-iter-next \n", xct_id);
 		e = t_iter->next(_pssm, eof, *prtrade);
 		if (e.is_error()) { goto done; }
-		int j;
-		for(j=0; j < max_trades && !eof; j++){
-		    prtrade->get_value(1, trade_dts[j]);
-		    prtrade->get_value(8, acct_id[j]);
-		    prtrade->get_value(9, exec_name[j], 50); //49
-		    prtrade->get_value(4, is_cash[j]);
-		    prtrade->get_value(10, trade_price[j]);
-		    prtrade->get_value(6, quantity[j]);
-		    prtrade->get_value(0, trade_list[j]);
-		    prtrade->get_value(3, trade_type[j], 4);
-
-		    TRACE( TRACE_TRX_FLOW, "App: %d TL:t-iter-next \n", xct_id);
-		    e = t_iter->next(_pssm, eof, *prtrade);
-		    if (e.is_error()) { goto done; }
-		}
-		int num_found = j;
-
-		for(int i = 0; i < num_found; i++){
+	    }
+	    
+	    for(int i = 0; i < num_found; i++){
+		/**
+		 *	select
+		 *		settlement_amount[i] = SE_AMT,
+		 *		settlement_cash_due_date[i] = SE_CASH_DUE_DATE,
+		 *		settlement_cash_type[i] = SE_CASH_TYPE
+		 *	from
+		 *		SETTLEMENT
+		 *	where
+		 *		SE_T_ID = trade_list[i]
+		 */
+		
+		TRACE( TRACE_TRX_FLOW, "TL: %d SE:se-idx-probe (%ld) \n", xct_id,  trade_list[i]);
+		e = _psettlement_man->se_index_probe(_pssm, prsettlement, trade_list[i]);
+		if (e.is_error()) { goto done; }
+		
+		prsettlement->get_value(3, settlement_amount[i]);
+		prsettlement->get_value(2, settlement_cash_due_date[i]);
+		prsettlement->get_value(1, settlement_cash_type[i], 41); //40
+		
+		if(is_cash[i]){
 		    /**
 		     *	select
-		     *		settlement_amount[i] = SE_AMT,
-		     *		settlement_cash_due_date[i] = SE_CASH_DUE_DATE,
-		     *		settlement_cash_type[i] = SE_CASH_TYPE
+		     *		cash_transaction_amount[i] = CT_AMT,
+		     *		cash_transaction_dts[i] = CT_DTS,
+		     *		cash_transaction_name[i] = CT_NAME
 		     *	from
-		     *		SETTLEMENT
+		     *		CASH_TRANSACTION
 		     *	where
-		     *		SE_T_ID = trade_list[i]
+		     *		CT_T_ID = trade_list[i]
 		     */
-
-		    TRACE( TRACE_TRX_FLOW, "TL: %d SE:se-idx-probe (%ld) \n", xct_id,  trade_list[i]);
-		    e = _psettlement_man->se_index_probe(_pssm, prsettlement, trade_list[i]);
-		    if (e.is_error()) { goto done; }
-
-		    prsettlement->get_value(3, settlement_amount[i]);
-		    prsettlement->get_value(2, settlement_cash_due_date[i]);
-		    prsettlement->get_value(1, settlement_cash_type[i], 41); //40
-
-		    if(is_cash[i]){
-			/**
-			 *	select
-			 *		cash_transaction_amount[i] = CT_AMT,
-			 *		cash_transaction_dts[i] = CT_DTS,
-			 *		cash_transaction_name[i] = CT_NAME
-			 *	from
-			 *		CASH_TRANSACTION
-			 *	where
-			 *		CT_T_ID = trade_list[i]
-			 */
-
-			TRACE( TRACE_TRX_FLOW, "App: %d TL:ct-idx-probe (%ld) \n", xct_id,  trade_list[i]);
-			e = _pcash_transaction_man->ct_index_probe(_pssm, prcashtrans, trade_list[i]);
-			if (e.is_error()) { goto done; }
-
-			prcashtrans->get_value(2, cash_transaction_amount[i]);
-			prcashtrans->get_value(1, cash_transaction_dts[i]);
-			prcashtrans->get_value(3, cash_transaction_name[i], 101); //100
-
-			/**
-			 *	select first 3 rows
-			 *		trade_history_dts[i][] = TH_DTS,
-			 *		trade_history_status_id[i][] = TH_ST_ID
-			 *	from
-			 *		TRADE_HISTORY
-			 *	where
-			 *		TH_T_ID = trade_list[i]
-			 *	order by
-			 *		TH_DTS
-			 */
-			guard<index_scan_iter_impl<trade_history_t> > th_iter;
-			{
-			    index_scan_iter_impl<trade_history_t>* tmp_th_iter;
-			    TRACE( TRACE_TRX_FLOW, "App: %d TL:th-get-iter-by-idx %ld \n", xct_id, trade_list[i]);
-			    e = _ptrade_history_man->th_get_iter_by_index(_pssm, tmp_th_iter, prtradehist, lowrep, highrep, trade_list[i]);
-			    if (e.is_error()) { goto done; }
-			    th_iter = tmp_th_iter;
-			}
-			//ascending order
-			rep_row_t sortrep(_ptrade_man->ts());
-			sortrep.set(_ptrade_desc->maxsize());
-			asc_sort_buffer_t th_list(2);
-
-			th_list.setup(0, SQL_LONG);
-			th_list.setup(1, SQL_FIXCHAR, 4);
-
-			table_row_t rsb(&th_list);
-			asc_sort_man_impl th_sorter(&th_list, &sortrep);
-			TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-next \n", xct_id);
-			e = th_iter->next(_pssm, eof, *prtradehist);
-			if (e.is_error()) { goto done; }
-			while (!eof) {
-			    /* put the value into the sorted buffer */
-			    myTime temp_dts;
-			    char temp_stid[5]; //4
-
-			    prtradehist->get_value(1, temp_dts);
-			    prtradehist->get_value(2, temp_stid, 5); //4
-
-			    rsb.set_value(0, temp_dts);
-			    rsb.set_value(1, temp_stid);
-
-			    th_sorter.add_tuple(rsb);
-
-			    TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-next \n", xct_id);
-			    e = th_iter->next(_pssm, eof, *prtradehist);
-			    if (e.is_error()) { goto done; }
-			}
-			assert (th_sorter.count());
-
-			asc_sort_iter_impl th_list_sort_iter(_pssm, &th_list, &th_sorter);
-			TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-next \n", xct_id);
-			e = th_list_sort_iter.next(_pssm, eof, rsb);
-			if (e.is_error()) { goto done; }
-			for(int j = 0; j < 3 && !eof; j++) {
-			    rsb.get_value(0, trade_history_dts[i][j]);
-			    rsb.get_value(1, trade_history_status_id[i][j], 5); //4
 		    
-			    //printf("DTS %ld, ID %ld \n", trade_history_dts[i][j], trade_history_status_id[i][j]);
-
-			    TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-next \n", xct_id);
-			    e = th_list_sort_iter.next(_pssm, eof, rsb);
-			    if (e.is_error()) { goto done; }
-			}
-		    }
+		    TRACE( TRACE_TRX_FLOW, "App: %d TL:ct-idx-probe (%ld) \n", xct_id,  trade_list[i]);
+		    e = _pcash_transaction_man->ct_index_probe(_pssm, prcashtrans, trade_list[i]);
+		    if (e.is_error()) { goto done; }
+		    
+		    prcashtrans->get_value(2, cash_transaction_amount[i]);
+		    prcashtrans->get_value(1, cash_transaction_dts[i]);
+		    prcashtrans->get_value(3, cash_transaction_name[i], 101); //100
+		    
 		}
-		assert(num_found >= 0); //Harness control
-	    }
-	//END FRAME3
-
-	//BEGIN FRAME4
-	else if(ptlin._frame_to_execute == 4)
-	    {
-
-		TIdent  holding_history_id[20];
-		TIdent  holding_history_trade_id[20];
-		int	quantity_before[20];
-		int	quantity_after[20];
-
+		
 		/**
-		 *	select first 1 row
-		 *		trade_id = T_ID
+		 *	select first 3 rows
+		 *		trade_history_dts[i][] = TH_DTS,
+		 *		trade_history_status_id[i][] = TH_ST_ID
 		 *	from
-		 *		TRADE
+		 *		TRADE_HISTORY
 		 *	where
-		 *		T_CA_ID = acct_id and
-		 *		T_DTS >= start_trade_dts
+		 *		TH_T_ID = trade_list[i]
 		 *	order by
-		 *		T_DTS asc
+		 *		TH_DTS
 		 */
-
-		guard<index_scan_iter_impl<trade_t> > t_iter;
+		guard<index_scan_iter_impl<trade_history_t> > th_iter;
 		{
-		    index_scan_iter_impl<trade_t>* tmp_t_iter;
-		    TRACE( TRACE_TRX_FLOW, "App: %d TL:t-get-iter-by-idx2 (%ld) (%ld) (%ld) \n", xct_id, ptlin._acct_id, ptlin._start_trade_dts, MAX_DTS);
-		    e = _ptrade_man->t_get_iter_by_index2(_pssm, tmp_t_iter, prtrade, lowrep, highrep, ptlin._acct_id, ptlin._start_trade_dts, MAX_DTS);
+		    index_scan_iter_impl<trade_history_t>* tmp_th_iter;
+		    TRACE( TRACE_TRX_FLOW, "App: %d TL:th-get-iter-by-idx %ld \n", xct_id, trade_list[i]);
+		    e = _ptrade_history_man->th_get_iter_by_index(_pssm, tmp_th_iter, prtradehist, lowrep, highrep, trade_list[i]);
 		    if (e.is_error()) { goto done; }
-		    t_iter = tmp_t_iter;
+		    th_iter = tmp_th_iter;
 		}
-		//already sorted in ascending order because of index
-
-		bool eof;
-		e = t_iter->next(_pssm, eof, *prtrade);
+		//ascending order
+		rep_row_t sortrep(_ptrade_man->ts());
+		sortrep.set(_ptrade_desc->maxsize());
+		
+		asc_sort_buffer_t th_list(2);
+		th_list.setup(0, SQL_LONG);
+		th_list.setup(1, SQL_FIXCHAR, 4);
+		
+		table_row_t rsb(&th_list);
+		asc_sort_man_impl th_sorter(&th_list, &sortrep);
+		TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-next \n", xct_id);
+		e = th_iter->next(_pssm, eof, *prtradehist);
 		if (e.is_error()) { goto done; }
-
-		TIdent trade_id;
-		prtrade->get_value(0, trade_id);
-
-		/**
-		 *	select first 20 rows
-		 *		holding_history_id[] = HH_H_T_ID,
-		 *		holding_history_trade_id[] = HH_T_ID,
-		 *		quantity_before[] = HH_BEFORE_QTY,
-		 *		quantity_after[] = HH_AFTER_QTY
-		 *	from
-		 *		HOLDING_HISTORY
-		 *	where
-		 *		HH_H_T_ID in
-		 *				(select
-		 *					HH_H_T_ID
-		 *				from
-		 *					HOLDING_HISTORY
-		 *				where
-		 *					HH_T_ID = trade_id
-		 * 				)
-		 */
-		guard< index_scan_iter_impl<holding_history_t> > hh_iter;
-		{
-		    index_scan_iter_impl<holding_history_t>* tmp_hh_iter;
-		    TRACE( TRACE_TRX_FLOW, "App: %d TL:hh-iter-by-idx (%ld)\n", xct_id, trade_id);
-		    e = _pholding_history_man->hh_get_iter_by_index2(_pssm, tmp_hh_iter, prholdinghistory, lowrep, highrep, trade_id);
+		while (!eof) {
+		    /* put the value into the sorted buffer */
+		    myTime temp_dts;
+		    char temp_stid[5]; //4
+		    
+		    prtradehist->get_value(1, temp_dts);
+		    prtradehist->get_value(2, temp_stid, 5); //4
+		    
+		    rsb.set_value(0, temp_dts);
+		    rsb.set_value(1, temp_stid);
+		    
+		    th_sorter.add_tuple(rsb);
+		    
+		    TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-next \n", xct_id);
+		    e = th_iter->next(_pssm, eof, *prtradehist);
 		    if (e.is_error()) { goto done; }
-		    hh_iter = tmp_hh_iter;
 		}
-
+		assert (th_sorter.count());
+		
+		asc_sort_iter_impl th_list_sort_iter(_pssm, &th_list, &th_sorter);
+		TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-next \n", xct_id);
+		e = th_list_sort_iter.next(_pssm, eof, rsb);
+		if (e.is_error()) { goto done; }
+		for(int j = 0; j < 3 && !eof; j++) {
+		    rsb.get_value(0, trade_history_dts[i][j]);
+		    rsb.get_value(1, trade_history_status_id[i][j], 5); //4
+		    TRACE( TRACE_TRX_FLOW, "App: %d TL:th-iter-next \n", xct_id);
+		    e = th_list_sort_iter.next(_pssm, eof, rsb);
+		    if (e.is_error()) { goto done; }
+		}
+	    }
+	    assert(num_found >= 0 && num_found <= max_trades); //Harness control
+	}
+	//END FRAME3
+	
+	//BEGIN FRAME4
+	else if(ptlin._frame_to_execute == 4)  {
+	    
+	    TIdent  holding_history_id[20];
+	    TIdent  holding_history_trade_id[20];
+	    int	quantity_before[20];
+	    int	quantity_after[20];
+	    
+	    /**
+	     *	select first 1 row
+	     *		trade_id = T_ID
+	     *	from
+	     *		TRADE
+	     *	where
+	     *		T_CA_ID = acct_id and
+	     *		T_DTS >= start_trade_dts
+	     *	order by
+	     *		T_DTS asc
+	     */
+	    
+	    guard<index_scan_iter_impl<trade_t> > t_iter;
+	    {
+		index_scan_iter_impl<trade_t>* tmp_t_iter;
+		TRACE( TRACE_TRX_FLOW, "App: %d TL:t-get-iter-by-idx2 (%ld) (%ld) (%ld) \n", xct_id, ptlin._acct_id, ptlin._start_trade_dts, MAX_DTS);
+		e = _ptrade_man->t_get_iter_by_index2(_pssm, tmp_t_iter, prtrade, lowrep, highrep, ptlin._acct_id, ptlin._start_trade_dts, MAX_DTS);
+		if (e.is_error()) { goto done; }
+		t_iter = tmp_t_iter;
+	    }
+	    //already sorted in ascending order because of index
+	    
+	    bool eof;
+	    e = t_iter->next(_pssm, eof, *prtrade);
+	    if (e.is_error()) { goto done; }
+	    	    
+	    TIdent trade_id;
+	    prtrade->get_value(0, trade_id);
+	    
+	    /**
+	     *	select first 20 rows
+	     *		holding_history_id[] = HH_H_T_ID,
+	     *		holding_history_trade_id[] = HH_T_ID,
+	     *		quantity_before[] = HH_BEFORE_QTY,
+	     *		quantity_after[] = HH_AFTER_QTY
+	     *	from
+	     *		HOLDING_HISTORY
+	     *	where
+	     *		HH_H_T_ID in
+	     *				(select
+	     *					HH_H_T_ID
+	     *				from
+	     *					HOLDING_HISTORY
+	     *				where
+	     *					HH_T_ID = trade_id
+	     * 				)
+	     */
+	    guard< index_scan_iter_impl<holding_history_t> > hh_iter;
+	    {
+		index_scan_iter_impl<holding_history_t>* tmp_hh_iter;
+		TRACE( TRACE_TRX_FLOW, "App: %d TL:hh-iter-by-idx (%ld)\n", xct_id, trade_id);
+		e = _pholding_history_man->hh_get_iter_by_index2(_pssm, tmp_hh_iter, prholdinghistory, lowrep, highrep, trade_id);
+		if (e.is_error()) { goto done; }
+		hh_iter = tmp_hh_iter;
+	    }
+	    
+	    TRACE( TRACE_TRX_FLOW, "App: %d TL:hh-iter-next \n", xct_id);
+	    e = hh_iter->next(_pssm, eof, *prholdinghistory);
+	    if (e.is_error()) { goto done; }
+	    int num_found;
+	    for(num_found = 0; num_found < 20 && !eof; num_found++) {
+		prholdinghistory->get_value(0, holding_history_id[num_found]);
+		prholdinghistory->get_value(1, holding_history_trade_id[num_found]);
+		prholdinghistory->get_value(2, quantity_before[num_found]);
+		prholdinghistory->get_value(3, quantity_after[num_found]);
 		TRACE( TRACE_TRX_FLOW, "App: %d TL:hh-iter-next \n", xct_id);
 		e = hh_iter->next(_pssm, eof, *prholdinghistory);
 		if (e.is_error()) { goto done; }
-	      
-		for(int i = 0; i < 20 && !eof; i++) {
-		    prholdinghistory->get_value(0, holding_history_id[i]);
-		    prholdinghistory->get_value(1, holding_history_trade_id[i]);
-		    prholdinghistory->get_value(2, quantity_before[i]);
-		    prholdinghistory->get_value(3, quantity_after[i]);
-
-		    //printf("id %ld, trade_id %ld, q_before %ld, q_after %ld \n", holding_history_id[i], holding_history_trade_id[i],  quantity_before[i], quantity_after[i]);
-
-		    TRACE( TRACE_TRX_FLOW, "App: %d TL:hh-iter-next \n", xct_id);
-		    e = hh_iter->next(_pssm, eof, *prholdinghistory);
-		    if (e.is_error()) { goto done; }
-		}
 	    }
+	    assert(num_found >= 0 && num_found <= 20); //Harness control
+	}
 	//END FRAME4
     }
+    
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction
     // dumps the status of all the table rows used

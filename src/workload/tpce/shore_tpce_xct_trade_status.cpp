@@ -58,7 +58,6 @@ ENTER_NAMESPACE(tpce);
 
 w_rc_t ShoreTPCEEnv::xct_trade_status(const int xct_id, trade_status_input_t& ptsin)
 {
-    //ptsin.print();
     // ensure a valid environment
     assert (_pssm);
     assert (_initialized);
@@ -170,7 +169,9 @@ w_rc_t ShoreTPCEEnv::xct_trade_status(const int xct_id, trade_status_input_t& pt
 	{
 	    index_scan_iter_impl<trade_t>* tmp_t_iter;
 	    TRACE( TRACE_TRX_FLOW, "App: %d TS:t-iter-by-idx2 (%ld) (%ld) (%ld) \n", xct_id, ptsin._acct_id, 0, MAX_DTS);
-	    e = _ptrade_man->t_get_iter_by_index2(_pssm, tmp_t_iter, prtrade, lowrep, highrep, ptsin._acct_id, 0, MAX_DTS, true);
+	    e = _ptrade_man->t_get_iter_by_index2(_pssm, tmp_t_iter,
+						  prtrade, lowrep, highrep,
+						  ptsin._acct_id, 0, MAX_DTS);
 	    if (e.is_error()) {  goto done; }
 	    t_iter = tmp_t_iter;
 	}
@@ -179,31 +180,6 @@ w_rc_t ShoreTPCEEnv::xct_trade_status(const int xct_id, trade_status_input_t& pt
 	e = t_iter->next(_pssm, eof, *prtrade);
 	if (e.is_error()) {  goto done; }
 	while(!eof){
-	    char t_st_id[5], t_tt_id[4], t_s_symb[16]; //4, 3, 15
-
-	    prtrade->get_value(2, t_st_id, 5);
-	    prtrade->get_value(3, t_tt_id, 4);
-	    prtrade->get_value(5, t_s_symb, 16);
-
-	    TRACE( TRACE_TRX_FLOW, "App: %d TS:st-idx-probe (%s) \n", xct_id,  t_st_id);
-	    e =  _pstatus_type_man->st_index_probe(_pssm, prstatustype, t_st_id);
-	    if (e.is_error()) { goto done; }
-
-	    TRACE( TRACE_TRX_FLOW, "App: %d TS:tt-idx-probe (%s) \n", xct_id, t_tt_id);
-	    e =  _ptrade_type_man->tt_index_probe(_pssm, prtradetype, t_tt_id);
-	    if (e.is_error()) { goto done; }
-
-	    TRACE( TRACE_TRX_FLOW, "App: %d TS:s-idx-probe (%s) \n", xct_id, t_s_symb);
-	    e =  _psecurity_man->s_index_probe(_pssm, prsecurity, t_s_symb);
-	    if(e.is_error()) { goto done; }
-
-	    char s_ex_id[7]; //6
-	    prsecurity->get_value(4, s_ex_id, 7);
-
-	    TRACE( TRACE_TRX_FLOW, "App: %d TS:ex-idx-probe (%s) \n", xct_id, s_ex_id);
-	    e =  _pexchange_man->ex_index_probe(_pssm, prexchange, s_ex_id);
-	    if(e.is_error()) { goto done; }
-
 	    myTime t_dts;
 	    prtrade->get_value(1, t_dts);
 	    rsb.set_value(0, t_dts);
@@ -211,19 +187,6 @@ w_rc_t ShoreTPCEEnv::xct_trade_status(const int xct_id, trade_status_input_t& pt
 	    TIdent t_id;
 	    prtrade->get_value(0, t_id);
 	    rsb.set_value(1, t_id);
-
-	    //DELETE_ME the block
-	    TIdent idd;  
-	    prtrade->get_value(8, idd);
-	    //printf("Cust acct id %ld %ld %ld %ld \n",t_id, t_dts, ptsin._acct_id, idd);
-
-	    char st_name[11]; //10
-	    prstatustype->get_value(1, st_name, 11);
-	    rsb.set_value(2, st_name);
-
-	    char tt_name[13]; //12
-	    prstatustype->get_value(1, tt_name, 13);
-	    rsb.set_value(3, tt_name);
 
 	    char t_s_symbol[16]; //15
 	    prtrade->get_value(5, t_s_symbol, 16);
@@ -241,13 +204,51 @@ w_rc_t ShoreTPCEEnv::xct_trade_status(const int xct_id, trade_status_input_t& pt
 	    prtrade->get_value(11, t_chrg);
 	    rsb.set_value(7, t_chrg);
 
+	    char t_st_id[5], t_tt_id[4], t_s_symb[16]; //4, 3, 15
+
+	    prtrade->get_value(2, t_st_id, 5);
+	    prtrade->get_value(3, t_tt_id, 4);
+	    prtrade->get_value(5, t_s_symb, 16);
+
+
+	    TRACE( TRACE_TRX_FLOW, "App: %d TS:st-idx-probe (%s) \n", xct_id,  t_st_id);
+	    e =  _pstatus_type_man->st_index_probe(_pssm, prstatustype, t_st_id);
+	    if (e.is_error()) { goto done; }
+
+	    char st_name[11]; //10
+	    prstatustype->get_value(1, st_name, 11);
+	    rsb.set_value(2, st_name);
+
+	    char tt_name[13]; //12
+	    prstatustype->get_value(1, tt_name, 13);
+	    rsb.set_value(3, tt_name);
+
+	    
+	    TRACE( TRACE_TRX_FLOW, "App: %d TS:tt-idx-probe (%s) \n", xct_id, t_tt_id);
+	    e =  _ptrade_type_man->tt_index_probe(_pssm, prtradetype, t_tt_id);
+	    if (e.is_error()) { goto done; }
+
+
+	    TRACE( TRACE_TRX_FLOW, "App: %d TS:s-idx-probe (%s) \n", xct_id, t_s_symb);
+	    e =  _psecurity_man->s_index_probe(_pssm, prsecurity, t_s_symb);
+	    if(e.is_error()) { goto done; }
+
 	    char s_name[71]; //70
 	    prsecurity->get_value(3, s_name, 71);
 	    rsb.set_value(8, s_name);
 
+	    char s_ex_id[7]; //6
+	    prsecurity->get_value(4, s_ex_id, 7);
+
+
+	    TRACE( TRACE_TRX_FLOW, "App: %d TS:ex-idx-probe (%s) \n", xct_id, s_ex_id);
+	    e =  _pexchange_man->ex_index_probe(_pssm, prexchange, s_ex_id);
+	    if(e.is_error()) { goto done; }
+
 	    char ex_name[101]; //100
 	    prexchange->get_value(1, ex_name, 101);
 	    rsb.set_value(9, ex_name);
+
 
 	    t_sorter.add_tuple(rsb);
 
@@ -278,7 +279,6 @@ w_rc_t ShoreTPCEEnv::xct_trade_status(const int xct_id, trade_status_input_t& pt
 	    e = t_list_sort_iter.next(_pssm, eof, rsb);
 	    if (e.is_error()) {  goto done; }
 	}
-
 	assert(i == max_trade_status_len); 		
 
 	/**
@@ -321,7 +321,6 @@ w_rc_t ShoreTPCEEnv::xct_trade_status(const int xct_id, trade_status_input_t& pt
 	prcustomer->get_value(4, cust_f_name, 21);
 	prbroker->get_value(2, broker_name, 50);
 
-	//TRACE( TRACE_TRX_RESULT, "App: %d TS:Q2 result (%s), (%s), (%s)\n", xct_id,  cust_l_name, cust_f_name, broker_name);
     }
 
 #ifdef PRINT_TRX_RESULTS

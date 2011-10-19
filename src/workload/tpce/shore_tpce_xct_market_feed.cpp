@@ -64,6 +64,7 @@ w_rc_t ShoreTPCEEnv::xct_market_feed(const int xct_id, market_feed_input_t& pmfi
     assert (_initialized);
     assert (_loaded);
 
+    w_rc_t e = RCOK;
 	  
     table_row_t* prlasttrade = _plast_trade_man->get_tuple(); //48
     assert (prlasttrade);
@@ -77,7 +78,6 @@ w_rc_t ShoreTPCEEnv::xct_market_feed(const int xct_id, market_feed_input_t& pmfi
     table_row_t* prtradehist = _ptrade_history_man->get_tuple();
     assert (prtradehist);
 
-    w_rc_t e = RCOK;
     rep_row_t areprow(_ptrade_man->ts());
     areprow.set(_ptrade_desc->maxsize());
 
@@ -93,17 +93,21 @@ w_rc_t ShoreTPCEEnv::xct_market_feed(const int xct_id, market_feed_input_t& pmfi
     lowrep.set(_ptrade_desc->maxsize());
     highrep.set(_ptrade_desc->maxsize());
     {
+	if(pmfin._type_limit_buy[0] == '\n') {
+	    e = RC(se_INVALID_INPUT);
+	    goto done;
+	}	
+
 	myTime 		now_dts;
 	double 		req_price_quote;
 	TIdent		req_trade_id;
-	int			req_trade_qty;
+	int		req_trade_qty;
 	char		req_trade_type[4]; //3
 	int 		rows_updated;
 
 	now_dts = time(NULL);
-	rows_updated = 0;
 
-	for(int i = 0; i < max_feed_len; i++){  //the transaction should formally start here!
+	for(rows_updated = 0; rows_updated < max_feed_len; rows_updated++){  //the transaction should formally start here!
 	    /**
 	       update
 	       LAST_TRADE
@@ -115,11 +119,12 @@ w_rc_t ShoreTPCEEnv::xct_market_feed(const int xct_id, market_feed_input_t& pmfi
 	       LT_S_SYMB = symbol[i]
 	    */
 
-	    TRACE( TRACE_TRX_FLOW, "App: %d MF:lt-update (%s) (%d) (%d) (%ld) \n", xct_id, pmfin._symbol[i], pmfin._price_quote[i], pmfin._trade_qty[i], now_dts);
-	    e = _plast_trade_man->lt_update_by_index(_pssm, prlasttrade, pmfin._symbol[i], pmfin._price_quote[i], pmfin._trade_qty[i], now_dts); //should we include lock_mode??
+	    TRACE( TRACE_TRX_FLOW, "App: %d MF:lt-update (%s) (%d) (%d) (%ld) \n",
+		   xct_id, pmfin._symbol[rows_updated], pmfin._price_quote[rows_updated], pmfin._trade_qty[rows_updated], now_dts);
+	    e = _plast_trade_man->lt_update_by_index(_pssm, prlasttrade,
+						     pmfin._symbol[rows_updated], pmfin._price_quote[rows_updated],
+						     pmfin._trade_qty[rows_updated], now_dts);
 	    if (e.is_error()) {  goto done; }
-
-	    rows_updated++; //there is only one row per symbol
 
 	    /**
 	       select
@@ -140,52 +145,7 @@ w_rc_t ShoreTPCEEnv::xct_market_feed(const int xct_id, market_feed_input_t& pmfi
 	       )
 	    */
 
-	    //why doing scan?? create index on symbol!
-	    /* trade_request_man_impl::table_iter* tr_iter;
-	       TRACE( TRACE_TRX_FLOW, "App: %d MF:tr-get-table-iter \n", xct_id);
-	       e = _ptrade_request_man->tr_get_table_iter(_pssm, tr_iter, prtradereq);
-	       if (e.is_error()) { errors[0]++; goto done; }
-	    */
-
-	    /*
-	      guard<index_scan_iter_impl<trade_request_t> > tr_iter;
-	      {
-	      index_scan_iter_impl<trade_request_t> *tmp_tr_iter;
-	      TRACE( TRACE_TRX_FLOW, "App: %d MF:tr-get-iter-by-index5 \n", xct_id);
-	      e = _ptrade_request_man->tr_get_iter_by_index5(_pssm, tmp_tr_iter, prtradereq, lowrep, highrep, pmfin._symbol[i], EX, true);
-	      if (e.is_error()) { printf("MF- error1 \n"); goto done;}
-	      tr_iter = tmp_tr_iter;
-	      }
-
-
-	      bool eof;
-	      TRACE( TRACE_TRX_FLOW, "App: %d MF:tr-iter-next \n", xct_id);
-	      e = tr_iter->next(_pssm, eof, *prtradereq);
-	      if (e.is_error()) { printf("MF- error2 \n"); goto done; }
-	      while(!eof){ 
-	      printf("MF- not EOF \n");
-	      char tr_s_symb[16], tr_tt_id[4]; //15,3
-	      double tr_bid_price;
-
-	      prtradereq->get_value(2, tr_s_symb, 16);
-	      prtradereq->get_value(1, tr_tt_id, 4); //check padding in schema!
-	      prtradereq->get_value(4, tr_bid_price);
-	      assert(strcmp(tr_s_symb, pmfin._symbol[i]) == 0); 
-		
-	      if ((strcmp(tr_tt_id, pmfin._type_stop_loss) == 0 && (tr_bid_price >= pmfin._price_quote[i])) ||
-	      (strcmp(tr_tt_id, pmfin._type_limit_sell) == 0 && (tr_bid_price <= pmfin._price_quote[i])) ||
-	      (strcmp(tr_tt_id, pmfin._type_limit_buy)== 0 && (tr_bid_price >= pmfin._price_quote[i])))
-	      {
-	      printf("MF- MATCH \n");
-	      prtradereq->get_value(0, req_trade_id);
-	      prtradereq->get_value(4, req_price_quote);
-	      prtradereq->get_value(1, req_trade_type, 4);
-	      prtradereq->get_value(3, req_trade_qty);
-	    */
-
-
-	    ///////////////////
-
+	    // PIN: why doing scan?? create index on symbol!
 	    trade_request_man_impl::table_iter* tr_iter;
 	    TRACE( TRACE_TRX_FLOW, "App: %d MF:tr-get-table-iter \n", xct_id);
 	    e = _ptrade_request_man->tr_get_table_iter(_pssm, tr_iter, prtradereq);
@@ -200,22 +160,20 @@ w_rc_t ShoreTPCEEnv::xct_market_feed(const int xct_id, market_feed_input_t& pmfi
 		double tr_bid_price;
 
 		prtradereq->get_value(2, tr_s_symb, 16);
-		prtradereq->get_value(1, tr_tt_id, 4); //check padding in schema!
+		prtradereq->get_value(1, tr_tt_id, 4);
 		prtradereq->get_value(4, tr_bid_price);
 
-		if(strcmp(tr_s_symb, pmfin._symbol[i]) == 0 &&
+		if(strcmp(tr_s_symb, pmfin._symbol[rows_updated]) == 0 &&
 		   (
-		    (strcmp(tr_tt_id, pmfin._type_stop_loss) == 0 && (tr_bid_price >= pmfin._price_quote[i])) ||
-		    (strcmp(tr_tt_id, pmfin._type_limit_sell) == 0 && (tr_bid_price <= pmfin._price_quote[i])) ||
-		    (strcmp(tr_tt_id, pmfin._type_limit_buy)== 0 && (tr_bid_price >= pmfin._price_quote[i]))
+		    (strcmp(tr_tt_id, pmfin._type_stop_loss) == 0 && (tr_bid_price >= pmfin._price_quote[rows_updated])) ||
+		    (strcmp(tr_tt_id, pmfin._type_limit_sell) == 0 && (tr_bid_price <= pmfin._price_quote[rows_updated])) ||
+		    (strcmp(tr_tt_id, pmfin._type_limit_buy)== 0 && (tr_bid_price >= pmfin._price_quote[rows_updated]))
 		    ))
 		    {
 			prtradereq->get_value(0, req_trade_id);
 			prtradereq->get_value(4, req_price_quote);
 			prtradereq->get_value(1, req_trade_type, 4);
 			prtradereq->get_value(3, req_trade_qty);
-
-			//////////////////////////
 
 
 
@@ -271,6 +229,20 @@ w_rc_t ShoreTPCEEnv::xct_market_feed(const int xct_id, market_feed_input_t& pmfi
 	assert(rows_updated == max_feed_len); //Harness Control
     }
 
+    /* @note: PIN: the below is not executed because it ends up at an abstract virtual function
+       //send triggered trades to the Market Exchange Emulator
+       //via the SendToMarket interface.
+       //This should be done after the related database changes have committed
+       For (j=0; j<rows_sent; j++)
+       {
+         SendToMarketFromFrame(TradeRequestBuffer[i].symbol,
+	 TradeRequestBuffer[i].trade_id,
+	 TradeRequestBuffer[i].price_quote,
+	 TradeRequestBuffer[i].trade_qty,
+	 TradeRequestBuffer[i].trade_type);
+       }
+     */
+    
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction
     // dumps the status of all the table rows used

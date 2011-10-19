@@ -113,7 +113,6 @@ w_rc_t ShoreTPCEEnv::xct_market_watch(const int xct_id, market_watch_input_t& pm
     highrep.set(_pcompany_desc->maxsize());
 
     {
-	//pmwin.print();
 	if(! ((pmwin._acct_id != 0) || (pmwin._cust_id != 0) || strcmp(pmwin._industry_name, "") != 0))
 	    assert(false); //Harness control
 
@@ -153,7 +152,6 @@ w_rc_t ShoreTPCEEnv::xct_market_watch(const int xct_id, market_watch_input_t& pm
 		char wi_s_symb[16]; //15
 		prwatchitem->get_value(1, wi_s_symb, 16);
 
-		//printf(" added symbol %s \n", wi_s_symb); //DELETE_ME
 		string symb(wi_s_symb);
 		stock_list.push_back(symb);
 
@@ -181,8 +179,6 @@ w_rc_t ShoreTPCEEnv::xct_market_watch(const int xct_id, market_watch_input_t& pm
 
 	    char in_id[3];
 	    prindustry->get_value(0, in_id, 3);
-
-	    //TRACE( TRACE_TRX_RESULT, "App: %d MW:F2-Q1 Result (%s) (%s) \n", xct_id, pmwin._industry_name, in_id);
 
 	    guard< index_scan_iter_impl<company_t> > co_iter;
 	    {
@@ -222,8 +218,7 @@ w_rc_t ShoreTPCEEnv::xct_market_watch(const int xct_id, market_watch_input_t& pm
 
 			string symb(s_symb);
 			stock_list.push_back(symb);
-			//printf("Symbol %s \n", s_symb); //DELETE_ME
-
+			
 			TRACE( TRACE_TRX_FLOW, "App: %d TO:s-iter-next \n", xct_id);
 			e = s_iter->next(_pssm, eof, *prsecurity);
 			if (e.is_error()) { goto done; }
@@ -264,7 +259,6 @@ w_rc_t ShoreTPCEEnv::xct_market_watch(const int xct_id, market_watch_input_t& pm
 
 		string symb(hs_s_symb);
 		stock_list.push_back(symb);
-		//printf("symbol  %s \n", hs_s_symb); //DELETE_ME
 
 		TRACE( TRACE_TRX_FLOW, "App: %d MW:hs-iter-next \n", xct_id);
 		e = hs_iter->next(_pssm, eof, *prholdsumm);
@@ -276,13 +270,12 @@ w_rc_t ShoreTPCEEnv::xct_market_watch(const int xct_id, market_watch_input_t& pm
 	double new_mkt_cap = 0;
 	double pct_change;
 
-	vector<string>::iterator stock_list_iter;
-	stock_list_iter = stock_list.begin();
-
-	while(stock_list_iter != stock_list.end()){
+	for(vector<string>::iterator stock_list_iter = stock_list.begin();
+	    stock_list_iter != stock_list.end();
+	    stock_list_iter++) {
+	    
 	    char symbol[16]; //15
 	    strcpy(symbol, (*stock_list_iter).c_str());
-	    //printf("Symbol  %s \n", symbol); //DELETE_ME
 
 	    /**
 	       select
@@ -300,7 +293,6 @@ w_rc_t ShoreTPCEEnv::xct_market_watch(const int xct_id, market_watch_input_t& pm
 	    double new_price;
 	    prlasttrade->get_value(2, new_price);
 
-	    //printf("New price  %4.2f \n", new_price); //DELETE_ME
 
 	    /**
 	       select
@@ -316,8 +308,6 @@ w_rc_t ShoreTPCEEnv::xct_market_watch(const int xct_id, market_watch_input_t& pm
 
 	    double s_num_out;
 	    prsecurity->get_value(6, s_num_out);
-
-	    //printf("S_NUM_OUT  %4.2f \n", s_num_out); //DELETE_ME
 
 	    /**
 	       select
@@ -336,12 +326,8 @@ w_rc_t ShoreTPCEEnv::xct_market_watch(const int xct_id, market_watch_input_t& pm
 	    double old_price;
 	    prdailymarket->get_value(2, old_price);
 
-	    //printf("OLD PRICE  %4.2f \n", old_price); //DELETE_ME
-
 	    old_mkt_cap += (s_num_out * old_price);
 	    new_mkt_cap += (s_num_out * new_price);
-
-	    stock_list_iter++;
 	}
 
 	if(old_mkt_cap != 0){

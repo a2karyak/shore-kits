@@ -343,30 +343,12 @@ w_rc_t commission_rate_man_impl::cr_get_iter_by_index(ss_m* db,
       ptuple->set_value(3, trade_qty);
       int highsz = format_key(pindex, ptuple, rephigh);
       assert (rephigh._dest);    
-  /* 
-    
-    assert (_ptable);
-    index_desc_t* pindex = _ptable->find_index("CR_INDEX_2");
-    assert (pindex);
 
-    // CR_INDEX: { 0, 1, 2, 3 }
-
-    // prepare the key to be probed
-    ptuple->set_value(3, (int)0);
-
-    int lowsz = format_key(pindex, ptuple, replow);
-    assert (replow._dest);
-
-    ptuple->set_value(3, trade_qty);
-    int highsz = format_key(pindex, ptuple, rephigh);
-    assert (rephigh._dest);   
-    */
-    
-    /* index only access */
-    W_DO(get_iter_for_index_scan(db, pindex, iter, alm, need_tuple,
-				 scan_index_i::ge, vec_t(replow._dest, lowsz),
-				 scan_index_i::le, vec_t(rephigh._dest, highsz)));
-    return (RCOK);
+      /* index only access */
+      W_DO(get_iter_for_index_scan(db, pindex, iter, alm, need_tuple,
+				   scan_index_i::ge, vec_t(replow._dest, lowsz),
+				   scan_index_i::le, vec_t(rephigh._dest, highsz)));
+      return (RCOK);
 }
 
 

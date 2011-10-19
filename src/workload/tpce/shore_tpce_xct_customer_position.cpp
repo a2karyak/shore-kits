@@ -105,12 +105,10 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
     highrep.set(_pcustomer_desc->maxsize());
 
     {
-	//pcpin.print(); //DELETE_ME
 	//BEGIN FRAME 1
 	TIdent acct_id[10];
 	int acct_len;
 	{
-	    //printf("cust id: %ld ", pcpin._cust_id);
 	    TIdent cust_id = pcpin._cust_id;
 	    if(cust_id == 0){
 		/**
@@ -248,7 +246,7 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
 	    table_row_t rsb(&ca_list);
 	    asc_sort_man_impl ca_sorter(&ca_list, &sortrep);
 
-	    int i = 0;
+	    acct_len = 0;
 	    bool eof;
 	    TRACE( TRACE_TRX_FLOW, "App: %d CP:ca-iter-next \n", xct_id);
 	    e = ca_iter->next(_pssm, eof, *prcustacct);
@@ -286,8 +284,6 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
 		    prlasttrade->get_value(2, lt_price);
 		    temp_assets += (lt_price * qty);
 
-		    //printf("LT_PRICE %4.2f QTY %d \n", lt_price, qty);
-
 		    TRACE( TRACE_TRX_FLOW, "App: %d CP:hs-iter-next  \n", xct_id);
 		    e = hs_iter->next(_pssm, eof, *prholdsum);
 		    if (e.is_error()) { goto done; }
@@ -303,10 +299,8 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
 		TRACE( TRACE_TRX_FLOW, "App: %d CP:ca-iter-next \n", xct_id);
 		e = ca_iter->next(_pssm, eof, *prcustacct);
 		if (e.is_error()) { goto done; }
-		i++;
+		acct_len++;
 	    }
-	    assert (ca_sorter.count());
-	    acct_len = i;
 
 	    double cash_bal[10];
 	    double assets_total[10];
@@ -315,13 +309,10 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
 	    TRACE( TRACE_TRX_FLOW, "App: %d CP:ca-sorter-iter-next \n", xct_id);
 	    e = ca_list_sort_iter.next(_pssm, eof, rsb);
 	    if (e.is_error()) { goto done; }
-	    for(int j = 0; j < 10 && !eof; j++) {
+	    for(int j = 0; j < max_acct_len && !eof; j++) {
 		rsb.get_value(2, acct_id[j]);
 		rsb.get_value(1, cash_bal[j]);
 		rsb.get_value(0, assets_total[j]);
-
-		//printf("Acct_id %ld, cash_bal %4.2f assets_total %4.2f \n", acct_id[j], cash_bal[j], assets_total[j]); //DELETE_ME
-
 		TRACE( TRACE_TRX_FLOW, "App: %d CP:ca-sorter-iter-next \n", xct_id);
 		e = ca_list_sort_iter.next(_pssm, eof, rsb);
 		if (e.is_error()) { goto done; }
@@ -419,14 +410,7 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
 		for (int i = 0; i < 10 && !eof; i++) {
 		    TIdent id;
 		    rsb.get_value(1, id);
-
 		    id_list[i] = id;
-		  
-		    //DELETE_ME
-		    myTime dts;
-		    rsb.get_value(0, dts);
-		    //printf("DTS %ld id %ld \n", dts, id);
-
 		    TRACE( TRACE_TRX_FLOW, "App: %d CP:t-sorter-iter-next \n", xct_id);
 		    e = t_list_sort_iter.next(_pssm, eof, rsb);
 		    if (e.is_error()) { goto done; }
@@ -500,22 +484,15 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
 	    bool eof;
 	    e = t_list_sort_iter.next(_pssm, eof, rsb);
 	    if (e.is_error()) { goto done; }
-	    int i;
-	    for(i = 0; i < 30 && !eof; i++){
-		rsb.get_value(0, hist_dts[i]);
-		rsb.get_value(1, trade_id[i]);
-		rsb.get_value(2, symbol[i], 16);
-		rsb.get_value(3, qty[i]);
-		rsb.get_value(4, trade_status[i], 11);
-
-		//DELETE_ME
-		//printf("Hist-dts %ld, trade-id %ld, symbol %s, qty %d, trade_status %s \n", hist_dts[i], trade_id[i], symbol[i], qty[i], trade_status[i]);
-
-
+	    for(hist_len = 0; hist_len < max_hist_len && !eof; hist_len++){
+		rsb.get_value(0, hist_dts[hist_len]);
+		rsb.get_value(1, trade_id[hist_len]);
+		rsb.get_value(2, symbol[hist_len], 16);
+		rsb.get_value(3, qty[hist_len]);
+		rsb.get_value(4, trade_status[hist_len], 11);
 		e = t_list_sort_iter.next(_pssm, eof, rsb);
 		if (e.is_error()) { goto done; }
 	    }
-	    hist_len = i;			
 	    assert(hist_len >= 10 && hist_len <= max_hist_len); //Harness control
 	}
 	//END OF FRAME 2

@@ -57,7 +57,9 @@ enum {
   se_ERROR_IN_LOAD            = 0x810041,
   se_ERROR_IN_IDX_LOAD        = 0x810042,
 
-  se_WRONG_DISK_DATA          = 0x810050
+  se_WRONG_DISK_DATA          = 0x810050,
+
+  se_INVALID_INPUT            = 0x810060
 };
 
 

@@ -50,7 +50,7 @@ using namespace TPCE;
 
 ENTER_NAMESPACE(tpce);
 
-extern TIdent lastTradeId;
+extern unsigned long lastTradeId;
 
 /******************************************************************** 
  *
@@ -145,39 +145,10 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
     lowrep.set(_pcompany_desc->maxsize());
     highrep.set(_pcompany_desc->maxsize());
 
-    //TradeRequest for Marker
     PTradeRequest req = NULL;
-    /*
-      {//try
-      {
-      int cnt = 0;
-      holding_summary_man_impl::table_iter* hs_iter;
-      //	TRACE( TRACE_TRX_FLOW, "App: %d MW:lt-get-table-iter \n", xct_id);
-      e = _pholding_summary_man->hs_get_table_iter(_pssm, hs_iter);
-      if (e.is_error()) { goto done; }
-
-      bool eof;
-      //TRACE( TRACE_TRX_FLOW, "App: %d MW:lt-iter-next \n", xct_id);
-      e = hs_iter->next(_pssm, eof, *prholdingsummary);
-      if (e.is_error()) { goto done; }
-      while(!eof){
-      TIdent id;
-      prholdingsummary->get_value(0, id);	
-
-      //TRACE( TRACE_TRX_FLOW, "App: %d TO:ca-idx-probe (%ld) \n", xct_id,  ptoin._acct_id);
-      e =  _pcustomer_account_man->ca_index_probe(_pssm, prcustacct, id);
-      if (e.is_error()) {printf("NOT FOUND \n"); }
-
-      e = hs_iter->next(_pssm, eof, *prholdingsummary);
-      if (e.is_error()) { goto done; }		  
-      cnt++;
-      }
-      printf("HS TABLE COUNT: 	%d \n\n\n\n\n\n\n\n\n\n\n", cnt);
-      }	  
-
-      }*/
+	
     { // make gotos safe
-	//ptoin.print();
+
 	double requested_price = ptoin._requested_price;
 
 	//BEGIN FRAME1
@@ -252,20 +223,32 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 	     *		AP_TAX_ID = exec_tax_id
 	     */
 
-	    char ap_acl[5] = ""; //4
-	    if(strcmp(ptoin._exec_l_name, cust_l_name) != 0 || strcmp(ptoin._exec_f_name, cust_f_name) != 0 || strcmp(ptoin._exec_tax_id, tax_id) != 0 ){
+	    if(strcmp(ptoin._exec_l_name, cust_l_name) != 0 ||
+	       strcmp(ptoin._exec_f_name, cust_f_name) != 0 ||
+	       strcmp(ptoin._exec_tax_id, tax_id) != 0 ){
+		
 		TRACE( TRACE_TRX_FLOW, "App: %d TO:ap-idx-probe (%ld) (%s) \n", xct_id,  ptoin._acct_id, ptoin._exec_tax_id);
 		e =  _paccount_permission_man->ap_index_probe(_pssm, pracctperm, ptoin._acct_id, ptoin._exec_tax_id);
-		if (e.is_error()) { goto done; } //Validate authorization, can fails sometimes, NORMAL to abort, rollback
+		if (e.is_error()) { goto done; } 
 
 		char f_name[21], l_name[26];
 		pracctperm->get_value(3, l_name, 26);
 		pracctperm->get_value(4, f_name, 21);
 
+		char ap_acl[5] = ""; //4
 		if(strcmp(ptoin._exec_l_name, l_name) == 0 && strcmp(ptoin._exec_f_name, f_name) == 0){
 		    pracctperm->get_value(1, ap_acl, 5);
 		}
-		//assert(strcmp(ap_acl, "") != 0); //Validate authorization, can fails sometimes, NORMAL to abort, rollback
+
+		// Harness Control
+		//assert(strcmp(ap_acl, "") != 0);
+		/* ... but spec says the following for Trade-Order in 3.3.7:
+		 *  "Next, the Transaction conditionally validates that the person executing the trade is authorized to
+		 *   perform such actions on the specified account. If the executor is not authorized, then the Transaction
+		 *   rolls back. However, during the benchmark execution, the CE will always generate authorized
+		 *   executors."
+		 * So, 
+		 */
 		if(strcmp(ap_acl, "") == 0){
 		    e = RC(se_NOT_FOUND);
 		    if (e.is_error()) { goto done; }
@@ -295,7 +278,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 	    char	s_name[71]; //70
 
 	    bool 	type_is_sell;
-	    if(symbol[0] == 0){
+	    if(symbol[0] == '\0'){
 		/**
 		 * 	select
 		 *		co_id = CO_ID
@@ -346,14 +329,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 		TRACE( TRACE_TRX_FLOW, "App: %d TO:s-iter-next \n", xct_id);
 		e = s_iter->next(_pssm, eof, *prsecurity);
 		if (e.is_error()) { goto done; }
-		while(!eof){				  
-		    //DELETE_ME
-		    char s_issue[7];
-		    prsecurity->get_value(1, s_issue, 7);				  
-		    TIdent coid;
-		    prsecurity->get_value(5, coid);
-		    //printf("CO_ID %ld, issue %s \n", coid, s_issue); //DELETE_ME
-
+		while(!eof){
 		    prsecurity->get_value(4, exch_id, 7);
 		    prsecurity->get_value(3, s_name, 71);				
 		    prsecurity->get_value(0, symbol, 16);
@@ -503,11 +479,6 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 			    myTime temp_dts;
 			    double temp_price;
 		      
-			    //DELETE_ME
-			    TIdent hcaid;
-			    prholding->get_value(1, hcaid);
-			    //printf("HCAID %ld \n", hcaid); //DELETE_ME
-
 			    prholding->get_value(5, temp_qty);
 			    prholding->get_value(4, temp_price);
 			    prholding->get_value(3, temp_dts);
@@ -654,7 +625,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 			    if (e.is_error()) { goto done; }
 			}
 			assert (h_sorter.count());
-
+						
 			desc_sort_iter_impl h_list_sort_iter(_pssm, &h_list, &h_sorter);
 
 			TRACE( TRACE_TRX_FLOW, "App: %d TO:h-sort-iter-next \n", xct_id);
@@ -896,12 +867,15 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 		    if (e.is_error()) { goto done; }
 		}
 
-		if(hold_assets == 0){
-		    cust_assets = acct_bal;
-		}
-		else{
-		    cust_assets = hold_assets + acct_bal;
-		}
+		/*
+		 *  if(hold_assets == 0){
+		 *     cust_assets = acct_bal;
+		 *  }
+		 *  else{
+		 *     cust_assets = hold_assets + acct_bal;
+		 *  }
+		 */
+		cust_assets = hold_assets + acct_bal;
 	    }
 	}
 	//END FRAME3
@@ -922,16 +896,13 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 	strcat(exec_name, " ");
 	strcat(exec_name, ptoin._exec_l_name);
 	bool is_cash = !ptoin._type_is_margin;
+	TIdent trade_id;
 	//BEGIN FRAME4
 	{
 	    myTime now_dts = time(NULL);
-	    TIdent trade_id;
 
-	    {
-		//		CRITICAL_SECTION(cs_to,_trade_order_lock);
-		trade_id = lastTradeId++;			  
-	    }
-
+	    trade_id = (long long) atomic_inc_64_nv(&lastTradeId);			  
+	    
 	    /**
 	     *
 	     *	INSERT INTO TRADE 	(
@@ -975,19 +946,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 	    TRACE( TRACE_TRX_FLOW, "App: %d TO:t-add-tuple (%ld) \n", xct_id, trade_id);
 	    e = _ptrade_man->add_tuple(_pssm, prtrade);
 	    if (e.is_error()) { goto done; }
-
-	    //prepare TradeRequest to send to market
-
-
-	    req= new TTradeRequest();
-	    req->trade_id = trade_id;
-	    req->trade_qty = ptoin._trade_qty;
-	    strcpy(req->symbol, symbol);
-	    strcpy(req->trade_type_id, ptoin._trade_type_id);
-	    req->price_quote = requested_price;
-	    if(type_is_market)   req->eAction=eMEEProcessOrder;
-	    else req->eAction=eMEESetLimitOrderTrigger;
-
+	    
 	    if(!type_is_market){
 
 		/**
@@ -1047,12 +1006,26 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 		if (e.is_error()) { goto done; }		 
 	    }
 	}
-
-	//send TradeRequest to Market
-
-	mee->SubmitTradeRequest(req);			  
-
 	//END FRAME5
+
+	//BEGIN FRAME6
+	{
+	    //send TradeRequest to Market
+	    req = new TTradeRequest();
+	    req->trade_id = trade_id;
+	    req->trade_qty = ptoin._trade_qty;
+	    strcpy(req->symbol, symbol);
+	    strcpy(req->trade_type_id, ptoin._trade_type_id);
+	    req->price_quote = requested_price;
+	    if(type_is_market) {
+		req->eAction=eMEEProcessOrder;
+	    } else {
+		req->eAction=eMEESetLimitOrderTrigger;
+	    }
+	    mee->SubmitTradeRequest(req);
+	}
+	// END FRAME6
+	
     } // goto
 
 #ifdef PRINT_TRX_RESULTS

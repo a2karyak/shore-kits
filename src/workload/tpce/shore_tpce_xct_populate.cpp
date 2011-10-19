@@ -69,8 +69,7 @@ int trxs_cnt_failed[10];
 
 int TradeOrderCnt;
 
-TIdent lastTradeId = -1;
-mcs_lock _trade_order_lock;
+unsigned long lastTradeId = 0;
 
 //buffers for Egen data
 AccountPermissionBuffer accountPermissionBuffer (3015);
@@ -233,23 +232,12 @@ void ShoreTPCEEnv::print_throughput(const double iQueriedSF,
 w_rc_t ShoreTPCEEnv::run_one_xct(Request* prequest)
 {
     // check if there is ready transaction initiated by market 
-
- 
     if(prequest->type()==XCT_TPCE_MIX) {
-	if(TradeOrderCnt<5000) {TradeOrderCnt++; prequest->set_type(XCT_TPCE_TRADE_ORDER);}
-	else{ 
-	    double rndm =  (1.0*(smthread_t::me()->rand()%10000))/100.0;
-	    if (rndm<0) rndm*=-1.0;
-	    int intr = int(rndm); 
-	    if(intr %10 ==9) {
-		if(!MarketFeedInputBuffer->isEmpty())  prequest->set_type(XCT_TPCE_MARKET_FEED);
-		else  prequest->set_type(random_xct_type(rndm));
-	    }else if(intr%2 ==1) {
-		if(!TradeResultInputBuffer->isEmpty()) prequest->set_type(XCT_TPCE_TRADE_RESULT);
-		else  prequest->set_type(random_xct_type(rndm));
-	    } else  prequest->set_type(random_xct_type(rndm));
-	}
+	double rand =  (1.0*(smthread_t::me()->rand()%10000))/100.0;
+	if (rand<0) rand*=-1.0;
+	prequest->set_type(random_xct_type(rand));
     }
+ 
     switch (prequest->type()) {
 
     case XCT_TPCE_BROKER_VOLUME:
@@ -259,8 +247,8 @@ w_rc_t ShoreTPCEEnv::run_one_xct(Request* prequest)
 	return run_customer_position(prequest);
 
     case XCT_TPCE_MARKET_FEED:
-	//        printf("Run Market Feed\n");
 	return run_market_feed(prequest);
+
     case XCT_TPCE_MARKET_WATCH:
 	return run_market_watch(prequest);
 
@@ -283,11 +271,11 @@ w_rc_t ShoreTPCEEnv::run_one_xct(Request* prequest)
 	return run_trade_update(prequest);
 
     case XCT_TPCE_DATA_MAINTENANCE:
-	//      assert(false);
 	return run_data_maintenance(prequest);
 
     case XCT_TPCE_TRADE_CLEANUP:
 	return run_trade_cleanup(prequest);
+
     default:
 	printf("************type %d**********\n ", prequest->type());
 	assert (0); // UNKNOWN TRX-ID
@@ -2294,29 +2282,25 @@ w_rc_t ShoreTPCEEnv::xct_find_maxtrade_id(const int xct_id, find_maxtrade_id_inp
 
     TIdent trade_id;
 
-    if(lastTradeId == -1){
-	guard<index_scan_iter_impl<trade_t> > t_iter;
-	{
-	    index_scan_iter_impl<trade_t>* tmp_t_iter;
-	    TRACE( TRACE_TRX_FLOW, "App: %d TO:t-iter-by-caid-idx \n", xct_id);
-	    e = _ptrade_man->t_get_iter_by_index(_pssm, tmp_t_iter, prtrade, lowrep, highrep, 0);
-	    if (e.is_error()) { goto done; }
-	    t_iter = tmp_t_iter;	  
-	}
-	bool eof;
-	TRACE( TRACE_TRX_FLOW, "App: %d TO:t-iter-next \n", xct_id);
+    guard<index_scan_iter_impl<trade_t> > t_iter;
+    {
+	index_scan_iter_impl<trade_t>* tmp_t_iter;
+	TRACE( TRACE_TRX_FLOW, "App: %d TO:t-iter-by-caid-idx \n", xct_id);
+	e = _ptrade_man->t_get_iter_by_index(_pssm, tmp_t_iter, prtrade, lowrep, highrep, 0);
+	if (e.is_error()) { goto done; }
+	t_iter = tmp_t_iter;	  
+    }
+    bool eof;
+    TRACE( TRACE_TRX_FLOW, "App: %d TO:t-iter-next \n", xct_id);
+    e = t_iter->next(_pssm, eof, *prtrade);
+    if (e.is_error()) { goto done; }
+    while(!eof){	
+	prtrade->get_value(0, trade_id);
 	e = t_iter->next(_pssm, eof, *prtrade);
 	if (e.is_error()) { goto done; }
-	while(!eof){
+    }
+    lastTradeId = ++trade_id;		  
 
-	    prtrade->get_value(0, trade_id);
-
-	    //TRACE( TRACE_TRX_FLOW, "App: %d TO:t-iter-next \n", xct_id);
-	    e = t_iter->next(_pssm, eof, *prtrade);
-	    if (e.is_error()) { goto done; }
-	}
-	lastTradeId = ++trade_id;		  
-    }			
     e = _pssm->commit_xct();
  done:
     _ptrade_man->give_tuple(prtrade);

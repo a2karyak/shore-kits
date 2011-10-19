@@ -126,53 +126,20 @@ const int XCT_TPCE_TRADE_CLEANUP     = 82;
 
 // TPC-E Transaction Probabilities
 
-const double PROB_TPCE_DATA_MAINTENANCE1  = 0;  
-const double PROB_TPCE_TRADE_CLEANUP1     = 0;
-const double PROB_TPCE_MARKET_FEED1       = 1.0;
-const double PROB_TPCE_TRADE_UPDATE1      = 2.0;
-const double PROB_TPCE_BROKER_VOLUME1     = 4.9;
-const double PROB_TPCE_TRADE_LOOKUP1      = 8.0;
-const double PROB_TPCE_TRADE_RESULT1      = 10.0;
-const double PROB_TPCE_TRADE_ORDER1       = 10.1;
-const double PROB_TPCE_CUSTOMER_POSITION1 = 13.0;
-const double PROB_TPCE_SECURITY_DETAIL1   = 14.0;
-const double PROB_TPCE_MARKET_WATCH1      = 18.0;
-const double PROB_TPCE_TRADE_STATUS1      = 19.0;
+const double PROB_TPCE_DATA_MAINTENANCE  = 0;  
+const double PROB_TPCE_TRADE_CLEANUP     = 0;
+const double PROB_TPCE_MARKET_FEED       = 1.0;
+const double PROB_TPCE_TRADE_UPDATE      = 2.0;
+const double PROB_TPCE_BROKER_VOLUME     = 4.9;
+const double PROB_TPCE_TRADE_LOOKUP      = 8.0;
+const double PROB_TPCE_TRADE_RESULT      = 10.0;
+const double PROB_TPCE_TRADE_ORDER       = 10.1;
+const double PROB_TPCE_CUSTOMER_POSITION = 13.0;
+const double PROB_TPCE_SECURITY_DETAIL   = 14.0;
+const double PROB_TPCE_MARKET_WATCH      = 18.0;
+const double PROB_TPCE_TRADE_STATUS      = 19.0;
 
 
-//scaled probabilities
-const double PROB_TPCE_DATA_MAINTENANCE  = 0.00;  
-const double PROB_TPCE_TRADE_UPDATE      = 2.25;
-const double PROB_TPCE_BROKER_VOLUME     = 5.50;
-const double PROB_TPCE_TRADE_LOOKUP      = 8.99;
-const double PROB_TPCE_TRADE_ORDER       = 11.35;
-const double PROB_TPCE_CUSTOMER_POSITION = 14.61;
-const double PROB_TPCE_SECURITY_DETAIL   = 15.73;
-const double PROB_TPCE_MARKET_WATCH      = 20.22;
-const double PROB_TPCE_TRADE_STATUS      = 21.36;
-
-
-
-/*
-const double PROB_TPCE_DATA_MAINTENANCE  = 0.01;  
-const double PROB_TPCE_TRADE_UPDATE      = 2.53;
-const double PROB_TPCE_BROKER_VOLUME     = 6.21;
-const double PROB_TPCE_TRADE_LOOKUP      = 10.13;
-const double PROB_TPCE_CUSTOMER_POSITION = 16.49;
-const double PROB_TPCE_SECURITY_DETAIL   = 17.74;
-const double PROB_TPCE_MARKET_WATCH      = 22.81;
-const double PROB_TPCE_TRADE_STATUS      = 24.08;
-
-*/
-
-/*
-const double PROB_TPCE_BROKER_VOLUME     = 6.71;
-const double PROB_TPCE_TRADE_LOOKUP      = 10.63;
-const double PROB_TPCE_CUSTOMER_POSITION = 16.99;
-const double PROB_TPCE_SECURITY_DETAIL   = 18.24;
-const double PROB_TPCE_MARKET_WATCH      = 23.31;
-const double PROB_TPCE_TRADE_STATUS      = 24.58;
-*/
 // --- Helper functions --- //
 
 

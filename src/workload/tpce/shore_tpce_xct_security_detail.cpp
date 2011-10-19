@@ -123,7 +123,6 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
     lowrep.set(_pnews_item_desc->maxsize());
     highrep.set(_pnews_item_desc->maxsize());
     {
-	//psdin.print(); //DELETE_ME
 	/**
 	   select
 	   s_name          = S_NAME,
@@ -224,7 +223,6 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 
 	prsecurity->get_value(5, s_co_id);
 	prsecurity->get_value(4, s_ex_id, 7);
-
 	prsecurity->get_value(3, s_name, 71);
 	prsecurity->get_value(6, num_out);
 	prsecurity->get_value(7, start_date);
@@ -291,12 +289,11 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 	if (e.is_error()) { goto done; }
 
 	przipcode->get_value(2, ex_ad_div, 81);
+	przipcode->get_value(1, ex_ad_town, 81);
 
 	praddress->get_value(4, ex_ad_ctry, 81);
 	praddress->get_value(1, ex_ad_line1, 81);
 	praddress->get_value(2, ex_ad_line2, 81);
-	przipcode->get_value(1, ex_ad_town, 81);
-
 	praddress->get_value(3, ex_ad_zip, 13);
 
 	prexchange->get_value(4, ex_close);
@@ -406,67 +403,64 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 	TRACE( TRACE_TRX_FLOW, "App: %d SD:fi-iter-next \n", xct_id);
 	e = fi_iter->next(_pssm, eof, *prfinancial);
 	if (e.is_error()) { goto done; }
-	int i;
-	for(i = 0; i < 20 && !eof; i++){
+	int fin_len;
+	for(fin_len = 0; fin_len < 20 && !eof; fin_len++){
 	    int fi_year;
 	    prfinancial->get_value(1, fi_year);
-	    fin_year[i] = fi_year;
+	    fin_year[fin_len] = fi_year;
 
 	    short fi_qtr;
 	    prfinancial->get_value(2, fi_qtr);
-	    fin_qtr[i] = fi_qtr;
+	    fin_qtr[fin_len] = fi_qtr;
 
 	    myTime fi_qtr_start_date;
 	    prfinancial->get_value(3, fi_qtr_start_date);
-	    fin_start_date[i] = fi_qtr_start_date;
+	    fin_start_date[fin_len] = fi_qtr_start_date;
 
 	    double fi_revenue;
 	    prfinancial->get_value(4, fi_revenue);
-	    fin_rev[i] = fi_revenue;
+	    fin_rev[fin_len] = fi_revenue;
 
 	    double fi_net_earn;
 	    prfinancial->get_value(5, fi_net_earn);
-	    fin_net_earn[i] = fi_net_earn;
+	    fin_net_earn[fin_len] = fi_net_earn;
 
 	    double fi_basic_eps;
 	    prfinancial->get_value(6, fi_basic_eps);
-	    fin_basic_eps[i] = fi_basic_eps;
+	    fin_basic_eps[fin_len] = fi_basic_eps;
 
 	    double fi_dilut_eps;
 	    prfinancial->get_value(7, fi_dilut_eps);
-	    fin_dilut_eps[i] = fi_dilut_eps;
+	    fin_dilut_eps[fin_len] = fi_dilut_eps;
 
 	    double fi_margin;
 	    prfinancial->get_value(8, fi_margin);
-	    fin_margin[i] = fi_margin;
+	    fin_margin[fin_len] = fi_margin;
 
 	    double fi_inventory;
 	    prfinancial->get_value(9, fi_inventory);
-	    fin_invent[i] = fi_inventory;
+	    fin_invent[fin_len] = fi_inventory;
 
 	    double fi_assets;
 	    prfinancial->get_value(10, fi_assets);
-	    fin_assets[i] = fi_assets;
+	    fin_assets[fin_len] = fi_assets;
 
 	    double fi_liability;
 	    prfinancial->get_value(11, fi_liability);
-	    fin_liab[i] = fi_liability;
+	    fin_liab[fin_len] = fi_liability;
 
 	    double fi_out_basics;
 	    prfinancial->get_value(12, fi_out_basics);
-	    fin_out_basic[i] = fi_out_basics;
+	    fin_out_basic[fin_len] = fi_out_basics;
 
 	    double fi_out_dilut;
 	    prfinancial->get_value(13, fi_out_dilut);
-	    fin_out_dilut[i] = fi_out_dilut;
+	    fin_out_dilut[fin_len] = fi_out_dilut;
 
 	    TRACE( TRACE_TRX_FLOW, "App: %d SD:fi-iter-next \n", xct_id);
 	    e = fi_iter->next(_pssm, eof, *prfinancial);
 	    if (e.is_error()) { goto done; }
 	}
-
-	int fin_len = i;
-
 	assert(fin_len == max_fin_len); //Harness control
 
 	/**
@@ -506,20 +500,18 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 	TRACE( TRACE_TRX_FLOW, "App: %d SD:dm-iter-next \n", xct_id);
 	e = dm_iter->next(_pssm, eof, *prdailymarket);
 	if (e.is_error()) { goto done; }
-	i = 0;
-	for( ; i < psdin._max_rows_to_return && !eof; i++){
-	    prdailymarket->get_value(0, day_date[i]);
-	    prdailymarket->get_value(2, day_close[i]);
-	    prdailymarket->get_value(3, day_high[i]);
-	    prdailymarket->get_value(4, day_low[i]);
-	    prdailymarket->get_value(5, day_vol[i]);
+	int day_len;
+	for(day_len = 0; day_len < psdin._max_rows_to_return && !eof; day_len++){
+	    prdailymarket->get_value(0, day_date[day_len]);
+	    prdailymarket->get_value(2, day_close[day_len]);
+	    prdailymarket->get_value(3, day_high[day_len]);
+	    prdailymarket->get_value(4, day_low[day_len]);
+	    prdailymarket->get_value(5, day_vol[day_len]);
 
-	    TRACE( TRACE_TRX_FLOW, "App: %d SD:dm-iter-next %ld \n", xct_id, day_date[i]);
+	    TRACE( TRACE_TRX_FLOW, "App: %d SD:dm-iter-next %ld \n", xct_id, day_date[day_len]);
 	    e = dm_iter->next(_pssm, eof, *prdailymarket);
 	    if (e.is_error()) { goto done; }
 	}
-
-	int day_len = i;
 	assert(day_len >= min_day_len && day_len <= max_day_len); //Harness control
 
 	/**
@@ -549,6 +541,7 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 	char news_headline[2][81]; //80
 	char news_summary[2][256]; //255
 
+	int news_len;
 	if(psdin._access_lob_flag){
 	    /**
 	       select first max_news_len rows
@@ -556,14 +549,14 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 	       news[].dts      = NI_DTS,
 	       news[].src      = NI_SOURCE,
 	       news[].auth     = NI_AUTHOR,
-	       news[].headline = “”,
-	       news[].summary  = “”
+	       news[].headline = "",
+	       news[].summary  = ""
 	       from
 	       NEWS_XREF,
 	       NEWS_ITEM
-	       where
-	       NI_ID = NX_NI_ID and
-	       NX_CO_ID = co_id
+	      where
+	      NI_ID = NX_NI_ID and
+	      NX_CO_ID = co_id
 	    */
 
 	    guard< index_scan_iter_impl<news_xref_t> > nx_iter;
@@ -578,7 +571,7 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 	    TRACE( TRACE_TRX_FLOW, "App: %d SD:nx-iter-next \n", xct_id);
 	    e = nx_iter->next(_pssm, eof, *prnewsxref);
 	    if (e.is_error()) { goto done; }
-	    for(i = 0; i < 2 && !eof; i++){
+	    for(news_len = 0; news_len < 2 && !eof; news_len++){
 		TIdent nx_ni_id;
 		prnewsxref->get_value(0, nx_ni_id);
 
@@ -586,12 +579,12 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 		e =  _pnews_item_man->ni_index_probe(_pssm, prnewsitem, nx_ni_id);
 		if (e.is_error()) { goto done; }
 
-		prnewsitem->get_value(3, news_item[i], max_news_item_size+1);
-		prnewsitem->get_value(4, news_dts[i]);
-		prnewsitem->get_value(5, news_src[i], 31);
-		prnewsitem->get_value(6, news_auth[i], 31);
-		strcpy(news_headline[i], "");
-		strcpy(news_summary[i], "");
+		prnewsitem->get_value(3, news_item[news_len], max_news_item_size+1);
+		prnewsitem->get_value(4, news_dts[news_len]);
+		prnewsitem->get_value(5, news_src[news_len], 31);
+		prnewsitem->get_value(6, news_auth[news_len], 31);
+		strcpy(news_headline[news_len], "");
+		strcpy(news_summary[news_len], "");
 
 		TRACE( TRACE_TRX_FLOW, "App: %d SD:nx-iter-next %ld \n", xct_id, nx_ni_id);
 		e = nx_iter->next(_pssm, eof, *prnewsxref);
@@ -601,7 +594,7 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 	else{
 	    /**
 	       select first max_news_len rows
-	       news[].item     = “”,
+	       news[].item     = "",
 	       news[].dts      = NI_DTS,
 	       news[].src      = NI_SOURCE,
 	       news[].auth     = NI_AUTHOR,
@@ -627,7 +620,7 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 	    TRACE( TRACE_TRX_FLOW, "App: %d SD:nx-iter-next \n", xct_id);
 	    e = nx_iter->next(_pssm, eof, *prnewsxref);
 	    if (e.is_error()) { goto done; }
-	    for(i = 0; i < 2 && !eof; i++){
+	    for(news_len = 0; news_len < 2 && !eof; news_len++){
 		TIdent nx_ni_id;
 		prnewsxref->get_value(0, nx_ni_id);
 
@@ -635,20 +628,18 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 		e =  _pnews_item_man->ni_index_probe(_pssm, prnewsitem, nx_ni_id);
 		if (e.is_error()) { goto done; }
 
-		strcpy(news_item[i], "");
-		prnewsitem->get_value(4, news_dts[i]);
-		prnewsitem->get_value(5, news_src[i], 31);
-		prnewsitem->get_value(6, news_auth[i], 31);
-		prnewsitem->get_value(1, news_headline[i], 81);
-		prnewsitem->get_value(2, news_summary[i], 256);
+		strcpy(news_item[news_len], "");
+		prnewsitem->get_value(4, news_dts[news_len]);
+		prnewsitem->get_value(5, news_src[news_len], 31);
+		prnewsitem->get_value(6, news_auth[news_len], 31);
+		prnewsitem->get_value(1, news_headline[news_len], 81);
+		prnewsitem->get_value(2, news_summary[news_len], 256);
 
 		TRACE( TRACE_TRX_FLOW, "App: %d SD:nx-iter-next %ld \n", xct_id, nx_ni_id);
 		e = nx_iter->next(_pssm, eof, *prnewsxref);
 		if (e.is_error()) { goto done; }
 	    }
 	}
-	int news_len = i;
-
 	assert(news_len == max_news_len); //Harness control
     }
 

@@ -89,54 +89,56 @@ int dayOfMonth(myTime& t)
 int random_xct_type(const double idx)
 {
   double sum = 0;
-
-    sum += PROB_TPCE_DATA_MAINTENANCE;
-    if (idx < sum){
-	printf(" idx %lf  sum %lf\n", idx, sum); assert(false);
-	return XCT_TPCE_DATA_MAINTENANCE;
-     }
-/* sum += PROB_TPCE_MARKET_FEED;
-  if (idx < sum)
-    return XCT_TPCE_MARKET_FEED;*/
-
-    sum += PROB_TPCE_TRADE_UPDATE;
-    if (idx < sum)
-	return XCT_TPCE_TRADE_UPDATE;
-
-    sum += PROB_TPCE_BROKER_VOLUME;
-    if (idx < sum)
-	return XCT_TPCE_BROKER_VOLUME;
   
-    sum += PROB_TPCE_TRADE_LOOKUP;
-    if (idx < sum)
-	return XCT_TPCE_TRADE_LOOKUP;
-    
- /*   sum += PROB_TPCE_TRADE_RESULT;
-    if (idx < sum)
-	return XCT_TPCE_TRADE_RESULT;*/
-    
-    sum += PROB_TPCE_TRADE_ORDER;
-    if (idx < sum)
-	return XCT_TPCE_TRADE_ORDER;
+  sum += PROB_TPCE_DATA_MAINTENANCE;
+  if (idx < sum){
+      printf(" idx %lf  sum %lf\n", idx, sum); assert(false);
+      return XCT_TPCE_DATA_MAINTENANCE;
+  }
+  
+  sum += PROB_TPCE_MARKET_FEED;
+  if (idx < sum)
+      return XCT_TPCE_MARKET_FEED;
+  
+  sum += PROB_TPCE_TRADE_UPDATE;
+  if (idx < sum)
+      return XCT_TPCE_TRADE_UPDATE;
+  
+  sum += PROB_TPCE_BROKER_VOLUME;
+  if (idx < sum)
+      return XCT_TPCE_BROKER_VOLUME;
+  
+  sum += PROB_TPCE_TRADE_LOOKUP;
+  if (idx < sum)
+      return XCT_TPCE_TRADE_LOOKUP;
+  
+  sum += PROB_TPCE_TRADE_RESULT;
+  if (idx < sum)
+      return XCT_TPCE_TRADE_RESULT;
+  
+  sum += PROB_TPCE_TRADE_ORDER;
+  if (idx < sum)
+      return XCT_TPCE_TRADE_ORDER;
+  
+  sum += PROB_TPCE_CUSTOMER_POSITION;
+  if (idx < sum)
+      return XCT_TPCE_CUSTOMER_POSITION;
+  
+  sum += PROB_TPCE_SECURITY_DETAIL;
+  if (idx < sum)
+      return XCT_TPCE_SECURITY_DETAIL;
+  
+  sum += PROB_TPCE_MARKET_WATCH;
+  if (idx < sum)
+      return XCT_TPCE_MARKET_WATCH;
+  
+  sum += PROB_TPCE_TRADE_STATUS;
+  if (idx <= sum)
+      return XCT_TPCE_TRADE_STATUS;
 
-    sum += PROB_TPCE_CUSTOMER_POSITION;
-    if (idx < sum)
-	return XCT_TPCE_CUSTOMER_POSITION;
-    
-    sum += PROB_TPCE_SECURITY_DETAIL;
-    if (idx < sum)
-	return XCT_TPCE_SECURITY_DETAIL;
-    
-    sum += PROB_TPCE_MARKET_WATCH;
-    if (idx < sum)
-	return XCT_TPCE_MARKET_WATCH;
-    
-    sum += PROB_TPCE_TRADE_STATUS;
-    if (idx <= sum)
-	return XCT_TPCE_TRADE_STATUS;
   printf("************sum %lf**********\n ", sum);
-    return -1;
-};
+  return -1;
+}
 
 
 //broker volume
@@ -242,9 +244,10 @@ trade_lookup_input_t      create_trade_lookup_input(int sf, int specificIdx)
     atli._frame_to_execute=m_TradeLookupTxnInput.frame_to_execute;
     atli._max_trades=m_TradeLookupTxnInput.max_trades;
     atli._max_acct_id=m_TradeLookupTxnInput.max_acct_id;
-  
-    memcpy(atli._symbol, m_TradeLookupTxnInput.symbol, 16); 
-    memcpy(atli._trade_id, m_TradeLookupTxnInput.trade_id, 30*sizeof(TIdent)); 
+    memcpy(atli._symbol, m_TradeLookupTxnInput.symbol, 16);
+    if(atli._frame_to_execute == 1) {
+	memcpy(atli._trade_id, m_TradeLookupTxnInput.trade_id, atli._max_trades*sizeof(TIdent));
+    }
     atli._start_trade_dts = EgenTimeStampToTimeT(m_TradeLookupTxnInput.start_trade_dts); 
     atli._end_trade_dts = EgenTimeStampToTimeT(m_TradeLookupTxnInput.end_trade_dts); 
     
@@ -267,17 +270,15 @@ void trade_lookup_input_t::print(){
 trade_result_input_t      create_trade_result_input(int sf, int specificIdx) 
 { 
     trade_result_input_t atri;
-    TTradeResultTxnInput* input =TradeResultInputBuffer->get();
-    assert(input!=NULL);   
-    atri._trade_id=input->trade_id;
-    atri._trade_price=input->trade_price;
+    TTradeResultTxnInput* input = TradeResultInputBuffer->get();
+    if(input==NULL) {   
+	atri._trade_id=-1;
+	atri._trade_price=-1;
+    } else {
+	atri._trade_id=input->trade_id;
+	atri._trade_price=input->trade_price;
+    }
     return (atri);
-
-//this is just for testing]!!!
-/*    trade_result_input_t atri;
-    atri._trade_id=200000800000125;
-    atri._trade_price=24.69;
-    return (atri);*/
 };
 
 void trade_result_input_t::print(){
@@ -402,61 +403,20 @@ market_feed_input_t create_market_feed_input(int sf, int specificIdx)
     
     market_feed_input_t amfi;
     TMarketFeedTxnInput* input= MarketFeedInputBuffer->get();    
-
-    assert (input);    
-    memcpy(amfi._status_submitted,input->StatusAndTradeType.status_submitted,5);
-    memcpy(amfi._type_limit_buy,input->StatusAndTradeType.type_limit_buy,4);
-    memcpy(amfi._type_limit_sell,input->StatusAndTradeType.type_limit_sell,4);
-    memcpy(amfi._type_stop_loss,input->StatusAndTradeType.type_stop_loss,4);
-    for(int i=0; i<max_feed_len; i++)
-      {
-        amfi._trade_qty[i] = input->Entries[i].trade_qty;
-        memcpy(amfi._symbol[i], input->Entries[i].symbol, 16);
-        amfi._price_quote[i] = input->Entries[i].price_quote;
-      }
-    delete input;
+    if(input!=NULL) {
+	memcpy(amfi._status_submitted,input->StatusAndTradeType.status_submitted,5);
+	memcpy(amfi._type_limit_buy,input->StatusAndTradeType.type_limit_buy,4);
+	memcpy(amfi._type_limit_sell,input->StatusAndTradeType.type_limit_sell,4);
+	memcpy(amfi._type_stop_loss,input->StatusAndTradeType.type_stop_loss,4);
+	for(int i=0; i<max_feed_len; i++) {
+	    amfi._trade_qty[i] = input->Entries[i].trade_qty;
+	    memcpy(amfi._symbol[i], input->Entries[i].symbol, 16);
+	    amfi._price_quote[i] = input->Entries[i].price_quote;
+	}
+	delete input;
+    }
     return (amfi);
-
-
-//this is for testing purposes
-/*
-   market_feed_input_t amfi;
-    
-    strcpy(amfi._status_submitted,"SBMT");
-    strcpy(amfi._type_limit_buy,"TLB");
-    strcpy(amfi._type_limit_sell,"TLS");
-    strcpy(amfi._type_stop_loss,"TSL");
-
-    
-    for(int i=0; i<20; i++)
-      {
-        amfi._trade_qty[i] = 234+i;        
-        amfi._price_quote[i] = 22.34+i;
-      }
-    strcpy(amfi._symbol[0], "A");
-    strcpy(amfi._symbol[1], "AA");
-    strcpy(amfi._symbol[2], "AACB");
-    strcpy(amfi._symbol[3], "AALA");
-    strcpy(amfi._symbol[4], "AAPL");
-    strcpy(amfi._symbol[5], "ACTI");
-    strcpy(amfi._symbol[6], "ACTT");
-    strcpy(amfi._symbol[7], "ACV");
-    strcpy(amfi._symbol[8], "ADM");
-    strcpy(amfi._symbol[9], "ADMPRA");
-    strcpy(amfi._symbol[10], "ADPRA");
-    strcpy(amfi._symbol[11], "ADPRB");
-    strcpy(amfi._symbol[12], "AEG");
-    strcpy(amfi._symbol[13], "AGAM");
-    strcpy(amfi._symbol[14], "AIB");
-    strcpy(amfi._symbol[15], "AIF");
-    strcpy(amfi._symbol[16], "ALA");
-    strcpy(amfi._symbol[17], "AMFH");
-    strcpy(amfi._symbol[18], "BWG");
-    strcpy(amfi._symbol[19], "BXP");
-
-    return (amfi);
-*/
-};
+}
 
 void market_feed_input_t::print()
 {
