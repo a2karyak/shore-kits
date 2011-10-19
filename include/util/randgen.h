@@ -93,7 +93,16 @@ public:
 #ifdef USE_STHREAD_RAND
             bits = k;
 #else
-            bits = rand();
+            if (RAND_MAX < n) {
+		int bits_lower = rand();
+		int bits_upper = rand();
+		int bits_last = rand() % 2;
+		bits_upper = bits_upper << 15;
+		bits_last = bits_last << 30;
+		bits = bits_lower + bits_upper + bits_last;
+	    } else {
+		bits = rand();
+	    }
 #endif
             val = bits % n;
         } while(bits - val + (n-1) < 0);
