@@ -246,9 +246,9 @@ void table_row_t::print_values(ostream& os)
     //  cout << "Number of fields: " << _field_count << endl;
     for (uint i=0; i<_field_cnt; i++) {
 	_pvalues[i].print_value(os);
-	if (i != _field_cnt) os << DELIM_CHAR;
+	if (i != _field_cnt-1) os << DELIM_CHAR;
     }
-    os << endl;
+    os << ROWEND_CHAR << endl;
 }
 
 

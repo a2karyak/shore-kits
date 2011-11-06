@@ -58,6 +58,7 @@ const unsigned int MAX_FILENAME_LEN  = 100;
 const unsigned int MAX_BODY_SIZE     = 1024;
 
 #define  DELIM_CHAR            '|'
+#define  ROWEND_CHAR            '\r'
 
 const unsigned int COMMIT_ACTION_COUNT           = 2000;  
 const unsigned int COMMIT_ACTION_COUNT_WITH_ITER = 500000;

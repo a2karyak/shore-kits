@@ -45,9 +45,6 @@
 using namespace shore;
 using namespace TPCE;
 
-//#define TRACE_TRX_FLOW TRACE_ALWAYS
-//#define TRACE_TRX_RESULT TRACE_ALWAYS
-
 ENTER_NAMESPACE(tpce);
 
 /******************************************************************** 
@@ -301,7 +298,7 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 	prexchange->get_value(1, ex_name, 101);
 	prexchange->get_value(2, ex_num_symb);
 	prexchange->get_value(3, ex_open);
-
+	
 	/**
 	   select first max_comp_len rows
 	   cp_co_name[] = CO_NAME,
@@ -380,8 +377,8 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 	int fin_qtr[20];
 	myTime fin_start_date[20];
 	double fin_rev[20];
-	int fin_net_earn[20];
-	int fin_basic_eps[20];
+	double fin_net_earn[20];
+	double fin_basic_eps[20];
 	double fin_dilut_eps[20];
 	double fin_margin[20];
 	double fin_invent[20];
@@ -462,7 +459,7 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 	    if (e.is_error()) { goto done; }
 	}
 	assert(fin_len == max_fin_len); //Harness control
-
+	
 	/**
 	   select first max_rows_to_return rows
 	   day[].date  = DM_DATE,
@@ -491,7 +488,8 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 	{
 	    index_scan_iter_impl<daily_market_t>* tmp_dm_iter;
 	    TRACE( TRACE_TRX_FLOW, "App: %d SD:dm-get-iter-by-idx (%s) (%ld) \n", xct_id, psdin._symbol, psdin._start_day);
-	    e = _pdaily_market_man->dm_get_iter_by_index(_pssm, tmp_dm_iter, prdailymarket, lowrep, highrep, psdin._symbol, psdin._start_day);
+	    e = _pdaily_market_man->dm_get_iter_by_index(_pssm, tmp_dm_iter, prdailymarket,
+							 lowrep, highrep, psdin._symbol, psdin._start_day);
 	    if (e.is_error()) { goto done; }
 	    dm_iter = tmp_dm_iter;
 	}
@@ -513,7 +511,7 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 	    if (e.is_error()) { goto done; }
 	}
 	assert(day_len >= min_day_len && day_len <= max_day_len); //Harness control
-
+		
 	/**
 	   select
 	   last_price = LT_PRICE,
@@ -533,7 +531,7 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 	prlasttrade->get_value(2, last_price);
 	prlasttrade->get_value(3, last_open);
 	prlasttrade->get_value(4, last_vol);
-
+	
 	char news_item[2][max_news_item_size+1]; //10000
 	myTime news_dts[2];
 	char news_src[2][31]; //30
@@ -646,7 +644,6 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction
     // dumps the status of all the table rows used
-
     raddress.print_tuple();
     rcompany.print_tuple();
     rcompanycomp.print_tuple();
@@ -659,21 +656,10 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
     rnewsxref.print_tuple();
     rsecurity.print_tuple();
     rzipcode.print_tuple();
-
 #endif
 
- done:
-	  
-#ifdef TESTING_TPCE           
-    int exec=++trxs_cnt_executed[XCT_TPCE_SECURITY_DETAIL - XCT_TPCE_MIX - 1];
-    if(e.is_error()) trxs_cnt_failed[XCT_TPCE_SECURITY_DETAIL - XCT_TPCE_MIX-1]++;
-    if(exec%100==99) printf("SECURITY_DETAIL executed: %d, failed: %d\n", exec, trxs_cnt_failed[XCT_TPCE_SECURITY_DETAIL - XCT_TPCE_MIX-1]);
-#endif
-
-
-
+ done:	  
     // return the tuples to the cache
-
     _paddress_man->give_tuple(praddress);
     _pcompany_man->give_tuple(prcompany);
     _pcompany_competitor_man->give_tuple(prcompanycomp);
@@ -686,7 +672,7 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
     _pnews_xref_man->give_tuple(prnewsxref);
     _psecurity_man->give_tuple(prsecurity);
     _pzip_code_man->give_tuple(przipcode);
-    //
+    
     return (e);
 }
 

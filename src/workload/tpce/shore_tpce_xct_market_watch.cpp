@@ -45,9 +45,6 @@
 using namespace shore;
 using namespace TPCE;
 
-//#define TRACE_TRX_FLOW TRACE_ALWAYS
-//#define TRACE_TRX_RESULT TRACE_ALWAYS
-
 ENTER_NAMESPACE(tpce);
 
 /******************************************************************** 
@@ -244,7 +241,8 @@ w_rc_t ShoreTPCEEnv::xct_market_watch(const int xct_id, market_watch_input_t& pm
 	    {
 		index_scan_iter_impl<holding_summary_t>* tmp_hs_iter;
 		TRACE( TRACE_TRX_FLOW, "App: %d MW:hs-iter-by-idx (%ld) \n", xct_id, pmwin._acct_id);
-		e = _pholding_summary_man->hs_get_iter_by_index(_pssm, tmp_hs_iter, prholdsumm, lowrep, highrep, pmwin._acct_id, false);
+		e = _pholding_summary_man->hs_get_iter_by_index(_pssm, tmp_hs_iter, prholdsumm,
+								lowrep, highrep, pmwin._acct_id, false);
 		hs_iter = tmp_hs_iter;
 		if (e.is_error()) { goto done; }
 	    }
@@ -341,7 +339,6 @@ w_rc_t ShoreTPCEEnv::xct_market_watch(const int xct_id, market_watch_input_t& pm
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction
     // dumps the status of all the table rows used
-
     rcompany.print_tuple();
     rdailymarket.print_tuple();
     rholdsumm.print_tuple();
@@ -350,17 +347,9 @@ w_rc_t ShoreTPCEEnv::xct_market_watch(const int xct_id, market_watch_input_t& pm
     rsecurity.print_tuple();
     rwatchitem.print_tuple();
     rwatchlist.print_tuple();
-
 #endif
 
  done:
-#ifdef TESTING_TPCE           
-    int exec=++trxs_cnt_executed[XCT_TPCE_MARKET_WATCH - XCT_TPCE_MIX - 1];
-    if(e.is_error()) trxs_cnt_failed[XCT_TPCE_MARKET_WATCH - XCT_TPCE_MIX-1]++;
-    if(exec%100==99) printf("MARKET_WATCH executed: %d, failed: %d\n", exec, trxs_cnt_failed[XCT_TPCE_MARKET_WATCH - XCT_TPCE_MIX-1]);
-#endif
-
-
     // return the tuples to the cache
     _pcompany_man->give_tuple(prcompany);
     _pdaily_market_man->give_tuple(prdailymarket);

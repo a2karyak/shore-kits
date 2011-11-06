@@ -45,9 +45,6 @@
 using namespace shore;
 using namespace TPCE;
 
-//#define TRACE_TRX_FLOW TRACE_ALWAYS
-//#define TRACE_TRX_RESULT TRACE_ALWAYS
-
 ENTER_NAMESPACE(tpce);
 
 /******************************************************************** 
@@ -100,8 +97,6 @@ w_rc_t ShoreTPCEEnv::xct_trade_lookup(const int xct_id, trade_lookup_input_t& pt
     lowrep.set(_ptrade_desc->maxsize());
     highrep.set(_ptrade_desc->maxsize());
 
-    // PIN: WTF?
-    //unsigned int max_trades = 20; //instead of ptlin._max_trades
     int max_trades = ptlin._max_trades;
 
     {
@@ -131,7 +126,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_lookup(const int xct_id, trade_lookup_input_t& pt
 
 	//BEGIN FRAME1
 	int num_found = 0;
-	if(ptlin._frame_to_execute == 1) {
+	if(ptlin._frame_to_execute == 1) {	
 	    for (num_found = 0; num_found < max_trades; num_found++){
 		/**
 		 *	select
@@ -306,8 +301,10 @@ w_rc_t ShoreTPCEEnv::xct_trade_lookup(const int xct_id, trade_lookup_input_t& pt
 	    guard<index_scan_iter_impl<trade_t> > t_iter;
 	    {
 		index_scan_iter_impl<trade_t>* tmp_t_iter;
-		TRACE( TRACE_TRX_FLOW, "App: %d TL:t-iter-by-idx2 %ld %ld %ld \n", xct_id, ptlin._acct_id, ptlin._start_trade_dts, ptlin._end_trade_dts);
-		e = _ptrade_man->t_get_iter_by_index2(_pssm, tmp_t_iter, prtrade, lowrep, highrep, ptlin._acct_id, ptlin._start_trade_dts, ptlin._end_trade_dts);
+		TRACE( TRACE_TRX_FLOW, "App: %d TL:t-iter-by-idx2 %ld %ld %ld \n",
+		       xct_id, ptlin._acct_id, ptlin._start_trade_dts, ptlin._end_trade_dts);
+		e = _ptrade_man->t_get_iter_by_index2(_pssm, tmp_t_iter, prtrade, lowrep, highrep,
+						      ptlin._acct_id, ptlin._start_trade_dts, ptlin._end_trade_dts);
 		t_iter = tmp_t_iter;
 		if (e.is_error()) { goto done; }
 	    }
@@ -468,9 +465,10 @@ w_rc_t ShoreTPCEEnv::xct_trade_lookup(const int xct_id, trade_lookup_input_t& pt
 	    guard<index_scan_iter_impl<trade_t> > t_iter;
 	    {
 		index_scan_iter_impl<trade_t>* tmp_t_iter;
-		TRACE( TRACE_TRX_FLOW, "App: %d TL:t-get-iter-by-idx3 %s %ld %ld \n", xct_id, ptlin._symbol,
-		       ptlin._start_trade_dts, ptlin._end_trade_dts);
-		e = _ptrade_man->t_get_iter_by_index3(_pssm, tmp_t_iter, prtrade, lowrep, highrep, ptlin._symbol, ptlin._start_trade_dts, ptlin._end_trade_dts);
+		TRACE( TRACE_TRX_FLOW, "App: %d TL:t-get-iter-by-idx3 %s %ld %ld \n",
+		       xct_id, ptlin._symbol, ptlin._start_trade_dts, ptlin._end_trade_dts);
+		e = _ptrade_man->t_get_iter_by_index3(_pssm, tmp_t_iter, prtrade, lowrep, highrep,
+						      ptlin._symbol, ptlin._start_trade_dts, ptlin._end_trade_dts);
 		if (e.is_error()) { goto done; }
 		t_iter = tmp_t_iter;
 	    }
@@ -626,8 +624,10 @@ w_rc_t ShoreTPCEEnv::xct_trade_lookup(const int xct_id, trade_lookup_input_t& pt
 	    guard<index_scan_iter_impl<trade_t> > t_iter;
 	    {
 		index_scan_iter_impl<trade_t>* tmp_t_iter;
-		TRACE( TRACE_TRX_FLOW, "App: %d TL:t-get-iter-by-idx2 (%ld) (%ld) (%ld) \n", xct_id, ptlin._acct_id, ptlin._start_trade_dts, MAX_DTS);
-		e = _ptrade_man->t_get_iter_by_index2(_pssm, tmp_t_iter, prtrade, lowrep, highrep, ptlin._acct_id, ptlin._start_trade_dts, MAX_DTS);
+		TRACE( TRACE_TRX_FLOW, "App: %d TL:t-get-iter-by-idx2 (%ld) (%ld) (%ld) \n",
+		       xct_id, ptlin._acct_id, ptlin._start_trade_dts, MAX_DTS);
+		e = _ptrade_man->t_get_iter_by_index2(_pssm, tmp_t_iter, prtrade, lowrep, highrep,
+						      ptlin._acct_id, ptlin._start_trade_dts, MAX_DTS);
 		if (e.is_error()) { goto done; }
 		t_iter = tmp_t_iter;
 	    }
@@ -694,18 +694,9 @@ w_rc_t ShoreTPCEEnv::xct_trade_lookup(const int xct_id, trade_lookup_input_t& pt
     rcashtrans.print_tuple();
     rtradehist.print_tuple();
     rholdinghistory.print_tuple();
-
 #endif
 
  done:
-
-#ifdef TESTING_TPCE           
-    int exec=++trxs_cnt_executed[XCT_TPCE_TRADE_LOOKUP - XCT_TPCE_MIX - 1];
-    if(e.is_error()) trxs_cnt_failed[XCT_TPCE_TRADE_LOOKUP - XCT_TPCE_MIX-1]++;
-    if(exec%100==99) printf("TRADE_LOOKUP executed: %d, failed: %d\n", exec, trxs_cnt_failed[XCT_TPCE_TRADE_LOOKUP - XCT_TPCE_MIX-1]);
-#endif
-
-
     // return the tuples to the cache
     _ptrade_man->give_tuple(prtrade);
     _ptrade_type_man->give_tuple(prtradetype);

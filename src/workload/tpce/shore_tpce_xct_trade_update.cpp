@@ -45,9 +45,6 @@
 using namespace shore;
 using namespace TPCE;
 
-//#define TRACE_TRX_FLOW TRACE_ALWAYS
-//#define TRACE_TRX_RESULT TRACE_ALWAYS
-
 ENTER_NAMESPACE(tpce);
 
 /******************************************************************** 
@@ -100,14 +97,12 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
     highrep.set(_psecurity_desc->maxsize());
 
     {
-	//unsigned int max_trades = 20; //instead of ptuin._max_trades 	// PIN: why????????????????
 	unsigned int max_trades = ptuin._max_trades;
 	int num_found = 0;
 	int num_updated = 0;
 
 	if(ptuin._frame_to_execute == 1){
 	    int i;
-	    char ex_name[50]; //49
 
 	    array_guard_t<double> bid_price = new double[max_trades];
 	    array_guard_t< char[50] > exec_name = new char[max_trades][50]; //49
@@ -125,7 +120,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 
 	    array_guard_t< myTime[3] > trade_history_dts = new myTime[max_trades][3];
 	    array_guard_t< char[3][5] > trade_history_status_id = new char[max_trades][3][5]; //4
-
+	
 	    for(i = 0; i < max_trades; i++){
 		if(num_updated < ptuin._max_updates){
 		    /**
@@ -143,6 +138,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 		    e =  _ptrade_man->t_index_probe_forupdate(_pssm, prtrade, ptuin._trade_id[i]);
 		    if (e.is_error()) { goto done; }
 
+		    char ex_name[50]; //49
 		    prtrade->get_value(9, ex_name, 50);
 
 		    num_found++;
@@ -311,8 +307,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 		}
 	    }
 	    assert(num_found == max_trades && num_updated == ptuin._max_updates); //Harness control
-	}
-	else if(ptuin._frame_to_execute == 2){
+
+	} else if(ptuin._frame_to_execute == 2){
 	    int i;
 
 	    array_guard_t<double> bid_price = new double[max_trades];
@@ -352,7 +348,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 	    guard<index_scan_iter_impl<trade_t> > t_iter;
 	    {
 		index_scan_iter_impl<trade_t>* tmp_t_iter;
-		TRACE( TRACE_TRX_FLOW, "App: %d TL:t-iter-by-idx2 %ld %ld %ld \n", xct_id, ptuin._acct_id, ptuin._start_trade_dts, ptuin._end_trade_dts);
+		TRACE( TRACE_TRX_FLOW, "App: %d TL:t-iter-by-idx2 %ld %ld %ld \n",
+		       xct_id, ptuin._acct_id, ptuin._start_trade_dts, ptuin._end_trade_dts);
 		e = _ptrade_man->t_get_iter_by_index2(_pssm, tmp_t_iter,
 						      prtrade, lowrep, highrep,
 						      ptuin._acct_id, ptuin._start_trade_dts, ptuin._end_trade_dts);
@@ -537,10 +534,10 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 		}
 	    }
 	    assert(num_updated == num_found && num_updated >= 0 && num_found <= max_trades);
-	}
-	else if(ptuin._frame_to_execute == 3){
 
+	} else if(ptuin._frame_to_execute == 3){
 	    int i;
+	    
 	    array_guard_t<TIdent> acct_id = new TIdent[max_trades];
 	    array_guard_t< char[50] > exec_name = new char[max_trades][50]; //49
 	    array_guard_t<bool> is_cash = new bool[max_trades];
@@ -551,7 +548,6 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 	    array_guard_t<TIdent> trade_list = new TIdent[max_trades];
 	    array_guard_t< char[4] > trade_type = new char[max_trades][4]; //3
 	    array_guard_t< char[13] > type_name = new char[max_trades][13]; //12
-
 
 	    array_guard_t<double> settlement_amount = new double[max_trades];
 	    array_guard_t<myTime> settlement_cash_due_date = new myTime[max_trades];
@@ -592,7 +588,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 	    guard<index_scan_iter_impl<trade_t> > t_iter;
 	    {
 		index_scan_iter_impl<trade_t>* tmp_t_iter;
-		TRACE( TRACE_TRX_FLOW, "App: %d TL:t-iter-by-idx3 %s %ld %ld \n", xct_id,  ptuin._symbol, ptuin._start_trade_dts, ptuin._end_trade_dts);
+		TRACE( TRACE_TRX_FLOW, "App: %d TL:t-iter-by-idx3 %s %ld %ld \n",
+		       xct_id,  ptuin._symbol, ptuin._start_trade_dts, ptuin._end_trade_dts);
 		e = _ptrade_man->t_get_iter_by_index3(_pssm, tmp_t_iter,
 						      prtrade, lowrep, highrep,
 						      ptuin._symbol, ptuin._start_trade_dts, ptuin._end_trade_dts); 
@@ -666,7 +663,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 			   CT_T_ID = trade_list[i]
 			*/
 
-			TRACE( TRACE_TRX_FLOW, "App: %d TU:cash-transaction-index-probe-forupdate (%ld) \n", xct_id,  trade_list[i]);
+			TRACE( TRACE_TRX_FLOW, "App: %d TU:cash-transaction-index-probe-forupdate (%ld) \n",
+			       xct_id,  trade_list[i]);
 			e = _pcash_transaction_man->ct_index_probe_forupdate(_pssm, prcashtrans, trade_list[i]);
 			if (e.is_error()) { goto done; }
 
@@ -803,19 +801,10 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
     rtrade.print_tuple();
     rtradetype.print_tuple();
     rtradehist.print_tuple();
-
 #endif
 
  done:
-#ifdef TESTING_TPCE           
-    int exec=++trxs_cnt_executed[XCT_TPCE_TRADE_UPDATE - XCT_TPCE_MIX - 1];
-    if(e.is_error()) trxs_cnt_failed[XCT_TPCE_TRADE_UPDATE - XCT_TPCE_MIX-1]++;
-    if(exec%100==99) printf("TRADE_UPDATE executed: %d, failed: %d\n", exec, trxs_cnt_failed[XCT_TPCE_TRADE_UPDATE - XCT_TPCE_MIX-1]);
-#endif
-
-
     // return the tuples to the cache
-
     _pcash_transaction_man->give_tuple(prcashtrans);
     _psecurity_man->give_tuple(prsecurity);
     _psettlement_man->give_tuple(prsettlement);

@@ -155,9 +155,10 @@ broker_volume_input_t     create_broker_volume_input(int sf, int specificIdx)
 
 void broker_volume_input_t::print()
 {	
-	  printf("\nbroker_volume_input\n");
-	  for (int i=0; i<40; i++) printf(" %s\n", _broker_list[i]);
-	  printf(" %s\n", _sector_name);
+    printf("\nbroker_volume_input\n");
+    printf("broker_list:\n");
+    for (int i=0; i<40; i++) printf(" %s\n", _broker_list[i]);
+    printf("sector_name: %s\n", _sector_name);
 }
 
 
@@ -177,11 +178,11 @@ customer_position_input_t create_customer_position_input(int sf, int specificIdx
 };
 
 void customer_position_input_t::print(){
-	  printf("\nCustomer position input\n");
-	  printf(" %ld\n", _acct_id_idx);
-	  printf(" %ld\n", _cust_id);
-	  printf(" %d\n", _get_history);
-	  printf(" %s\n", _tax_id);
+    printf("\nCustomer position input\n");
+    printf("acct_id_idx: %ld\n", _acct_id_idx);
+    printf("cust_id: %ld\n", _cust_id);
+    printf("get_history: %d\n", _get_history);
+    printf("tax_id: %s\n", _tax_id);
 }
 
 //trade order
@@ -213,23 +214,24 @@ trade_order_input_t    create_trade_order_input(int sf, int specificIdx)
     return (ati);
 };
 
-void trade_order_input_t::print(){
-	  printf("\ntrade order input\n");
-	  printf(" %ld\n", _acct_id);
-	  printf(" %s\n", _co_name);
-	  printf(" %s\n", _exec_f_name);
-	  printf(" %s\n", _exec_l_name);
-	  printf(" %s\n", _exec_tax_id);
-	  printf(" %d\n", _is_lifo);
-	  printf(" %s\n", _issue);
-	  printf(" %lf\n", _requested_price);
-	  printf(" %d\n", _roll_it_back);
-	  printf(" %s\n", _st_pending_id);
-	  printf(" %s\n", _st_submitted_id);
-	  printf(" %s\n", _symbol);
-	  printf(" %d\n", _trade_qty);
-	  printf(" %s\n", _trade_type_id);
-	  printf(" %d\n", _type_is_margin);
+void trade_order_input_t::print()
+{
+    printf("\ntrade order input\n");
+    printf("acct_id: %ld\n", _acct_id);
+    printf("co_name: %s\n", _co_name);
+    printf("exec_f_name: %s\n", _exec_f_name);
+    printf("exec_l_name: %s\n", _exec_l_name);
+    printf("exec_tax_id: %s\n", _exec_tax_id);
+    printf("is_lifo: %d\n", _is_lifo);
+    printf("issue: %s\n", _issue);
+    printf("requested_price: %.2f\n", _requested_price);
+    printf("roll_it_back: %d\n", _roll_it_back);
+    printf("st_pending_id: %s\n", _st_pending_id);
+    printf("st_submitted_id: %s\n", _st_submitted_id);
+    printf("symbol: %s\n", _symbol);
+    printf("trade_qty: %d\n", _trade_qty);
+    printf("trade_type_id: %s\n", _trade_type_id);
+    printf("type_is_margin: %d\n", _type_is_margin);
 }
 
 //trade lookup
@@ -238,7 +240,6 @@ trade_lookup_input_t      create_trade_lookup_input(int sf, int specificIdx)
     trade_lookup_input_t atli;
     TTradeLookupTxnInput		m_TradeLookupTxnInput;
     m_TxnInputGenerator->GenerateTradeLookupInput( m_TradeLookupTxnInput );
-
 
     atli._acct_id=m_TradeLookupTxnInput.acct_id;
     atli._frame_to_execute=m_TradeLookupTxnInput.frame_to_execute;
@@ -254,16 +255,19 @@ trade_lookup_input_t      create_trade_lookup_input(int sf, int specificIdx)
     return (atli);
 };
 
-void trade_lookup_input_t::print(){
-	  printf("\ntrade lookup input\n");
-	  printf(" %ld\n", _acct_id);
-	  printf(" %d\n", _frame_to_execute);
-	  printf(" %ld\n", _max_acct_id);
-	  printf(" %d\n", _max_trades);
-	  printf(" %ld (%s)\n", _start_trade_dts,  ctime((const time_t*)&_start_trade_dts));
-	  printf(" %ld (%s)\n", _end_trade_dts,  ctime((const time_t*)&_end_trade_dts)); 
-	  printf(" %s\n", _symbol);
-	  printf(" %ld\n", _trade_id);
+void trade_lookup_input_t::print()
+{
+    printf("\ntrade lookup input\n");
+    printf("acct_id: %ld\n", _acct_id);
+    printf("frame_to_execute: %d\n", _frame_to_execute);
+    printf("max_acct_id: %ld\n", _max_acct_id);
+    printf("max_trades: %d\n", _max_trades);
+    printf("start_trade_dts: %ld (%s)\n", _start_trade_dts,  ctime((const time_t*)&_start_trade_dts));
+    printf("end_trade_dts: %ld (%s)\n", _end_trade_dts,  ctime((const time_t*)&_end_trade_dts)); 
+    printf("symbol: %s\n", _symbol);
+    for(int i=0; i<_max_trades; i++) {
+	printf("trade_id[%d]: %ld\n", i, _trade_id[i]);
+    }
 }
 
 //trade result
@@ -281,10 +285,11 @@ trade_result_input_t      create_trade_result_input(int sf, int specificIdx)
     return (atri);
 };
 
-void trade_result_input_t::print(){
-	  printf("\ntrade_result_input\n");
-	  printf(" %ld\n", _trade_id);
-	  printf(" %lf\n", _trade_price);
+void trade_result_input_t::print()
+{
+    printf("\ntrade_result_input\n");
+    printf("trade_id: %ld\n", _trade_id);
+    printf("trade_price: %.2f\n", _trade_price);
 }
 
 
@@ -308,14 +313,15 @@ market_watch_input_t      create_market_watch_input(int sf, int specificIdx)
     return (amwi);
 };
 
-void market_watch_input_t::print(){
-	  printf("\nmarket_watch_input\n");
-	  printf(" %ld\n", _acct_id);
-	  printf(" %ld\n", _cust_id);
-	  printf(" %ld\n", _starting_co_id);
-	  printf(" %ld\n", _ending_co_id);
-	  printf(" %s\n", _industry_name); 
-	  printf(" %ld (%s)\n", _start_date,  ctime((const time_t*)&_start_date));
+void market_watch_input_t::print()
+{
+    printf("\nmarket_watch_input\n");
+    printf("acct_id: %ld\n", _acct_id);
+    printf("cust_id: %ld\n", _cust_id);
+    printf("starting_co_id: %ld\n", _starting_co_id);
+    printf("ending_co_id: %ld\n", _ending_co_id);
+    printf("industry_name: %s\n", _industry_name); 
+    printf("start_date: %ld (%s)\n", _start_date,  ctime((const time_t*)&_start_date));
 }
 
 
@@ -334,12 +340,13 @@ security_detail_input_t   create_security_detail_input(int sf, int specificIdx)
 };
 
 
-void security_detail_input_t::print(){
-	  printf("\nsecurity_detail_input\n");
-	  printf(" %d\n", _access_lob_flag);
-	  printf(" %s\n", _symbol);
-	  printf(" %ld (%s)\n", _start_day,  ctime((const time_t*)&_start_day));
-	  printf(" %d\n", _max_rows_to_return);
+void security_detail_input_t::print()
+{
+    printf("\nsecurity_detail_input\n");
+    printf("access_lob_flag: %d\n", _access_lob_flag);
+    printf("symbol: %s\n", _symbol);
+    printf("start_day: %ld (%s)\n", _start_day,  ctime((const time_t*)&_start_day));
+    printf("max_rows_to_return: %d\n", _max_rows_to_return);
 }
 
 
@@ -354,9 +361,10 @@ trade_status_input_t      create_trade_status_input(int sf, int specificIdx)
 };
 
 
-void trade_status_input_t::print(){
-	  printf("\ntrade_status_input\n");
-	  printf(" %ld\n",_acct_id);
+void trade_status_input_t::print()
+{
+    printf("\ntrade_status_input\n");
+    printf("acct_id: %ld\n",_acct_id);
 }
 
 //trade update
@@ -382,25 +390,26 @@ trade_update_input_t      create_trade_update_input(int sf, int specificIdx)
     return (atui);
 };
 
-void trade_update_input_t::print(){
-	  printf("\ntrade_update_input\n");
-	  printf(" %ld\n", _acct_id);
-	  printf(" %d\n", _frame_to_execute);
-	  printf(" %d\n",_max_trades);
-	  printf(" %d\n", _max_updates);
-
-	  printf(" %s\n", _symbol);
-	  printf(" %ld (%s)\n", _start_trade_dts,  ctime((const time_t*)&_start_trade_dts));
-	  printf(" %ld (%s)\n", _end_trade_dts,  ctime((const time_t*)&_end_trade_dts));
-	  for(int i=0; i<TradeUpdateFrame1MaxRows; i++) printf(" %ld\n", _trade_id[i]);
-	  printf(" %ld\n", _max_acct_id);
+void trade_update_input_t::print()
+{
+    printf("\ntrade_update_input\n");
+    printf("acct_id: %ld\n", _acct_id);
+    printf("frame_to_execute: %d\n", _frame_to_execute);
+    printf("max_trades: %d\n",_max_trades);
+    printf("max_updates: %d\n", _max_updates);
+    printf("symbol: %s\n", _symbol);
+    printf("start_trade_dts: %ld (%s)\n", _start_trade_dts,  ctime((const time_t*)&_start_trade_dts));
+    printf("end_trade_dts: %ld (%s)\n", _end_trade_dts,  ctime((const time_t*)&_end_trade_dts));
+    for(int i=0; i<TradeUpdateFrame1MaxRows; i++) {
+	printf("trade_id[%d]: %ld\n", i, _trade_id[i]);
+    }
+    printf("max_acct_id: %ld\n", _max_acct_id);
 }
 
 
 //market feed
 market_feed_input_t create_market_feed_input(int sf, int specificIdx) 
 { 
-    
     market_feed_input_t amfi;
     TMarketFeedTxnInput* input= MarketFeedInputBuffer->get();    
     if(input!=NULL) {
@@ -420,14 +429,20 @@ market_feed_input_t create_market_feed_input(int sf, int specificIdx)
 
 void market_feed_input_t::print()
 {
-      	  printf("\nmarket_feed_input\n");
-	  for(int i=0; i<max_feed_len; i++ ) printf(" %ld ", _price_quote[i]); printf("\n");
-	  printf(" %s\n", _status_submitted);
-	  for(int i=0; i<max_feed_len; i++ ) printf(" %s ", _symbol[i]); printf("\n");
-	  for(int i=0; i<max_feed_len; i++ ) printf(" %d ", _trade_qty[i]);
-	  printf(" %s\n", _type_limit_buy);
-	  printf(" %s\n", _type_limit_sell);
-	  printf(" %s\n", _type_stop_loss);
+    printf("\nmarket_feed_input\n");
+    for(int i=0; i<max_feed_len; i++ ) {
+	printf("price_quote[%d]: %.2f\n", i, _price_quote[i]);
+    }
+    printf("status_submitted: %s\n", _status_submitted);
+    for(int i=0; i<max_feed_len; i++ ) {
+	printf("symbol[%d]: %s \n", i, _symbol[i]);
+    }
+    for(int i=0; i<max_feed_len; i++ ) {
+	printf("trade_qty[%d]: %d \n", i, _trade_qty[i]);
+    }
+    printf("type_limit_buy: %s\n", _type_limit_buy);
+    printf("type_limit_sell: %s\n", _type_limit_sell);
+    printf("type_stop_loss: %s\n", _type_stop_loss);
 }
 
 
@@ -449,16 +464,17 @@ data_maintenance_input_t  create_data_maintenance_input(int sf, int specificIdx)
     return (admi);
 };
 
-void data_maintenance_input_t::print(){
-	  printf("\ndata_maintenance_input\n");
-	  printf(" %ld\n", _acct_id);
-	  printf(" %ld\n", _c_id);
-	  printf(" %ld\n", _co_id);
-	  printf(" %d \n", _day_of_month);
-	  printf(" %s\n", _symbol);
-	  printf(" %s\n", _table_name);
-	  printf(" %s\n", _tx_id);
-	  printf(" %d\n", _vol_incr);
+void data_maintenance_input_t::print()
+{
+    printf("\ndata_maintenance_input\n");
+    printf("acct_id: %ld\n", _acct_id);
+    printf("c_id: %ld\n", _c_id);
+    printf("co_id: %ld\n", _co_id);
+    printf("day_of_month: %d \n", _day_of_month);
+    printf("symbol: %s\n", _symbol);
+    printf("table_name: %s\n", _table_name);
+    printf("tx_id: %s\n", _tx_id);
+    printf("vol_incr %d\n", _vol_incr);
 }
 
 
@@ -476,12 +492,13 @@ trade_cleanup_input_t     create_trade_cleanup_input(int sf, int specificIdx)
     return (atci);
 }
 
-void trade_cleanup_input_t::print(){
-	  printf("\ntrade_cleanup_input\n");
-	  printf(" %ld \n", _trade_id);
-	  printf(" %s\n", _st_canceled_id);
-	  printf(" %s\n", _st_pending_id);
-	  printf(" %s\n", _st_submitted_id);
+void trade_cleanup_input_t::print()
+{
+    printf("\ntrade_cleanup_input\n");
+    printf("trade_id: %ld \n", _trade_id);
+    printf("st_canceled_id: %s\n", _st_canceled_id);
+    printf("st_pending_id: %s\n", _st_pending_id);
+    printf("st_submitted_id: %s\n", _st_submitted_id);
 }
 
 EXIT_NAMESPACE(tpce);

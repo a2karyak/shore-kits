@@ -45,9 +45,6 @@
 using namespace shore;
 using namespace TPCE;
 
-//#define TRACE_TRX_FLOW TRACE_ALWAYS
-//#define TRACE_TRX_RESULT TRACE_ALWAYS
-
 ENTER_NAMESPACE(tpce);
 
 extern unsigned long lastTradeId;
@@ -59,7 +56,7 @@ extern unsigned long lastTradeId;
  ********************************************************************/
 
 w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoin)
-{
+{    
     // ensure a valid environment
     assert (_pssm);
     assert (_initialized);
@@ -207,7 +204,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 	    prbrok->get_value(2, broker_name, 50);
 	}
 	//END FRAME1
-
+	
 
 	//BEGIN FRAME2
 	{
@@ -271,6 +268,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 	strcpy(symbol, ptoin._symbol);
 	{
 	    TIdent 	co_id;
+	    char co_name[61]; //60
 	    char	exch_id[7]; //6
 
 	    double 	cust_assets;
@@ -303,7 +301,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 		if (e.is_error()) { goto done; }
 
 		prcompany->get_value(0, co_id);
-
+		
 		/**
 		 * 	select
 		 *		exch_id = S_EX_ID,
@@ -333,7 +331,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 		    prsecurity->get_value(4, exch_id, 7);
 		    prsecurity->get_value(3, s_name, 71);				
 		    prsecurity->get_value(0, symbol, 16);
-
+		    
 		    TRACE( TRACE_TRX_FLOW, "App: %d TO:s-iter-next \n", xct_id);
 		    e = s_iter->next(_pssm, eof, *prsecurity);
 		    if (e.is_error()) { goto done; }
@@ -372,7 +370,6 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 		e =  _pcompany_man->co_index_probe(_pssm, prcompany, co_id);
 		if(e.is_error()) { goto done; }
 
-		char co_name[61]; //60
 		prcompany->get_value(2, co_name, 61);
 	    }
 
@@ -455,7 +452,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 			{  
 			    index_scan_iter_impl<holding_t>* tmp_h_iter;
 			    TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-by-idx2 \n", xct_id);
-			    e = _pholding_man->h_get_iter_by_index2(_pssm, tmp_h_iter, prholding, lowrep, highrep, ptoin._acct_id, symbol);
+			    e = _pholding_man->h_get_iter_by_index2(_pssm, tmp_h_iter, prholding,
+								    lowrep, highrep, ptoin._acct_id, symbol);
 			    if (e.is_error()) { goto done; }
 			    h_iter = tmp_h_iter;
 			}
@@ -533,7 +531,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 			{
 			    index_scan_iter_impl<holding_t>* tmp_h_iter;
 			    TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-by-idx2 \n", xct_id);
-			    e = _pholding_man->h_get_iter_by_index2(_pssm, tmp_h_iter, prholding, lowrep, highrep, ptoin._acct_id, symbol);
+			    e = _pholding_man->h_get_iter_by_index2(_pssm, tmp_h_iter, prholding,
+								    lowrep, highrep, ptoin._acct_id, symbol);
 			    if (e.is_error()) { goto done; }
 			    h_iter = tmp_h_iter;
 			}
@@ -583,7 +582,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 			{
 			    index_scan_iter_impl<holding_t>* tmp_h_iter;
 			    TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-by-idx2 (%ld) (%s) \n", xct_id, ptoin._acct_id, symbol);
-			    e = _pholding_man->h_get_iter_by_index2(_pssm, tmp_h_iter, prholding, lowrep, highrep, ptoin._acct_id, symbol);
+			    e = _pholding_man->h_get_iter_by_index2(_pssm, tmp_h_iter, prholding,
+								    lowrep, highrep, ptoin._acct_id, symbol);
 			    if (e.is_error()) { goto done; }
 			    h_iter = tmp_h_iter;
 			}
@@ -665,7 +665,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 			{
 			    index_scan_iter_impl<holding_t>* tmp_h_iter;
 			    TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-by-idx2 \n", xct_id);
-			    e = _pholding_man->h_get_iter_by_index2(_pssm, tmp_h_iter, prholding, lowrep, highrep, ptoin._acct_id, symbol);
+			    e = _pholding_man->h_get_iter_by_index2(_pssm, tmp_h_iter, prholding,
+								    lowrep, highrep, ptoin._acct_id, symbol);
 			    if (e.is_error()) { goto done; }
 			    h_iter = tmp_h_iter;
 			}
@@ -749,6 +750,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 		}
 		tax_amount = (sell_value - buy_value) * tax_rates;
 	    }
+
 	    /**
 	     *
 	     *	select
@@ -766,8 +768,10 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 	    guard< index_scan_iter_impl<commission_rate_t> > cr_iter;
 	    {
 		index_scan_iter_impl<commission_rate_t>* tmp_cr_iter;
-		TRACE( TRACE_TRX_FLOW, "App: %d TR:cr-iter-by-idx (%d) (%s) (%s) (%d) \n", xct_id, cust_tier, ptoin._trade_type_id, exch_id, ptoin._trade_qty);
-		e = _pcommission_rate_man->cr_get_iter_by_index(_pssm, tmp_cr_iter, prcommrate, lowrep, highrep, cust_tier, ptoin._trade_type_id, exch_id, ptoin._trade_qty);
+		TRACE( TRACE_TRX_FLOW, "App: %d TR:cr-iter-by-idx (%d) (%s) (%s) (%d) \n",
+		       xct_id, cust_tier, ptoin._trade_type_id, exch_id, ptoin._trade_qty);
+		e = _pcommission_rate_man->cr_get_iter_by_index(_pssm, tmp_cr_iter, prcommrate, lowrep, highrep,
+								cust_tier, ptoin._trade_type_id, exch_id, ptoin._trade_qty);
 		if (e.is_error()) { goto done; }
 		cr_iter = tmp_cr_iter;
 	    }
@@ -788,6 +792,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 		e = cr_iter->next(_pssm, eof, *prcommrate);
 		if (e.is_error()) { goto done; }
 	    }
+
 	    /**
 	     *
 	     *	select
@@ -804,7 +809,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 	    if (e.is_error()) { goto done; }
 		
 	    prcharge->get_value(2, charge_amount);
-
+ 
 	    double acct_bal;
 	    double hold_assets = 0;
 	    cust_assets = 0;
@@ -840,7 +845,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 		{
 		    index_scan_iter_impl<holding_summary_t>* tmp_hs_iter;
 		    TRACE( TRACE_TRX_FLOW, "App: %d TO:hs-iter-by-idx (%ld) \n", xct_id, ptoin._acct_id);
-		    e = _pholding_summary_man->hs_get_iter_by_index(_pssm, tmp_hs_iter, prholdingsummary, lowrep, highrep, ptoin._acct_id, true);
+		    e = _pholding_summary_man->hs_get_iter_by_index(_pssm, tmp_hs_iter, prholdingsummary,
+								    lowrep, highrep, ptoin._acct_id, true);
 		    if (e.is_error()) { goto done; }
 		    hs_iter = tmp_hs_iter;
 		}
@@ -867,14 +873,6 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 		    if (e.is_error()) { goto done; }
 		}
 
-		/*
-		 *  if(hold_assets == 0){
-		 *     cust_assets = acct_bal;
-		 *  }
-		 *  else{
-		 *     cust_assets = hold_assets + acct_bal;
-		 *  }
-		 */
 		cust_assets = hold_assets + acct_bal;
 	    }
 	}
@@ -946,7 +944,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 	    TRACE( TRACE_TRX_FLOW, "App: %d TO:t-add-tuple (%ld) \n", xct_id, trade_id);
 	    e = _ptrade_man->add_tuple(_pssm, prtrade);
 	    if (e.is_error()) { goto done; }
-	    
+
 	    if(!type_is_market){
 
 		/**
@@ -998,7 +996,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 	    if (e.is_error()) { goto done; }
 	}
 	//END FRAME4
-
+	    
 	//BEGIN FRAME5
 	{
 	    if(ptoin._roll_it_back){			
@@ -1051,13 +1049,6 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 #endif
 
  done:
-
-#ifdef TESTING_TPCE           
-    int exec=++trxs_cnt_executed[XCT_TPCE_TRADE_ORDER - XCT_TPCE_MIX - 1];             
-    if(e.is_error()) trxs_cnt_failed[XCT_TPCE_TRADE_ORDER - XCT_TPCE_MIX-1]++;
-    if(exec%100==99) printf("TRADE_ORDER executed: %d, failed: %d\n", exec, trxs_cnt_failed[XCT_TPCE_TRADE_ORDER - XCT_TPCE_MIX-1]);          
-#endif
-           
     // return the tuples to the cache
     _pcustomer_account_man->give_tuple(prcustacct);
     _pcustomer_man->give_tuple(prcust);
@@ -1077,8 +1068,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
     _ptaxrate_man->give_tuple(prtaxrate);
     _pcommission_rate_man->give_tuple(prcommrate);
     if (req!=NULL) delete req;
-    return (e);
 
+    return (e);
 }
 
 EXIT_NAMESPACE(tpce);    

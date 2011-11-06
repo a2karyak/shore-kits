@@ -45,9 +45,6 @@
 using namespace shore;
 using namespace TPCE;
 
-//#define TRACE_TRX_FLOW TRACE_ALWAYS
-//#define TRACE_TRX_RESULT TRACE_ALWAYS
-
 ENTER_NAMESPACE(tpce);
 
 /******************************************************************** 
@@ -508,17 +505,9 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
     rtradehist.print_tuple();
     rstatustype.print_tuple();
     rtrade.print_tuple();
-
 #endif
 
  done:
-
-#ifdef TESTING_TPCE           
-    int exec=++trxs_cnt_executed[XCT_TPCE_CUSTOMER_POSITION - XCT_TPCE_MIX - 1];
-    if(e.is_error()) trxs_cnt_failed[XCT_TPCE_CUSTOMER_POSITION - XCT_TPCE_MIX-1]++;
-    if(exec%100==99) printf("CUSTOMER_POSITION executed: %d, failed: %d\n", exec, trxs_cnt_failed[XCT_TPCE_CUSTOMER_POSITION - XCT_TPCE_MIX-1]);
-#endif
-
     // return the tuples to the cache
     _pcustomer_man->give_tuple(prcust);
     _pcustomer_account_man->give_tuple(prcustacct);
@@ -527,6 +516,7 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
     _ptrade_history_man->give_tuple(prtradehist);
     _pstatus_type_man->give_tuple(prstatustype);
     _ptrade_man->give_tuple(prtrade);
+
     return (e);
 }
 

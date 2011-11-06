@@ -45,9 +45,6 @@
 using namespace shore;
 using namespace TPCE;
 
-//#define TRACE_TRX_FLOW TRACE_ALWAYS
-//#define TRACE_TRX_RESULT TRACE_ALWAYS
-
 ENTER_NAMESPACE(tpce);
 
 /******************************************************************** 
@@ -107,7 +104,8 @@ w_rc_t ShoreTPCEEnv::xct_market_feed(const int xct_id, market_feed_input_t& pmfi
 
 	now_dts = time(NULL);
 
-	for(rows_updated = 0; rows_updated < max_feed_len; rows_updated++){  //the transaction should formally start here!
+	//the transaction should formally start here!
+	for(rows_updated = 0; rows_updated < max_feed_len; rows_updated++) {
 	    /**
 	       update
 	       LAST_TRADE
@@ -120,7 +118,8 @@ w_rc_t ShoreTPCEEnv::xct_market_feed(const int xct_id, market_feed_input_t& pmfi
 	    */
 
 	    TRACE( TRACE_TRX_FLOW, "App: %d MF:lt-update (%s) (%d) (%d) (%ld) \n",
-		   xct_id, pmfin._symbol[rows_updated], pmfin._price_quote[rows_updated], pmfin._trade_qty[rows_updated], now_dts);
+		   xct_id, pmfin._symbol[rows_updated], pmfin._price_quote[rows_updated],
+		   pmfin._trade_qty[rows_updated], now_dts);
 	    e = _plast_trade_man->lt_update_by_index(_pssm, prlasttrade,
 						     pmfin._symbol[rows_updated], pmfin._price_quote[rows_updated],
 						     pmfin._trade_qty[rows_updated], now_dts);
@@ -144,7 +143,7 @@ w_rc_t ShoreTPCEEnv::xct_market_feed(const int xct_id, market_feed_input_t& pmfi
 	       TR_BID_PRICE >= price_quote[i])
 	       )
 	    */
-
+	    
 	    // PIN: why doing scan?? create index on symbol!
 	    trade_request_man_impl::table_iter* tr_iter;
 	    TRACE( TRACE_TRX_FLOW, "App: %d MF:tr-get-table-iter \n", xct_id);
@@ -165,62 +164,64 @@ w_rc_t ShoreTPCEEnv::xct_market_feed(const int xct_id, market_feed_input_t& pmfi
 
 		if(strcmp(tr_s_symb, pmfin._symbol[rows_updated]) == 0 &&
 		   (
-		    (strcmp(tr_tt_id, pmfin._type_stop_loss) == 0 && (tr_bid_price >= pmfin._price_quote[rows_updated])) ||
-		    (strcmp(tr_tt_id, pmfin._type_limit_sell) == 0 && (tr_bid_price <= pmfin._price_quote[rows_updated])) ||
-		    (strcmp(tr_tt_id, pmfin._type_limit_buy)== 0 && (tr_bid_price >= pmfin._price_quote[rows_updated]))
-		    ))
-		    {
-			prtradereq->get_value(0, req_trade_id);
-			prtradereq->get_value(4, req_price_quote);
-			prtradereq->get_value(1, req_trade_type, 4);
-			prtradereq->get_value(3, req_trade_qty);
-
-
-
-
-			/**
-			   update
-			   TRADE
-			   set
-			   T_DTS   = now_dts,
-			   T_ST_ID = status_submitted
-			   where
-			   T_ID = req_trade_id
-			*/
-
-			TRACE( TRACE_TRX_FLOW, "App: %d MF:t-update (%ld) (%ld) (%s) \n", xct_id, req_trade_id, now_dts, pmfin._status_submitted);
-			e = _ptrade_man->t_update_dts_stdid_by_index(_pssm, prtrade, req_trade_id, now_dts, pmfin._status_submitted);
-			if (e.is_error()) { goto done; }
-
-			/**
-			   delete
-			   TRADE_REQUEST
-			   where
-			   current of request_list
-			*/
-			TRACE( TRACE_TRX_FLOW, "App: %d MF:tr-delete- \n", xct_id);
-			e = _ptrade_request_man->delete_tuple(_pssm, prtradereq);
-			if (e.is_error()) {  goto done; }
-			prtradereq = _ptrade_request_man->get_tuple();
-			assert (prtradereq);
-			prtradereq->_rep = &areprow;
-
-			/**
-			   insert into
-			   TRADE_HISTORY
-			   values (
-			   TH_T_ID = req_trade_id,
-			   TH_DTS = now_dts,
-			   TH_ST_ID = status_submitted)
-			*/
-			prtradehist->set_value(0, req_trade_id);
-			prtradehist->set_value(1, now_dts);
-			prtradehist->set_value(2, pmfin._status_submitted);
-
-			TRACE( TRACE_TRX_FLOW, "App: %d MF:th-add-tuple (%ld) (%ld) (%s) \n", xct_id, req_trade_id, now_dts, pmfin._status_submitted);
-			e = _ptrade_history_man->add_tuple(_pssm, prtradehist);
-			if (e.is_error()) {goto done; }
-		    }
+		    (strcmp(tr_tt_id, pmfin._type_stop_loss) == 0 &&
+		     (tr_bid_price >= pmfin._price_quote[rows_updated])) ||
+		    (strcmp(tr_tt_id, pmfin._type_limit_sell) == 0 &&
+		     (tr_bid_price <= pmfin._price_quote[rows_updated])) ||
+		    (strcmp(tr_tt_id, pmfin._type_limit_buy)== 0 &&
+		     (tr_bid_price >= pmfin._price_quote[rows_updated]))
+		    )) {
+		    prtradereq->get_value(0, req_trade_id);
+		    prtradereq->get_value(4, req_price_quote);
+		    prtradereq->get_value(1, req_trade_type, 4);
+		    prtradereq->get_value(3, req_trade_qty);
+		    
+		    /**
+		       update
+		       TRADE
+		       set
+		       T_DTS   = now_dts,
+		       T_ST_ID = status_submitted
+		       where
+		       T_ID = req_trade_id
+		    */
+		    
+		    TRACE( TRACE_TRX_FLOW, "App: %d MF:t-update (%ld) (%ld) (%s) \n",
+			   xct_id, req_trade_id, now_dts, pmfin._status_submitted);
+		    e = _ptrade_man->t_update_dts_stdid_by_index(_pssm, prtrade, req_trade_id,
+								 now_dts, pmfin._status_submitted);
+		    if (e.is_error()) { goto done; }
+		    
+		    /**
+		       delete
+		       TRADE_REQUEST
+		       where
+		       current of request_list
+		    */
+		    TRACE( TRACE_TRX_FLOW, "App: %d MF:tr-delete- \n", xct_id);
+		    e = _ptrade_request_man->delete_tuple(_pssm, prtradereq);
+		    if (e.is_error()) {  goto done; }
+		    prtradereq = _ptrade_request_man->get_tuple();
+		    assert (prtradereq);
+		    prtradereq->_rep = &areprow;
+		    
+		    /**
+		       insert into
+		       TRADE_HISTORY
+		       values (
+		       TH_T_ID = req_trade_id,
+		       TH_DTS = now_dts,
+		       TH_ST_ID = status_submitted)
+		    */
+		    prtradehist->set_value(0, req_trade_id);
+		    prtradehist->set_value(1, now_dts);
+		    prtradehist->set_value(2, pmfin._status_submitted);
+		    
+		    TRACE( TRACE_TRX_FLOW, "App: %d MF:th-add-tuple (%ld) (%ld) (%s) \n",
+			   xct_id, req_trade_id, now_dts, pmfin._status_submitted);
+		    e = _ptrade_history_man->add_tuple(_pssm, prtradehist);
+		    if (e.is_error()) {goto done; }
+		}
 		TRACE( TRACE_TRX_FLOW, "App: %d MF:tr-iter-next \n", xct_id);
 		e = tr_iter->next(_pssm, eof, *prtradereq);
 		if (e.is_error()) { goto done; }
@@ -250,21 +251,9 @@ w_rc_t ShoreTPCEEnv::xct_market_feed(const int xct_id, market_feed_input_t& pmfi
     rtradereq.print_tuple();
     rtrade.print_tuple();
     rtradehist.print_tuple();
-
 #endif
 
  done:
-
-#ifdef TESTING_TPCE           
-    int exec=++trxs_cnt_executed[XCT_TPCE_MARKET_FEED - XCT_TPCE_MIX - 1];
-    if(e.is_error()) trxs_cnt_failed[XCT_TPCE_MARKET_FEED - XCT_TPCE_MIX-1]++;
-    if(exec%100==99) printf("MARKET_FEED executed: %d, failed: %d\n", exec, trxs_cnt_failed[XCT_TPCE_MARKET_FEED - XCT_TPCE_MIX-1]);
-#endif
-
-
-
-
-
     // return the tuples to the cache
     _plast_trade_man->give_tuple(prlasttrade);
     _ptrade_request_man->give_tuple(prtradereq);

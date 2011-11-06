@@ -45,9 +45,6 @@
 using namespace shore;
 using namespace TPCE;
 
-//#define TRACE_TRX_FLOW TRACE_ALWAYS
-//#define TRACE_TRX_RESULT TRACE_ALWAYS
-
 ENTER_NAMESPACE(tpce);
 
 /******************************************************************** 
@@ -219,14 +216,14 @@ w_rc_t ShoreTPCEEnv::xct_trade_status(const int xct_id, trade_status_input_t& pt
 	    prstatustype->get_value(1, st_name, 11);
 	    rsb.set_value(2, st_name);
 
-	    char tt_name[13]; //12
-	    prstatustype->get_value(1, tt_name, 13);
-	    rsb.set_value(3, tt_name);
-
 	    
 	    TRACE( TRACE_TRX_FLOW, "App: %d TS:tt-idx-probe (%s) \n", xct_id, t_tt_id);
 	    e =  _ptrade_type_man->tt_index_probe(_pssm, prtradetype, t_tt_id);
 	    if (e.is_error()) { goto done; }
+
+	    char tt_name[13]; //12
+	    prtradetype->get_value(1, tt_name, 13);
+	    rsb.set_value(3, tt_name);
 
 
 	    TRACE( TRACE_TRX_FLOW, "App: %d TS:s-idx-probe (%s) \n", xct_id, t_s_symb);
@@ -280,7 +277,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_status(const int xct_id, trade_status_input_t& pt
 	    if (e.is_error()) {  goto done; }
 	}
 	assert(i == max_trade_status_len); 		
-
+    
 	/**
 	   select
 	   cust_l_name = C_L_NAME,
@@ -320,7 +317,6 @@ w_rc_t ShoreTPCEEnv::xct_trade_status(const int xct_id, trade_status_input_t& pt
 	prcustomer->get_value(3, cust_l_name, 26);
 	prcustomer->get_value(4, cust_f_name, 21);
 	prbroker->get_value(2, broker_name, 50);
-
     }
 
 #ifdef PRINT_TRX_RESULTS
@@ -334,20 +330,10 @@ w_rc_t ShoreTPCEEnv::xct_trade_status(const int xct_id, trade_status_input_t& pt
     rstatustype.print_tuple();
     rtrade.print_tuple();
     rtradetype.print_tuple();
-
 #endif
 
  done:
-
-#ifdef TESTING_TPCE           
-    int exec=++trxs_cnt_executed[XCT_TPCE_TRADE_STATUS - XCT_TPCE_MIX - 1];
-    if(e.is_error()) trxs_cnt_failed[XCT_TPCE_TRADE_STATUS - XCT_TPCE_MIX-1]++;
-    if(exec%100==99) printf("TRADE_STATUS executed: %d, failed: %d\n", exec, trxs_cnt_failed[XCT_TPCE_TRADE_STATUS - XCT_TPCE_MIX-1]);
-#endif
-
-
     // return the tuples to the cache
-
     _pbroker_man->give_tuple(prbroker);
     _pcustomer_man->give_tuple(prcustomer);
     _pcustomer_account_man->give_tuple(prcustacct);

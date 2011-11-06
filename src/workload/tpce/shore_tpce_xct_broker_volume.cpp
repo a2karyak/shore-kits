@@ -45,9 +45,6 @@
 using namespace shore;
 using namespace TPCE;
 
-//#define TRACE_TRX_FLOW TRACE_ALWAYS
-//#define TRACE_TRX_RESULT TRACE_ALWAYS
-
 ENTER_NAMESPACE(tpce);
 
 /******************************************************************** 
@@ -208,7 +205,8 @@ w_rc_t ShoreTPCEEnv::xct_broker_volume(const int xct_id, broker_volume_input_t& 
 			{
 			    index_scan_iter_impl<trade_request_t>* tmp_tr_iter;
 			    TRACE( TRACE_TRX_FLOW, "App: %d BV:tr-get-iter-by-idx2 (%s) (%ld) \n", xct_id,  s_symb, b_id);
-			    e = _ptrade_request_man->tr_get_iter_by_index2(_pssm, tmp_tr_iter, prtradereq, lowrep, highrep, s_symb, b_id);
+			    e = _ptrade_request_man->tr_get_iter_by_index2(_pssm, tmp_tr_iter, prtradereq,
+									   lowrep, highrep, s_symb, b_id);
 			    if (e.is_error()) { goto done; }
 			    tr_iter = tmp_tr_iter;
 			}
@@ -289,19 +287,10 @@ w_rc_t ShoreTPCEEnv::xct_broker_volume(const int xct_id, broker_volume_input_t& 
     rsector.print_tuple();
     rsecurity.print_tuple();
     rtradereq.print_tuple();
-
 #endif
 
  done:
-    
-#ifdef TESTING_TPCE           
-    int exec=++trxs_cnt_executed[XCT_TPCE_BROKER_VOLUME - XCT_TPCE_MIX - 1];
-    if(e.is_error()) trxs_cnt_failed[XCT_TPCE_BROKER_VOLUME - XCT_TPCE_MIX-1]++;
-    if(exec%100==99) printf("BROKER_VOLUME executed: %d, failed: %d\n", exec, trxs_cnt_failed[XCT_TPCE_BROKER_VOLUME - XCT_TPCE_MIX-1]);
-#endif
-
     // return the tuples to the cache
-
     _pbroker_man->give_tuple(prbroker);
     _pcompany_man->give_tuple(prcompany);
     _pindustry_man->give_tuple(prindustry);

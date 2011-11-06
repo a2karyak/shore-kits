@@ -195,13 +195,13 @@ struct trade_lookup_input_t
 	myTime	_start_trade_dts; 
 	myTime	_end_trade_dts; 	
 	char	_symbol[16];		
-	TIdent	_trade_id[30];		
+	TIdent	_trade_id[20];		
 	
 	void print();
 	// Construction/Destructions
 	trade_lookup_input_t()
 		:_acct_id(0), _end_trade_dts(0), _frame_to_execute(0), 
-			_max_acct_id(0), _max_trades(0), _start_trade_dts(0)
+		 _max_acct_id(0), _max_trades(0), _start_trade_dts(0)
 	{	
 		memset(_symbol, '\0', 16);
 	}; 

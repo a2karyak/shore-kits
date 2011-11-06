@@ -182,6 +182,8 @@ void  field_value_t::print_value(ostream & os)
 	os << _value._int;
 	break;
     case SQL_FLOAT:
+	os << fixed;
+	os.precision(2);
 	os << _value._float;
 	break;
     case SQL_LONG:
@@ -194,11 +196,11 @@ void  field_value_t::print_value(ostream & os)
 	break;
     case SQL_VARCHAR:
     case SQL_FIXCHAR:
-	os << "\"";
+	//os << "\"";
 	for (uint i=0; i<_real_size; i++) {
 	    if (_value._string[i]) os << _value._string[i];
 	}
-	os << "\"";
+	//os << "\"";
 	break;
     case SQL_NUMERIC:
     case SQL_SNUMERIC: {
