@@ -339,21 +339,6 @@ public:
          */        
     }
 
-    /** In case we know the bounds of the iscan a-priori */
-    index_scan_iter_impl(ss_m* db,
-                         index_desc_t* pindex,
-                         table_manager* pmanager,
-                         lock_mode_t alm,
-                         bool need_tuple,
-                         scan_index_i::cmp_t cmp1, const cvec_t& bound1,
-                         scan_index_i::cmp_t cmp2, const cvec_t& bound2) 
-        : index_iter(db, pindex, alm, true), 
-          _pmanager(pmanager), _need_tuple(need_tuple)
-    { 
-        assert (_pmanager);
-        W_COERCE(open_scan(db, cmp1, bound1, cmp2, bound2));
-    }
-        
     ~index_scan_iter_impl() { 
         index_iter::close_scan(); 
     };

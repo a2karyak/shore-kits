@@ -1679,6 +1679,94 @@ w_rc_t table_man_t::read_tuple(table_tuple* ptuple,
 
 
 
+/* ---------------- */
+/* --- caching  --- */
+/* ---------------- */
+
+
+/********************************************************************* 
+ *
+ *  @fn:    fetch_table
+ *
+ *  @brief: Fetch all the pages of the table and its indexes to buffer pool
+ *
+ *  @note:  This function should be called in the context of a trx.
+ *
+ *********************************************************************/
+
+w_rc_t table_man_t::fetch_table(ss_m* db, lock_mode_t alm)
+{
+    assert (db);
+    assert (_ptable);
+
+    bool eof = false;
+    int counter = -1;
+    pin_i* handle;
+
+    W_DO(db->begin_xct());
+	
+    // 1. scan the table
+    W_DO(_ptable->check_fid(db));
+    bool bIgnoreLatches = (_ptable->get_pd() & (PD_MRBT_LEAF | PD_MRBT_PART) ? true : false);
+    scan_file_i t_scan(_ptable->fid(), ss_m::t_cc_record, false, alm, bIgnoreLatches);
+    while(!eof) {
+	W_DO(t_scan.next_page(handle, 0, eof));
+	counter++;
+    }
+    TRACE( TRACE_ALWAYS, "%s:%d pages\n", _ptable->name(), counter);
+
+    // 2. scan the indexes
+    index_desc_t* index = _ptable->indexes();
+    int pnum = 0;
+    while (index) {
+	W_DO(index->check_fid(db));
+	for(int pnum = 0; pnum < index->get_partition_count(); pnum++) {
+	    scan_file_i if_scan(index->fid(pnum), ss_m::t_cc_record, false, alm, bIgnoreLatches);
+	    eof = false;
+	    counter = -1;
+	    while(!eof) {
+		W_DO(if_scan.next_page(handle, 0, eof));
+		counter++;
+	    }
+	    TRACE( TRACE_ALWAYS, "\t%s:%d pages (pnum: %d)\n", index->name(), counter, pnum);
+	}
+	index = index->next();
+    }
+
+    W_DO(db->commit_xct());
+	
+    return (RCOK);
+}
+
+
+
+
+/* ------------------- */
+/* --- db fetcher  --- */
+/* ------------------- */
+
+
+table_fetcher_t::table_fetcher_t(ShoreEnv* env)
+    : thread_t("DB_FETCHER"), _env(env)
+{
+}
+
+table_fetcher_t::~table_fetcher_t()
+{
+}
+
+void table_fetcher_t::work()
+{
+    assert(_env);
+    w_rc_t e = _env->db_fetch();
+    if(e.is_error()) {
+	cerr << "Error while fetching db!" << endl << e << endl;
+    }
+}
+
+
+
+
 /* ------------------- */
 /* --- db printer  --- */
 /* ------------------- */

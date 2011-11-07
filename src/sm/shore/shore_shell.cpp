@@ -768,6 +768,7 @@ int shore_shell_t::register_commands()
     REGISTER_CMD_PARAM(skew_cmd_t,_skewer,_env);
     REGISTER_CMD_PARAM(stats_verbose_cmd_t,_stats_verboser,_env);
     REGISTER_CMD_PARAM(db_print_cmd_t,_db_printer,_env);
+    REGISTER_CMD_PARAM(db_fetch_cmd_t,_db_fetch,_env);
 
     REGISTER_CMD_PARAM(log_cmd_t,_logger,_env);
     REGISTER_CMD_PARAM(asynch_cmd_t,_asyncher,_env);
@@ -1236,6 +1237,39 @@ void db_print_cmd_t::usage(void)
 string db_print_cmd_t::desc() const 
 { 
     return (string("To print the contents of the current db tables into files.")); 
+}
+
+
+/*********************************************************************
+ *
+ *  "db_fetch" command
+ *
+ *  Fetches the pages of the current db tables and their indexes into the buffer pool
+ *
+ *********************************************************************/
+
+void db_fetch_cmd_t::setaliases() 
+{ 
+    _name = string("db_fetch"); 
+    _aliases.push_back("db_fetch"); 
+}
+
+int db_fetch_cmd_t::handle(const char* cmd)
+{
+    assert (_env);
+    _env->db_fetch_init();
+    return (SHELL_NEXT_CONTINUE);
+}
+
+
+void db_fetch_cmd_t::usage(void)
+{
+    TRACE( TRACE_ALWAYS, "DB_FETCH Usage:\n\n*** db_fetch\n\n");
+}
+
+string db_fetch_cmd_t::desc() const 
+{ 
+    return (string("To fetch  the pages of the current db tables and their indexes into the buffer pool.")); 
 }
 
 

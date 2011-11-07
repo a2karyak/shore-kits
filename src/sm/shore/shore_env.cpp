@@ -1296,4 +1296,21 @@ void ShoreEnv::db_print_init(int num_lines)
     delete (db_printer);
 }
 
+
+/****************************************************************** 
+ *
+ *  @fn:    db_fetch_init
+ *
+ *  @brief: Starts the db fetcher thread and then deletes it
+ *
+ ******************************************************************/
+
+void ShoreEnv::db_fetch_init()
+{
+    table_fetcher_t* db_fetcher = new table_fetcher_t(this);
+    db_fetcher->fork();
+    db_fetcher->join();
+    delete (db_fetcher);
+}
+
 EXIT_NAMESPACE(shore);

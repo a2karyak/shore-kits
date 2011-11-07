@@ -633,9 +633,13 @@ public:
     virtual void reset_skew();
     virtual void start_load_imbalance();
 
-    // printing the current db to files
+    // print the current db to files
     virtual void db_print_init(int num_lines);
     virtual w_rc_t db_print(int num_lines) { return(RCOK); }
+
+    // fetch the current db to buffer pool
+    virtual void db_fetch_init();
+    virtual w_rc_t db_fetch() { return(RCOK); }
     
     // Environment workers
     uint upd_worker_cnt();

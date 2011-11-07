@@ -501,7 +501,15 @@ public:
      * @note: PIN: right now it prints to files,
      *             with slight modification it can print to the screen as well
      */
-    virtual w_rc_t print_table(ss_m* db, int num_lines)=0; 
+    virtual w_rc_t print_table(ss_m* db, int num_lines)=0;
+
+
+    /* --------------- */
+    /* --- caching --- */
+    /* --------------- */
+    
+    /* fetch the pages of the table and its indexes to buffer pool */
+    virtual w_rc_t fetch_table(ss_m* db, lock_mode_t alm = SH); 
 
 
     /* ---------------------------------------------------------------
@@ -701,6 +709,34 @@ public:
     void work();
     
 }; // EOF: table_printer_t
+
+
+
+
+
+
+
+/* ---------------------------------------------------------------
+ *
+ * @class: table_fetcher_t
+ *
+ * @brief: Thread to fetch the pages of the table and its indexes
+ *
+ * --------------------------------------------------------------- */
+
+class table_fetcher_t : public thread_t
+{
+private:
+    
+    ShoreEnv* _env;
+
+public:
+
+    table_fetcher_t(ShoreEnv* _env);
+    ~table_fetcher_t();
+    void work();
+    
+}; // EOF: table_fetcher_t
 
 
 EXIT_NAMESPACE(shore);

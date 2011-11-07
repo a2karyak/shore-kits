@@ -872,4 +872,58 @@ w_rc_t ShoreTPCEEnv::db_print(int lines)
 }
 
 
+/********************************************************************* 
+ *
+ *  @fn:   db_fetch
+ *
+ *  @brief: Prints the current tpce tables to files
+ *
+ *********************************************************************/ 
+
+w_rc_t ShoreTPCEEnv::db_fetch() 
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+
+    // fetch tables
+    W_DO(_paccount_permission_man->fetch_table(_pssm));    
+    W_DO(_pcustomer_man->fetch_table(_pssm));
+    W_DO(_pcustomer_account_man->fetch_table(_pssm));
+    W_DO(_pcustomer_taxrate_man->fetch_table(_pssm));
+    W_DO(_pholding_man->fetch_table(_pssm));
+    W_DO(_pholding_history_man->fetch_table(_pssm));
+    W_DO(_pholding_summary_man->fetch_table(_pssm));
+    W_DO(_pwatch_item_man->fetch_table(_pssm));
+    W_DO(_pwatch_list_man->fetch_table(_pssm));
+    W_DO(_pbroker_man->fetch_table(_pssm));
+    W_DO(_pcash_transaction_man->fetch_table(_pssm));
+    W_DO(_pcharge_man->fetch_table(_pssm));
+    W_DO(_pcommission_rate_man->fetch_table(_pssm));
+    W_DO(_psettlement_man->fetch_table(_pssm));
+    W_DO(_ptrade_man->fetch_table(_pssm));
+    W_DO(_ptrade_history_man->fetch_table(_pssm));
+    W_DO(_ptrade_request_man->fetch_table(_pssm));
+    W_DO(_ptrade_type_man->fetch_table(_pssm));
+    W_DO(_pcompany_man->fetch_table(_pssm));
+    W_DO(_pcompany_competitor_man->fetch_table(_pssm));
+    W_DO(_pdaily_market_man->fetch_table(_pssm));
+    W_DO(_pexchange_man->fetch_table(_pssm));
+    W_DO(_pfinancial_man->fetch_table(_pssm));
+    W_DO(_pindustry_man->fetch_table(_pssm));
+    W_DO(_plast_trade_man->fetch_table(_pssm));
+    W_DO(_pnews_item_man->fetch_table(_pssm));
+    W_DO(_pnews_xref_man->fetch_table(_pssm));
+    W_DO(_psector_man->fetch_table(_pssm));
+    W_DO(_psecurity_man->fetch_table(_pssm));
+    W_DO(_paddress_man->fetch_table(_pssm));
+    W_DO(_pstatus_type_man->fetch_table(_pssm));
+    W_DO(_ptaxrate_man->fetch_table(_pssm));
+    W_DO(_pzip_code_man->fetch_table(_pssm));
+
+    return (RCOK);
+}
+
+
 EXIT_NAMESPACE(tpce);
