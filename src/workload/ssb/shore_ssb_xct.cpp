@@ -53,7 +53,6 @@ using namespace dbgenssb;
 ENTER_NAMESPACE(ssb);
 
 
-
 /******************************************************************** 
  *
  * Thread-local SSB TRXS Stats
@@ -270,7 +269,7 @@ w_rc_t ShoreSSBEnv::_gen_one_date(const int id,
 		  ad.daynuminweek, ad.daynuminmonth, ad.daynuminyear, ad.monthnuminyear, ad.weeknuminyear, 
 		  ad.sellingseason, ad.slen, ad.lastdayinweekfl, ad.lastdayinmonthfl, ad.holidayfl, ad.weekdayfl);
 #endif
-
+           
     prda->set_value(0, (int)ad.datekey);
     prda->set_value(1, ad.date);
     prda->set_value(2, ad.dayofweek);
@@ -326,20 +325,19 @@ typedef struct
 
 #ifdef DO_PRINT_SSB_RECS
     if (id%100==0) {
-        TRACE( TRACE_ALWAYS, "%ld,%s,%s[len:%d],%s,[%d:]%s,[%d:]%s,%s\n", 
-               as.suppkey,as.name,as.address,as.alen,as.city,as.nation_key,
-               as.nation_name,as.region_key,as.region_name,as.phone); 
+        TRACE(TRACE_ALWAYS, "%ld,%s,%s[len:%d],%s,%s,[%d:]%s,%s\n",
+                as.suppkey, as.name, as.address, as.alen, as.city,
+                as.nation_name, as.region_key, as.region_name, as.phone); 
     }
 #endif
-
+           
     prsu->set_value(0, (int)as.suppkey);
     prsu->set_value(1, as.name);
     prsu->set_value(2, as.address);
     prsu->set_value(3, as.city);
-    prsu->set_value(4, (int)as.nation_key);
-    prsu->set_value(5, as.nation_name);
-    prsu->set_value(6, as.region_name);
-    prsu->set_value(7, as.phone);
+    prsu->set_value(4, as.nation_name);
+    prsu->set_value(5, as.region_name);
+    prsu->set_value(6, as.phone);
 
     e = _psupplier_man->add_tuple(_pssm, prsu);
 
@@ -379,23 +377,22 @@ typedef struct
 
 #ifdef DO_PRINT_SSB_RECS
     if (id%100==0) {
-        TRACE( TRACE_ALWAYS, "%ld,%s[len:%d],%s[len:%d],%s[len:%d],[%d:]%s(%d),[%d:]%s(%d),%s,%s\n", 
-	       ac.custkey,ac.name,strlen(ac.name),ac.address,strlen(ac.address),ac.city,strlen(ac.city),
-	       ac.nation_key, ac.nation_name, strlen(ac.nation_name),
-	       ac.region_key, ac.region_name, strlen(ac.region_name),
-	       ac.phone, ac.mktsegment); 
+        TRACE(TRACE_ALWAYS, "%ld,%s[len:%d],%s[len:%d],%s[len:%d],%s(%d),[%d:]%s(%d),%s,%s\n",
+                ac.custkey, ac.name, strlen(ac.name), ac.address, strlen(ac.address), ac.city, strlen(ac.city),
+                ac.nation_name, strlen(ac.nation_name),
+                ac.region_key, ac.region_name, strlen(ac.region_name),
+                ac.phone, ac.mktsegment); 
     }
 #endif
-
+     
     prcu->set_value(0, (int)ac.custkey);
     prcu->set_value(1, ac.name);
     prcu->set_value(2, ac.address);
     prcu->set_value(3, ac.city);
-    prcu->set_value(4, (int)ac.nation_key);
-    prcu->set_value(5, ac.nation_name);
-    prcu->set_value(6, ac.region_name);
-    prcu->set_value(7, ac.phone);
-    prcu->set_value(8, ac.mktsegment);
+    prcu->set_value(4, ac.nation_name);
+    prcu->set_value(5, ac.region_name);
+    prcu->set_value(6, ac.phone);
+    prcu->set_value(7, ac.mktsegment);
         
     e = _pcustomer_man->add_tuple(_pssm, prcu);
 
@@ -441,8 +438,9 @@ typedef struct
                ap.partkey,ap.name,ap.nlen,ap.mfgr,ap.category,ap.brand,ap.color,
                ap.clen,ap.type,ap.tlen,ap.size,ap.container); 
     }
+    
 #endif
-
+    
     prpa->set_value(0, (int)ap.partkey);
     prpa->set_value(1, ap.name);
     prpa->set_value(2, ap.mfgr);
@@ -464,9 +462,9 @@ w_rc_t ShoreSSBEnv::_gen_one_lineorder(const int id,
                                          rep_row_t& areprow)
 {    
     w_rc_t e = RCOK;
-    table_row_t*     prlo = _plineorder_man->get_tuple();
-    assert (prlo);
-    prlo->_rep = &areprow;
+//    table_row_t*     prlo = _plineorder_man->get_tuple();
+//    assert (prlo);
+//    prlo->_rep = &areprow;
 
     dbgenssb::order_t o;
     
@@ -530,12 +528,16 @@ if (id%100==0)
 		       o.lineorders[i].shipmode);
 	    }
 
-
     }
 #endif
-   
+    
     for (int i=0;i<o.lines;i++)
         {
+
+        table_row_t* prlo = _plineorder_man->get_tuple();
+        assert(prlo);
+        prlo->_rep = &areprow;
+        
             prlo->set_value(0, (int)o.okey[0]);
             prlo->set_value(1, (int)o.lineorders[i].linenumber);
             prlo->set_value(2, (int)o.custkey);
@@ -553,11 +555,13 @@ if (id%100==0)
             prlo->set_value(14, (int)o.lineorders[i].tax);
             prlo->set_value(15, (int)atoi(o.lineorders[i].commit_date));
             prlo->set_value(16, o.lineorders[i].shipmode);
+            
+        e = _plineorder_man->add_tuple(_pssm, prlo);
+
+        _plineorder_man->give_tuple(prlo);
+            
         }
 
-    e = _plineorder_man->add_tuple(_pssm, prlo);
-
-    _plineorder_man->give_tuple(prlo);
     return (e);
 }
 
@@ -595,44 +599,45 @@ w_rc_t ShoreSSBEnv::xct_populate_baseline(const int /* xct_id */,
 
     w_rc_t e = RCOK;
 
-
     // 2. Build the small tables
     TRACE( TRACE_ALWAYS, "Building DATE !!!\n");
-    for(int i=0; i<NO_DATE; ++i) {
+    for(int i=1; i<=NO_DATE; ++i) {
         e = _gen_one_date(i, areprow);
     }
     if(e.is_error()) { return (e); }
 
     TRACE( TRACE_ALWAYS, "Building SUPPLIER SF=%d*%d=%d!!!\n",(int)in._sf,(int)SUPPLIER_PER_SF,(int)(in._sf*SUPPLIER_PER_SF));
-    for (int i=0; i<in._sf*SUPPLIER_PER_SF; ++i) {
+    for (int i=1; i<=in._sf*SUPPLIER_PER_SF; ++i) {
         e = _gen_one_supplier(i, areprow);
     }
     if(e.is_error()) { return (e); }
 
     TRACE( TRACE_ALWAYS, "Starting CUSTOMER SF=%d*%d=%d!!!\n",(int)in._sf,(int)CUSTOMER_PER_SF,(int)(in._sf*CUSTOMER_PER_SF));
-    for (int i=0; i<in._sf*CUSTOMER_PER_SF; ++i) {
+    for (int i=1; i<=in._sf*CUSTOMER_PER_SF; ++i) {
         e = _gen_one_customer(i, areprow);
     }
     if(e.is_error()) { return (e); }
 
     TRACE( TRACE_ALWAYS, "Starting PART 1+log2(SF)=1+log2(%d)=%d*%d=%d!!!\n",(int)in._sf,(int)(1+log2(in._sf)),(int)PART_PER_SF,(int)((1+log2(in._sf))*PART_PER_SF));
-    for (int i=0; i<(1+log2(in._sf))*PART_PER_SF; ++i) {
+    for (int i=1; i<=(1+log2(in._sf))*PART_PER_SF; ++i) {
         e = _gen_one_part(i, areprow);
     }
     if(e.is_error()) { return (e); }
 
     // 3. Insert first rows of lineorder
     TRACE( TRACE_ALWAYS, "Starting LINEORDERS SF=%d*%d=%d!!!\n",(int)in._sf,(int)LINEORDER_PER_SF,(int)(in._sf*LINEORDER_PER_SF));
+    
     for (int i=0; i < in._loader_count; ++i) {
-        long start = i*in._lineorder_per_thread;
+        long start = i * in._lineorder_per_thread + 1;
         long end = start + in._divisor - 1;
         TRACE( TRACE_ALWAYS, "Lineorder %d .. %d\n", start, end);
             
         for (int j=start; j<end; ++j) {
             e = _gen_one_lineorder(j,areprow);
             if(e.is_error()) { return (e); }
-        }            
+        }    
     }
+    
 
 
     e = _pssm->commit_xct();
@@ -773,6 +778,9 @@ w_rc_t ShoreSSBEnv::run_one_xct(Request* prequest)
     case XCT_SSB_QLINEORDER:
         return (run_qlineorder(prequest));
 
+    case XCT_SSB_QTEST:
+        return (run_qtest(prequest));
+        
     case XCT_SSB_Q1_1:
         return (run_q1_1(prequest));
 
@@ -856,6 +864,7 @@ DEFINE_TRX(ShoreSSBEnv,qdate);
 DEFINE_TRX(ShoreSSBEnv,qcustomer);
 DEFINE_TRX(ShoreSSBEnv,qsupplier);
 DEFINE_TRX(ShoreSSBEnv,qlineorder);
+DEFINE_TRX(ShoreSSBEnv,qtest);
 
 
 // uncomment the line below if want to dump (part of) the trx results
@@ -938,6 +947,22 @@ w_rc_t ShoreSSBEnv::xct_qsupplier(const int /* xct_id */,
 
 w_rc_t ShoreSSBEnv::xct_qlineorder(const int /* xct_id */, 
                             qlineorder_input_t& /* in */)
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
+/******************************************************************** 
+ *
+ * SSB QTEST
+ *
+ ********************************************************************/
+
+w_rc_t ShoreSSBEnv::xct_qtest(const int /* xct_id */, 
+                            qtest_input_t& /* in */)
 {
     // ensure a valid environment
     assert (_pssm);

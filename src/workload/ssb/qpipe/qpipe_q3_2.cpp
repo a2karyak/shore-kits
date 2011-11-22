@@ -35,8 +35,6 @@
 using namespace shore;
 using namespace qpipe;
 
-
-
 ENTER_NAMESPACE(ssb);
 
 
@@ -52,19 +50,19 @@ struct lo_tuple
   int LO_CUSTKEY;
   int LO_SUPPKEY;
   int LO_ORDERDATE;
-  double LO_REVENUE;    
+  int LO_REVENUE;    // was double
 };
 
 struct c_tuple
 {
   int C_CUSTKEY;
-  char C_CITY[11];
+  char C_CITY[STRSIZE(10)];
 };
 
 struct s_tuple
 {
   int S_SUPPKEY;
-  char S_CITY[11];
+  char S_CITY[STRSIZE(10)];
 };
 
 struct d_tuple
@@ -78,33 +76,34 @@ struct join_d_tuple
   int LO_CUSTKEY;
   int LO_SUPPKEY;
   int D_YEAR;
-  double LO_REVENUE;
+  int LO_REVENUE; // was double
 };
 
 struct join_d_s_tuple
 {
   int LO_CUSTKEY;
-  char S_CITY[11];
+  char S_CITY[STRSIZE(10)];
   int D_YEAR;
-  double LO_REVENUE;
+  int LO_REVENUE; // was double
 };
 
 
 struct join_tuple
 {
-  char C_CITY[11];
-  char S_CITY[11];
+  char C_CITY[STRSIZE(10)];
+  char S_CITY[STRSIZE(10)];
   int D_YEAR;
-  double LO_REVENUE;
+  int LO_REVENUE; // was double
 };
 
-/*struct projected_tuple
-{
-  int KEY;
-  };*/
-typedef struct join_tuple projected_tuple;
+struct aggregate_tuple {
+  char C_CITY[STRSIZE(10)];
+  char S_CITY[STRSIZE(10)];
+  int D_YEAR;
+    int REVENUE; // was double
+};
 
-
+typedef struct aggregate_tuple projected_tuple;
 
 class q3_2_lineorder_tscan_filter_t : public tuple_filter_t 
 {
@@ -117,7 +116,7 @@ private:
 
 public:
 
-    q3_2_lineorder_tscan_filter_t(ShoreSSBEnv* ssbdb)//,q3_2_input_t &in) 
+    q3_2_lineorder_tscan_filter_t(ShoreSSBEnv* ssbdb) 
         : tuple_filter_t(ssbdb->lineorder_desc()->maxsize()), _ssbdb(ssbdb)
     {
 
@@ -152,7 +151,7 @@ public:
     void project(tuple_t &d, const tuple_t &s) {        
 
         lo_tuple *dest;
-        dest = aligned_cast<lo_tuple>(d.data);
+        dest = aligned_cast<lo_tuple>(d.data); 
 
         _prline->get_value(2, _lineorder.LO_CUSTKEY);
         _prline->get_value(4, _lineorder.LO_SUPPKEY);
@@ -160,7 +159,7 @@ public:
         _prline->get_value(12, _lineorder.LO_REVENUE);
 
 
-        TRACE( TRACE_RECORD_FLOW, "%d|%d|%d|%lf --d\n",
+        TRACE( TRACE_RECORD_FLOW, "%d|%d|%d|%d --d\n",
                _lineorder.LO_CUSTKEY,
                _lineorder.LO_SUPPKEY,
                _lineorder.LO_ORDERDATE,
@@ -193,7 +192,7 @@ private:
     ssb_customer_tuple _customer;
 
   /*VARIABLES TAKING VALUES FROM INPUT FOR SELECTION*/
-    char NATION[16];
+    char NATION[STRSIZE(15)];
 public:
 
     q3_2_customer_tscan_filter_t(ShoreSSBEnv* ssbdb, q3_2_input_t &in) 
@@ -206,8 +205,7 @@ public:
                    _ssbdb->customer_desc()->maxsize());
         _prcust->_rep = &_rr;
 
-	
-	strcpy(NATION,"UNITED STATES");
+	strcpy(NATION,in._nation);
     }
 
     ~q3_2_customer_tscan_filter_t()
@@ -225,7 +223,8 @@ public:
             assert(false); // RC(se_WRONG_DISK_DATA)
         }
 
-        _prcust->get_value(5, _customer.C_NATION, 15);
+//        _prcust->get_value(5, _customer.C_NATION, STRSIZE(15));
+        _prcust->get_value(4, _customer.C_NATION, STRSIZE(15));
 
 	if (strcmp(_customer.C_NATION,NATION)==0)
 	    {
@@ -249,7 +248,7 @@ public:
         dest = aligned_cast<c_tuple>(d.data);
 
         _prcust->get_value(0, _customer.C_CUSTKEY);
-        _prcust->get_value(3, _customer.C_CITY, 10);
+        _prcust->get_value(3, _customer.C_CITY, STRSIZE(10));
 
         TRACE( TRACE_RECORD_FLOW, "%d|%s --d\n",
                _customer.C_CUSTKEY,
@@ -280,7 +279,7 @@ private:
     ssb_supplier_tuple _supplier;
 
   /*VARIABLES TAKING VALUES FROM INPUT FOR SELECTION*/
-    char NATION[16];
+    char NATION[STRSIZE(15)];
 public:
 
     q3_2_supplier_tscan_filter_t(ShoreSSBEnv* ssbdb, q3_2_input_t &in) 
@@ -293,8 +292,8 @@ public:
                    _ssbdb->supplier_desc()->maxsize());
         _prsupp->_rep = &_rr;
 
-	
-	strcpy(NATION,"UNITED STATES");
+        strcpy(NATION, in._nation);
+	//strcpy(NATION,"UNITED STATES");
     }
 
     ~q3_2_supplier_tscan_filter_t()
@@ -312,8 +311,8 @@ public:
             assert(false); // RC(se_WRONG_DISK_DATA)
         }
 
-        _prsupp->get_value(5, _supplier.S_NATION, 15);
-
+//        _prsupp->get_value(5, _supplier.S_NATION, STRSIZE(15));
+        _prsupp->get_value(4, _supplier.S_NATION, STRSIZE(15));
 
 	if (strcmp(_supplier.S_NATION,NATION)==0)
 	    {
@@ -337,7 +336,7 @@ public:
         dest = aligned_cast<s_tuple>(d.data);
 
         _prsupp->get_value(0, _supplier.S_SUPPKEY);
-        _prsupp->get_value(3, _supplier.S_CITY, 10);
+        _prsupp->get_value(3, _supplier.S_CITY, STRSIZE(10));
 
         TRACE( TRACE_RECORD_FLOW, "%d|%s --d\n",
                _supplier.S_SUPPKEY,
@@ -384,8 +383,10 @@ public:
                    _ssbdb->date_desc()->maxsize());
         _prdate->_rep = &_rr;
 
-	YEAR_LOW=1992;
-	YEAR_HIGH=1997;
+//	YEAR_LOW=1992;
+//	YEAR_HIGH=1997;
+        YEAR_LOW = in._year_lo;
+        YEAR_HIGH = in._year_hi;
     }
 
     ~q3_2_date_tscan_filter_t()
@@ -582,39 +583,184 @@ struct q3_2_join_t : public tuple_join_t {
     }
 };
 
+// Key extractor and Comparator for Aggregation filter
 
-/*struct count_aggregate_t : public tuple_aggregate_t {
-    default_key_extractor_t _extractor;
+struct q3_2_agg_input_tuple_key {
+    char C_CITY[STRSIZE(10)];
+    char S_CITY[STRSIZE(10)];
+    int D_YEAR;
     
-    count_aggregate_t()
-        : tuple_aggregate_t(sizeof(projected_tuple))
-    {
-    }
-    virtual key_extractor_t* key_extractor() { return &_extractor; }
-    
-    virtual void aggregate(char* agg_data, const tuple_t &) {
-        count_tuple* agg = aligned_cast<count_tuple>(agg_data);
-        agg->COUNT++;
-    }
-
-    virtual void finish(tuple_t &d, const char* agg_data) {
-        memcpy(d.data, agg_data, tuple_size());
-    }
-    virtual count_aggregate_t* clone() const {
-        return new count_aggregate_t(*this);
-    }
-    virtual c_str to_string() const {
-        return "count_aggregate_t";
+    int extract_hint() {
+        return (this->C_CITY[0] << 24) + (this->C_CITY[1] << 16) + (this->S_CITY[0] << 8) + (this->D_YEAR - 1990);
     }
 };
-*/
 
+struct q3_2_agg_input_tuple_key_extractor_t : public key_extractor_t {
 
+    q3_2_agg_input_tuple_key_extractor_t() : key_extractor_t(sizeof(q3_2_agg_input_tuple_key), offsetof(join_tuple, C_CITY)) {
+    }
 
+    virtual int extract_hint(const char* key) const {
+        q3_2_agg_input_tuple_key* aligned_key = aligned_cast<q3_2_agg_input_tuple_key>(key);
 
+        // We assume a 4-byte integer and fill it with: The two first 
+        // characters of C_CITY, the first character of S_CITY and the
+        // last digit of year (according to the specification, years
+        // can be between 1992-1998). According to this hint,
+        // the ordering can be made faster and only in ties, will
+        // the key_compare_t be used to extract the full comparison.
+        // Keep in mind that by using such a hint, performance is gained,
+        // as we don't have to compare full strings if the first
+        // characters are different, but we don't gain full ordering
+        // if the cities start with the same letters: The resulting groups will be sorted primarily by year, because
+        // the hint will only differ in the year. Groups are not affected, as on ties the full comparison is used.
+        // If ordering is wanted, you'll need to use a hint
+        // that is equal for everyone (like a zero), so that the full
+        // comparison is used for everyone. In Q3.2, we don't need
+        // full ordering in the aggregator, as in the end
+        // the tuples are again ordered differently.
+//        int result = (aligned_key->C_CITY[0] << 24) + (aligned_key->C_CITY[1] << 16) + (aligned_key->S_CITY[0] << 8) + (aligned_key->D_YEAR - 1990);
+//        return result;
+        return aligned_key->extract_hint();
+        
+        //return 0;
+    }
 
+    virtual q3_2_agg_input_tuple_key_extractor_t * clone() const {
+        return new q3_2_agg_input_tuple_key_extractor_t(*this);
+    }
+};
 
+struct q3_2_agg_input_tuple_key_compare_t : public key_compare_t {
 
+    virtual int operator()(const void* key1, const void* key2) const {
+        q3_2_agg_input_tuple_key* a = aligned_cast<q3_2_agg_input_tuple_key>(key1);
+        q3_2_agg_input_tuple_key* b = aligned_cast<q3_2_agg_input_tuple_key>(key2);
+
+        int ccitycomparison = strcmp(a->C_CITY, b->C_CITY);
+        if (ccitycomparison != 0) return ccitycomparison;
+        int scitycomparison = strcmp(a->S_CITY, b->S_CITY);
+        if (scitycomparison != 0) return scitycomparison;
+        return a->D_YEAR - b->D_YEAR;
+    }
+
+    virtual q3_2_agg_input_tuple_key_compare_t * clone() const {
+        return new q3_2_agg_input_tuple_key_compare_t(*this);
+    }
+};
+
+// Aggregate's tuple's key is the same as the input tuple's key.
+typedef struct q3_2_agg_input_tuple_key q3_2_agg_tuple_key;
+
+class q3_2_agg_aggregate_t : public tuple_aggregate_t {
+private:
+
+    struct q3_2_agg_output_tuple_key_extractor_t : public key_extractor_t {
+
+        q3_2_agg_output_tuple_key_extractor_t() : key_extractor_t(sizeof (q3_2_agg_tuple_key), offsetof(aggregate_tuple, C_CITY)) {
+        }
+
+        virtual int extract_hint(const char* key) const {
+            q3_2_agg_tuple_key* aligned_key = aligned_cast<q3_2_agg_tuple_key > (key);
+            return aligned_key->extract_hint();
+        }
+
+        virtual q3_2_agg_output_tuple_key_extractor_t * clone() const {
+            return new q3_2_agg_output_tuple_key_extractor_t(*this);
+        }
+    };
+    
+    q3_2_agg_output_tuple_key_extractor_t _extractor;
+
+public:
+
+    q3_2_agg_aggregate_t()
+    : tuple_aggregate_t(sizeof(aggregate_tuple)) {
+    }
+
+    key_extractor_t* key_extractor() {
+        return &_extractor;
+    }
+
+    void aggregate(char* agg_data, const tuple_t &s) {
+        join_tuple *src;
+        src = aligned_cast<join_tuple> (s.data);
+        aggregate_tuple* tuple = aligned_cast<aggregate_tuple>(agg_data);
+
+        tuple->REVENUE += src->LO_REVENUE;
+
+        TRACE(TRACE_RECORD_FLOW, "%.2f\n", tuple->REVENUE);
+    }
+
+    void finish(tuple_t &d, const char* agg_data) {
+        aggregate_tuple *dest;
+        dest = aligned_cast<aggregate_tuple > (d.data);
+        aggregate_tuple* tuple = aligned_cast<aggregate_tuple > (agg_data);
+
+        *dest = *tuple;
+    }
+
+    q3_2_agg_aggregate_t* clone() const {
+        return new q3_2_agg_aggregate_t(*this);
+    }
+
+    c_str to_string() const {
+        return "q3_2_agg_aggregate_t";
+    }
+};
+
+// Final Ordering
+
+struct q3_2_sort_tuple_key {
+    int D_YEAR;
+    int REVENUE; // was double
+};
+
+struct order_key_extractor_t : public key_extractor_t {
+
+    order_key_extractor_t() : key_extractor_t(sizeof (q3_2_sort_tuple_key), offsetof(aggregate_tuple, D_YEAR)) {
+    }
+
+    virtual int extract_hint(const char* key) const {
+        q3_2_sort_tuple_key* aligned_key = aligned_cast<q3_2_sort_tuple_key> (key);
+
+        // We assume a 4-byte integer and fill it with: The last digit of year
+        // in the 3 most significant bits. The remaining bits are filled with the
+        // integer representation of Revenue. But they are subtracted
+        // in order to keep a decreasing order.
+        int result = ((aligned_key->D_YEAR - 1992) << 29) - ((int(aligned_key->REVENUE) & ~(7)) >> 3);
+        return result;
+        
+        //return 0;
+    }
+
+    virtual order_key_extractor_t * clone() const {
+        return new order_key_extractor_t(*this);
+    }
+};
+
+struct order_key_compare_t : public key_compare_t {
+
+    virtual int operator()(const void* key1, const void* key2) const {
+        q3_2_sort_tuple_key* a = aligned_cast<q3_2_sort_tuple_key>(key1);
+        q3_2_sort_tuple_key* b = aligned_cast<q3_2_sort_tuple_key>(key2);
+
+        int yearcomparison = a->D_YEAR - b->D_YEAR;
+        if (yearcomparison != 0) return yearcomparison;
+        if (a->REVENUE > b->REVENUE)
+            return -1;
+        else if (a->REVENUE < b->REVENUE)
+            return 1;
+        else
+            return 0;
+    }
+
+    virtual order_key_compare_t * clone() const {
+        return new order_key_compare_t(*this);
+    }
+};
+
+// Processing query
 
 class ssb_q3_2_process_tuple_t : public process_tuple_t 
 {    
@@ -628,10 +774,7 @@ public:
     virtual void process(const tuple_t& output) {
         projected_tuple *tuple;
         tuple = aligned_cast<projected_tuple>(output.data);
-        TRACE ( TRACE_QUERY_RESULTS, "PROCESS {%s} {%s} %d %lf\n",tuple->C_CITY, tuple->S_CITY, tuple->D_YEAR, tuple->LO_REVENUE);
-
-        /*TRACE(TRACE_QUERY_RESULTS, "%d --\n",
-	  tuple->KEY);*/
+        TRACE ( TRACE_QUERY_RESULTS, "PROCESS {%s} {%s} %d %d\n",tuple->C_CITY, tuple->S_CITY, tuple->D_YEAR, tuple->REVENUE);
     }
 };
 
@@ -648,6 +791,15 @@ w_rc_t ShoreSSBEnv::xct_qpipe_q3_2(const int xct_id,
 {
     TRACE( TRACE_ALWAYS, "********** q3_2 *********\n");
 
+    q3_2_input_t inputt;
+//    inputt._year_lo = in._year_lo;
+//    inputt._year_hi = in._year_hi;
+//    strcpy(inputt._nation, in._nation);
+
+    // These input parameters are taken from the SSB specification.
+    inputt._year_lo = 1992;
+    inputt._year_hi = 1997;
+    strcpy(inputt._nation, "UNITED STATES");
    
     policy_t* dp = this->get_sched_policy();
     xct_t* pxct = smthread_t::me()->xct();
@@ -664,12 +816,13 @@ w_rc_t ShoreSSBEnv::xct_qpipe_q3_2(const int xct_id,
                            pxct
                            //, SH 
                            );
+
 	//CUSTOMER
 	tuple_fifo* c_out_buffer = new tuple_fifo(sizeof(c_tuple));
         tscan_packet_t* c_tscan_packet =
         new tscan_packet_t("TSCAN CUSTOMER",
                            c_out_buffer,
-                           new q3_2_customer_tscan_filter_t(this,in),
+                           new q3_2_customer_tscan_filter_t(this, inputt),
                            this->db(),
                            _pcustomer_desc.get(),
                            pxct
@@ -680,18 +833,20 @@ w_rc_t ShoreSSBEnv::xct_qpipe_q3_2(const int xct_id,
         tscan_packet_t* s_tscan_packet =
         new tscan_packet_t("TSCAN SUPPLIER",
                            s_out_buffer,
-                           new q3_2_supplier_tscan_filter_t(this,in),
+                           new q3_2_supplier_tscan_filter_t(this, inputt),
                            this->db(),
                            _psupplier_desc.get(),
                            pxct
                            //, SH 
                            );
+
+        
 	//DATE
 	tuple_fifo* d_out_buffer = new tuple_fifo(sizeof(d_tuple));
         tscan_packet_t* d_tscan_packet =
         new tscan_packet_t("TSCAN DATE",
                            d_out_buffer,
-                           new q3_2_date_tscan_filter_t(this,in),
+                           new q3_2_date_tscan_filter_t(this, inputt),
                            this->db(),
                            _pdate_desc.get(),
                            pxct
@@ -728,37 +883,48 @@ w_rc_t ShoreSSBEnv::xct_qpipe_q3_2(const int xct_id,
 				   join_lo_d_s_packet,
 				   c_tscan_packet,
 				   new q3_2_join_t() );
-	
-    /*    tuple_fifo* agg_output = new tuple_fifo(sizeof(count_tuple));
-    aggregate_packet_t* agg_packet =
-                new aggregate_packet_t(c_str("COUNT_AGGREGATE"),
-                               agg_output,
-                               new trivial_filter_t(agg_output->tuple_size()),
-                               new count_aggregate_t(),
-                               new int_key_extractor_t(),
-                               q3_2_date_tscan_packet);
+        
+    // AGG PACKET CREATION
+
+    tuple_fifo* agg_output_buffer =
+            new tuple_fifo(sizeof (aggregate_tuple));
+    packet_t* q32_agg_packet =
+            new partial_aggregate_packet_t("AGG Q3_2",
+            agg_output_buffer,
+            new trivial_filter_t(agg_output_buffer->tuple_size()),
+            join_packet,
+            new q3_2_agg_aggregate_t(),
+            new q3_2_agg_input_tuple_key_extractor_t(),
+            new q3_2_agg_input_tuple_key_compare_t());
     
-        new partial_aggregate_packet_t(c_str("COUNT_AGGREGATE"),
-                               agg_output,
-                               new trivial_filter_t(agg_output->tuple_size()),
-                               q3_2_lineorder_tscan_packet,
-                               new count_aggregate_t(),
-                               new default_key_extractor_t(),
-                               new int_key_compare_t());
-    */
+        tuple_fifo* sort_final_out = new tuple_fifo(sizeof(aggregate_tuple));
+	packet_t* sort_final_packet =
+	    new sort_packet_t("ORDER BY D_YEAR ASC, REVENUE DESC",
+				   sort_final_out,
+				   new trivial_filter_t(sizeof(aggregate_tuple)),
+                                   new order_key_extractor_t(),
+                                   new order_key_compare_t(),
+				   q32_agg_packet);
+    
     qpipe::query_state_t* qs = dp->query_state_create();
     lo_tscan_packet->assign_query_state(qs);
+
     s_tscan_packet->assign_query_state(qs);
     c_tscan_packet->assign_query_state(qs);
+
     d_tscan_packet->assign_query_state(qs);
     join_lo_d_packet->assign_query_state(qs);
     join_lo_d_s_packet->assign_query_state(qs);
     join_packet->assign_query_state(qs);
-    //agg_packet->assign_query_state(qs);
+    q32_agg_packet->assign_query_state(qs);
+    sort_final_packet->assign_query_state(qs);
         
     // Dispatch packet
     ssb_q3_2_process_tuple_t pt;
-    process_query(join_packet, pt);
+    
+    TRACE( TRACE_ALWAYS, "********** Executing Q 3.2 *********\n");
+    
+    process_query(sort_final_packet, pt);
     dp->query_state_destroy(qs);
 
     return (RCOK); 

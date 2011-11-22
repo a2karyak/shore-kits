@@ -76,10 +76,9 @@ supplier_t::supplier_t(const uint4_t& pd) :
     _desc[1].setup(SQL_FIXCHAR, "S_NAME",    25);
     _desc[2].setup(SQL_FIXCHAR, "S_ADDRESS", 25);
     _desc[3].setup(SQL_FIXCHAR, "S_CITY",    10);
-    _desc[4].setup(SQL_INT,     "S_NATION_PREFIX");
-    _desc[5].setup(SQL_FIXCHAR, "S_NATION",  15);
-    _desc[6].setup(SQL_FIXCHAR, "S_REGION",  12);
-    _desc[7].setup(SQL_FIXCHAR, "S_PHONE",   15);
+    _desc[4].setup(SQL_FIXCHAR, "S_NATION", 15);
+    _desc[5].setup(SQL_FIXCHAR, "S_REGION", 12);
+    _desc[6].setup(SQL_FIXCHAR, "S_PHONE", 15);
 
     uint keys[1] = {0}; // IDX { S_SUPPKEY}
 				
@@ -124,12 +123,11 @@ customer_t::customer_t(const uint4_t& pd) :
     _desc[0].setup(SQL_INT,     "C_CUSTKEY");
     _desc[1].setup(SQL_FIXCHAR, "C_NAME",       25);       
     _desc[2].setup(SQL_FIXCHAR, "C_ADDRESS",    25);       
-    _desc[3].setup(SQL_FIXCHAR, "C_CITY",       10);  
-    _desc[4].setup(SQL_INT,     "C_NATION_PREFIX");  
-    _desc[5].setup(SQL_FIXCHAR, "C_NATION",     15);   
-    _desc[6].setup(SQL_FIXCHAR, "C_REGION",     12);
-    _desc[7].setup(SQL_FIXCHAR, "C_PHONE",      15);
-    _desc[8].setup(SQL_FIXCHAR, "C_MKTSEGMENT", 10);
+    _desc[3].setup(SQL_FIXCHAR, "C_CITY",       10);
+        _desc[4].setup(SQL_FIXCHAR, "C_NATION",     15);   
+        _desc[5].setup(SQL_FIXCHAR, "C_REGION",     12);
+        _desc[6].setup(SQL_FIXCHAR, "C_PHONE",      15);
+        _desc[7].setup(SQL_FIXCHAR, "C_MKTSEGMENT", 10);
 
     uint keys[1] = { 0 }; // IDX { C_CUSTKEY }
         

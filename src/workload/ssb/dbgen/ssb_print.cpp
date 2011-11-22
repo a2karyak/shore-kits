@@ -949,7 +949,6 @@ vrf_supp(void *supp, int /*mode*/)
     VRF_STR(SUPP, supp_p->name);
     
     VRF_STR(CUST, supp_p->address);
-    VRF_INT(CUST, supp_p->nation_key);
     VRF_STR(CUST, supp_p->nation_name);
     VRF_INT(CUST, supp_p->region_key);
     VRF_STR(CUST, supp_p->region_name);

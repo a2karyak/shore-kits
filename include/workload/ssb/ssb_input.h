@@ -45,6 +45,7 @@ struct qsupplier_input_t { };
 struct qpart_input_t { };
 struct qdate_input_t { };
 struct qlineorder_input_t { };
+struct qtest_input_t { };
 struct q1_1_input_t { };
 struct q1_2_input_t { };
 struct q1_3_input_t { };
@@ -64,6 +65,7 @@ qsupplier_input_t  create_qsupplier_input (const double sf, const int specificWH
 qdate_input_t      create_qdate_input     (const double sf, const int specificWH);
 qpart_input_t      create_qpart_input     (const double sf, const int specificWH);
 qlineorder_input_t create_qlineorder_input(const double sf, const int specificWH);
+qtest_input_t create_qtest_input(const double sf, const int specificWH);
 q1_1_input_t create_q1_1_input(const double sf, const int specificWH);
 q1_2_input_t create_q1_2_input(const double sf, const int specificWH);
 q1_3_input_t create_q1_3_input(const double sf, const int specificWH);
@@ -111,7 +113,7 @@ struct q3_2_input_t
 {
     int _year_lo;
     int _year_hi;
-    char _nation[16];
+    char _nation[STRSIZE(15)];
 
     q3_2_input_t& operator=(const q3_2_input_t& rhs);
 };

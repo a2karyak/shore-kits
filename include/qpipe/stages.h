@@ -31,6 +31,7 @@
 #include "qpipe/stages/fscan.h"
 #include "qpipe/stages/func_call.h"
 #include "qpipe/stages/hash_join.h"
+#include "qpipe/stages/sort_merge_join.h"
 #include "qpipe/stages/pipe_hash_join.h"
 #include "qpipe/stages/merge.h"
 #include "qpipe/stages/partial_aggregate.h"

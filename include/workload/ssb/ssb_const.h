@@ -54,9 +54,9 @@ ENTER_NAMESPACE(ssb);
 
 
 const int SSB_PART_FCOUNT      = 9;
-const int SSB_SUPPLIER_FCOUNT  = 8;
+const int SSB_SUPPLIER_FCOUNT  = 7;
 const int SSB_DATE_FCOUNT  = 17;
-const int SSB_CUSTOMER_FCOUNT  = 9;
+const int SSB_CUSTOMER_FCOUNT  = 8;
 const int SSB_LINEORDER_FCOUNT  = 17;
 
 // -- number of tables -- //
@@ -86,6 +86,7 @@ const int XCT_SSB_QDATE      = 95;
 const int XCT_SSB_QSUPPLIER  = 96;
 const int XCT_SSB_QCUSTOMER  = 97;
 const int XCT_SSB_QLINEORDER = 98;
+const int XCT_SSB_QTEST = 99;
 
 
 const int XCT_QPIPE_SSB_MIX      = 1080;

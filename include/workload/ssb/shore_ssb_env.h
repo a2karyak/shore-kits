@@ -85,6 +85,7 @@ struct ShoreSSBTrxCount
     uint qsupplier;
     uint qcustomer;
     uint qlineorder;
+    uint qtest;
     uint q1_1;
     uint q1_2;
     uint q1_3;
@@ -108,6 +109,7 @@ struct ShoreSSBTrxCount
         qsupplier += rhs.qsupplier;
         qcustomer += rhs.qcustomer;
         qlineorder += rhs.qlineorder;
+        qtest += rhs.qtest;
         q1_1 += rhs.q1_1;
         q1_2 += rhs.q1_2;
         q1_3 += rhs.q1_3;
@@ -133,6 +135,7 @@ struct ShoreSSBTrxCount
         qsupplier -= rhs.qsupplier;
         qcustomer -= rhs.qcustomer;
         qlineorder -= rhs.qlineorder;
+        qtest -= rhs.qtest;
         q1_1 -= rhs.q1_1;
         q1_2 -= rhs.q1_2;
         q1_3 -= rhs.q1_3;
@@ -156,7 +159,7 @@ struct ShoreSSBTrxCount
 
     uint total() const {
         return 
-            (qlineorder+qcustomer+qsupplier+qpart+qdate+
+            (qlineorder+qcustomer+qsupplier+qpart+qdate+qtest+
              q1_1+q1_2+q1_3+q2_1+q2_2+q2_3+q3_1+q3_2+q3_3+q3_4+q4_1+q4_2+q4_3+qNP);
     }
 
@@ -276,6 +279,7 @@ public:
     DECLARE_TRX(qsupplier);
     DECLARE_TRX(qcustomer);
     DECLARE_TRX(qlineorder);
+    DECLARE_TRX(qtest);
     DECLARE_TRX(q1_1);
     DECLARE_TRX(q1_2);
     DECLARE_TRX(q1_3);
@@ -315,6 +319,7 @@ public:
     DECLARE_QPIPE_TRX(qsupplier);
     DECLARE_QPIPE_TRX(qcustomer);
     DECLARE_QPIPE_TRX(qlineorder);
+    DECLARE_QPIPE_TRX(qtest);
     DECLARE_QPIPE_TRX(q1_1);
     DECLARE_QPIPE_TRX(q1_2);
     DECLARE_QPIPE_TRX(q1_3);

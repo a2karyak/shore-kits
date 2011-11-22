@@ -25,7 +25,6 @@ typedef struct
     char            address[C_ADDR_MAX + 1];
     int             alen;
     char            city[CITY_FIX+1];
-    int             nation_key;
     char            nation_name[C_NATION_NAME_LEN+1];
     int             region_key;
     char            region_name[C_REGION_NAME_LEN+1];
@@ -200,7 +199,6 @@ typedef struct
     char            address[S_ADDR_MAX + 1];
     int             alen; 
     char            city[CITY_FIX +1];
-    int             nation_key;
     char            nation_name[S_NATION_NAME_LEN+1];
     int             region_key;
     char            region_name[S_REGION_NAME_LEN+1];

@@ -78,6 +78,7 @@ DEFINE_QPIPE_TRX(ShoreSSBEnv,qdate);
 DEFINE_QPIPE_TRX(ShoreSSBEnv,qsupplier);
 DEFINE_QPIPE_TRX(ShoreSSBEnv,qcustomer);
 DEFINE_QPIPE_TRX(ShoreSSBEnv,qlineorder);
+DEFINE_QPIPE_TRX(ShoreSSBEnv,qtest);
 DEFINE_QPIPE_TRX(ShoreSSBEnv,q1_1);
 DEFINE_QPIPE_TRX(ShoreSSBEnv,q1_2);
 DEFINE_QPIPE_TRX(ShoreSSBEnv,q1_3);
@@ -132,6 +133,9 @@ w_rc_t ShoreSSBEnv::run_one_qpipe_xct(Request* prequest)
 
     case XCT_SSB_QLINEORDER:
         return (run_qpipe_qlineorder(prequest));
+        
+    case XCT_SSB_QTEST:
+        return (run_qpipe_qtest(prequest));
 
     case XCT_SSB_Q1_1:
         return (run_qpipe_q1_1(prequest));
@@ -235,12 +239,12 @@ w_rc_t ShoreSSBEnv::xct_qpipe_q1_3(const int /* xct_id */,
  *
  ********************************************************************/
 
-w_rc_t ShoreSSBEnv::xct_qpipe_q2_1(const int /* xct_id */, 
-                                  q2_1_input_t& /* in */)
-{
-    TRACE( TRACE_ALWAYS, "********** Q2_1 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
+//w_rc_t ShoreSSBEnv::xct_qpipe_q2_1(const int /* xct_id */, 
+//                                  q2_1_input_t& /* in */)
+//{
+//    TRACE( TRACE_ALWAYS, "********** Q2_1 *********\n");
+//    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
+//}
 
 
 /******************************************************************** 
@@ -284,6 +288,18 @@ w_rc_t ShoreSSBEnv::xct_qpipe_q3_1(const int /* xct_id */,
     return (RC(smlevel_0::eNOTIMPLEMENTED)); 
 }
 
+/******************************************************************** 
+ *
+ * QPIPE Q3_2
+ *
+ ********************************************************************/
+
+//w_rc_t ShoreSSBEnv::xct_qpipe_q3_2(const int /* xct_id */, 
+//                                  q3_2_input_t& /* in */)
+//{
+//    TRACE( TRACE_ALWAYS, "********** Q3_2 *********\n");
+//    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
+//}
 
 /******************************************************************** 
  *
@@ -317,7 +333,7 @@ w_rc_t ShoreSSBEnv::xct_qpipe_q3_4(const int /* xct_id */,
 
 /******************************************************************** 
  *
- * QPIPE Q2_1
+ * QPIPE Q4_1
  *
  ********************************************************************/
 

@@ -89,7 +89,7 @@ int baseline_ssb_client_t::load_sup_xct(mapSupTrxs& stmap)
      stmap[qpipebase + XCT_SSB_Q1_1]           = "QPIPE-SSB-Q1_1";
 //     stmap[qpipebase + XCT_SSB_Q1_2]           = "QPIPE-SSB-Q1_2";
 //     stmap[qpipebase + XCT_SSB_Q1_3]           = "QPIPE-SSB-Q1_3";
-//     stmap[qpipebase + XCT_SSB_Q2_1]           = "QPIPE-SSB-Q2_1";
+     stmap[qpipebase + XCT_SSB_Q2_1]           = "QPIPE-SSB-Q2_1";
 //     stmap[qpipebase + XCT_SSB_Q2_2]           = "QPIPE-SSB-Q2_2";
 //     stmap[qpipebase + XCT_SSB_Q2_3]           = "QPIPE-SSB-Q2_3";
 //     stmap[qpipebase + XCT_SSB_Q3_1]           = "QPIPE-SSB-Q3_1";
@@ -104,6 +104,7 @@ int baseline_ssb_client_t::load_sup_xct(mapSupTrxs& stmap)
      stmap[qpipebase + XCT_SSB_QSUPPLIER]        = "QPIPE-SSB-QSUPPLIER";
      stmap[qpipebase + XCT_SSB_QCUSTOMER]        = "QPIPE-SSB-QCUSTOMER";
      stmap[qpipebase + XCT_SSB_QLINEORDER]       = "QPIPE-SSB-QLINEORDER";
+     stmap[qpipebase + XCT_SSB_QTEST]       = "QPIPE-SSB-QTEST";
 
 
 #endif

@@ -258,12 +258,14 @@ WL_SSB_DBGEN_SHORE = \
 WL_SSB_QPIPE = \
    $(SW)/ssb/qpipe_ssb_xct.cpp \
    $(SW)/ssb/qpipe/qpipe_q1_1.cpp \
+   $(SW)/ssb/qpipe/qpipe_q2_1.cpp \
    $(SW)/ssb/qpipe/qpipe_q3_2.cpp \
    $(SW)/ssb/qpipe/qpipe_qdate.cpp \
    $(SW)/ssb/qpipe/qpipe_qpart.cpp \
    $(SW)/ssb/qpipe/qpipe_qsupplier.cpp \
    $(SW)/ssb/qpipe/qpipe_qcustomer.cpp \
-   $(SW)/ssb/qpipe/qpipe_qlineorder.cpp 
+   $(SW)/ssb/qpipe/qpipe_qlineorder.cpp \
+   $(SW)/ssb/qpipe/qpipe_qtest.cpp 
 
 WL_TPCE_SHORE = \
    $(SW)/tpce/tpce_input.cpp \
@@ -414,6 +416,7 @@ QPIPE_STAGES = \
    $(SQP)/stages/hash_aggregate.cpp \
    $(SQP)/stages/delay_writer.cpp \
    $(SQP)/stages/bnl_join.cpp \
+   $(SQP)/stages/sort_merge_join.cpp \
    $(SQP)/stages/fscan.cpp \
    $(SQP)/stages/register_stage_containers.cpp
 

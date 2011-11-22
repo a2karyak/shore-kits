@@ -52,6 +52,8 @@ qcustomer_input_t       create_qcustomer_input(const double /*sf*/, const int /*
 {qcustomer_input_t a;return a;}
 qlineorder_input_t create_qlineorder_input(const double /*sf*/, const int /*specificWH*/) 
 {qlineorder_input_t a;return a;}
+qtest_input_t create_qtest_input(const double /*sf*/, const int /*specificWH*/) 
+{qtest_input_t a;return a;}
 q1_1_input_t create_q1_1_input(const double /*sf*/, const int /*specificWH*/) {q1_1_input_t a;return a;}
 q1_2_input_t create_q1_2_input(const double /*sf*/, const int /*specificWH*/) {q1_2_input_t a;return a;}
 q1_3_input_t create_q1_3_input(const double /*sf*/, const int /*specificWH*/) {q1_3_input_t a;return a;}

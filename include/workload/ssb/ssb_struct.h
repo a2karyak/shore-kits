@@ -93,8 +93,8 @@ enum ssb_nation{
 
 const int SUPPLIER_PER_SF  =    2000;
 const int CUSTOMER_PER_SF  =   30000;
-const int PART_PER_SF      =  200000;//actually 200K*(1+log2(SF))
-const int LINEORDER_PER_SF = 1500000;
+const int PART_PER_SF      =  200000; //actually 200K*(1+log2(SF))
+const int LINEORDER_PER_SF = 1500000; // results in ~6000000 tuples for SF=1
 const int NO_DATE          =    2556;
 
 
@@ -135,8 +135,7 @@ struct ssb_part_tuple_body
 {
     int       S_SUPPKEY;
     char      S_NAME      [STRSIZE(25)];
-    char      S_ADDRESS   [STRSIZE(40)]; 
-    int       S_NATIONKEY;
+    char      S_ADDRESS   [STRSIZE(40)];
     char      S_PHONE     [STRSIZE(15)];
     decimal   S_ACCTBAL;
     char      S_COMMENT   [STRSIZE(101)];
@@ -152,8 +151,7 @@ struct ssb_supplier_tuple
     int       S_SUPPKEY;
     char      S_NAME      [STRSIZE(25)];
     char      S_ADDRESS   [STRSIZE(25)]; 
-    char      S_CITY      [STRSIZE(10)]; 
-    int       S_NATION_PREFIX;
+    char      S_CITY      [STRSIZE(10)];
     char      S_NATION    [STRSIZE(15)];
     char      S_REGION    [STRSIZE(12)];
     char      S_PHONE     [STRSIZE(15)];
@@ -178,8 +176,7 @@ struct ssb_supplier_tuple_body
     int       S_SUPPKEY;
     char      S_NAME      [STRSIZE(25)];
     char      S_ADDRESS   [STRSIZE(25)]; 
-    char      S_CITY      [STRSIZE(10)]; 
-    int       S_NATION_PREFIX;
+    char      S_CITY      [STRSIZE(10)];
     char      S_NATION    [STRSIZE(15)];
     char      S_REGION    [STRSIZE(12)];
     char      S_PHONE     [STRSIZE(15)];
@@ -192,7 +189,7 @@ struct ssb_date_tuple
 {
     int     D_DATEKEY;
     char    D_DATE      [STRSIZE(18)];
-    char    D_DAYOFWEEK [STRSIZE(8)];
+    char    D_DAYOFWEEK [STRSIZE(9)];
     char    D_MONTH     [STRSIZE(9)];
     int     D_YEAR;
     int     D_YEARMONTHNUM;
@@ -239,7 +236,6 @@ struct ssb_customer_tuple
     char    C_NAME       [STRSIZE(25)];
     char    C_ADDRESS    [STRSIZE(25)];
     char    C_CITY       [STRSIZE(10)];
-    int     C_NATION_PREFIX;
     char    C_NATION     [STRSIZE(15)];
     char    C_REGION [STRSIZE(12)];
     char    C_PHONE [STRSIZE(15)];
@@ -247,9 +243,9 @@ struct ssb_customer_tuple
 
 
     c_str tuple_to_str() {
-        return(c_str("CUST = %d|%s|%s|%d|%s|%s|%s|%s -",
-                     C_CUSTKEY, C_NAME, C_ADDRESS, C_NATION_PREFIX,
-                     C_NATION, C_REGION, C_PHONE, C_MKTSEGMENT));
+        return (c_str("CUST = %d|%s|%s|%s|%s|%s|%s -",
+                C_CUSTKEY, C_NAME, C_ADDRESS, 
+                C_NATION, C_REGION, C_PHONE, C_MKTSEGMENT));
     }
     
 
@@ -276,7 +272,6 @@ struct ssb_customer_tuple_body
 {
     char    C_NAME       [STRSIZE(25)];
     char    C_ADDRESS    [STRSIZE(40)];
-    int	    C_NATIONKEY;
     char    C_PHONE      [STRSIZE(15)];
     decimal C_ACCTBAL;
     char    C_MKTSEGMENT [STRSIZE(10)];
@@ -298,7 +293,7 @@ struct ssb_lineorder_tuple
     int     LO_SUPPKEY;
     int     LO_ORDERDATE;
     char    LO_ORDERPRIORITY [STRSIZE(15)];
-    char    LO_SHIPPRIORITY;
+    int    LO_SHIPPRIORITY;
     int     LO_QUANTITY;
     int     LO_EXTENDEDPRICE;
     int     LO_ORDTOTALPRICE;

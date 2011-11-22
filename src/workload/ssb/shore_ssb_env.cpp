@@ -486,9 +486,9 @@ w_rc_t ShoreSSBEnv::loaddata()
     TRACE( TRACE_ALWAYS, "Firing up %d loaders ..\n", loaders_to_use);
     array_guard_t< guard<table_builder_t> > loaders(new guard<table_builder_t>[loaders_to_use]);
     for(int i=0; i < loaders_to_use; i++) {
-	long lineorder_start = (i*lineorders_per_thread) + DIVISOR;
-	long lineorder_end = ((i+1)*lineorders_per_thread > total_lineorders - 1) ? 
-            total_lineorders : (i+1)*lineorders_per_thread - 1;
+        	long lineorder_start = (i*lineorders_per_thread) + DIVISOR + 1;
+        	long lineorder_end = ((i+1)*lineorders_per_thread > total_lineorders) ? 
+                    total_lineorders : (i+1)*lineorders_per_thread;
         assert (lineorder_start <= lineorder_end);
 
         //	long cust_start = (i*custs_per_thread) + DIVISOR;
