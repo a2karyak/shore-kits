@@ -551,35 +551,87 @@ w_rc_t ShoreTPCHEnv::xct_populate_baseline(const int /* xct_id */,
     }
     if(e.is_error()) { return (e); }
 
-
-    TRACE( TRACE_ALWAYS, "Starting PARTS !!!\n");
-
+    W_COERCE(_pssm->commit_xct());
+    W_COERCE(_pssm->begin_xct());
     // 3. Insert first rows in the Part-based tables
-    for (int i=0; i < in._loader_count; ++i) {
-        long start = i*in._parts_per_thread;
-        long end = start + in._divisor - 1;
-        TRACE( TRACE_ALWAYS, "Parts %d .. %d\n", start, end);
-            
-        for (int j=start; j<end; ++j) {
-            e = _gen_one_part_based(j,areprow);
-            if(e.is_error()) { return (e); }
-        }            
+    if (in._loader_count == 1) {
+        int sf=in._sf;
+        int ppsf=PART_PER_SF;
+        TRACE( TRACE_ALWAYS, "Building PARTS and PARTSUPP (%d)!!!\n",sf*ppsf);
+        //MA: A simplified version of single threaded build for correctness.
+        int step=in._sf*PART_PER_SF/10;
+        for (int i=0; i<in._sf*PART_PER_SF; ++i) {
+            e = _gen_one_part_based(i, areprow);
+            if (i>0 && i%step==0)
+            {
+                TRACE( TRACE_ALWAYS, "PARTS-PARTSUPP(%d\%)!!!\n",10*i/step);
+                W_COERCE(_pssm->commit_xct());
+                W_COERCE(_pssm->begin_xct());
+            }
+        }
+        if(e.is_error()) { return (e); }
+    }
+    else {
+        TRACE( TRACE_ALWAYS, "Starting PARTS !!!\n");
+        for (int i = 0; i < in._loader_count; ++i) {
+            long start = i * in._parts_per_thread;
+            long end = start + in._divisor - 1;
+            TRACE(TRACE_ALWAYS, "Parts %d .. %d\n", start, end);
+
+            for (int j = start; j < end; ++j) {
+                e = _gen_one_part_based(j, areprow);
+                if (e.is_error()) {
+                    return (e);
+                }
+            }
+        }
     }
 
-
-    TRACE( TRACE_ALWAYS, "Starting CUSTS !!!\n");
-
     // 4. Insert first rows in the Customer-based tables
-    for (int i=0; i < in._loader_count; ++i) {
-        long start = i*in._custs_per_thread;
-        long end = start + in._divisor - 1;
-        TRACE( TRACE_ALWAYS, "[%d/%d] Custs %d .. %d\n", 
-               i, in._loader_count,
-               start, end);
-            
-        for (int j=start; j<end; ++j) {
-            e = _gen_one_cust_based(j,areprow);
-            if(e.is_error()) { return (e); }
+    if (in._loader_count == 1) {
+        int sf=in._sf;
+        int cpsf=CUSTOMER_PER_SF;
+        TRACE( TRACE_ALWAYS, "Building CUSTS, ORDERS, LINEITEM (%d)!!!\n",sf*cpsf);
+        //MA: A simplified version of single threaded build for correctness.
+        int step=in._sf*CUSTOMER_PER_SF/10;
+        int step100=in._sf*CUSTOMER_PER_SF/100;
+        int current=0;
+        for (int i=0; i<in._sf*CUSTOMER_PER_SF; ++i) {
+            e = _gen_one_cust_based(i,areprow);
+            if (i>0 && i%step==0)
+            {
+                TRACE( TRACE_ALWAYS, "\nCUSTS-ORDERS-LINEITEM(%d\%)!!!\n",100*i/step);
+            }
+            if (i>0 && i%step100==0)
+            {
+                W_COERCE(_pssm->commit_xct());
+                W_COERCE(_pssm->begin_xct());
+            }
+            if (current==1000)
+            {
+                printf(".");
+                current=0;
+            }
+            else
+                current++;
+
+        }
+        if(e.is_error()) { return (e); }
+    }
+    else
+    {
+        TRACE( TRACE_ALWAYS, "Starting CUSTS !!!\n");
+        for (int i=0; i < in._loader_count; ++i) {
+            long start = i*in._custs_per_thread;
+            long end = start + in._divisor - 1;
+            TRACE( TRACE_ALWAYS, "[%d/%d] Custs %d .. %d\n",
+                   i, in._loader_count,
+                   start, end);
+
+            for (int j=start; j<end; ++j) {
+                e = _gen_one_cust_based(j,areprow);
+                if(e.is_error()) { return (e); }
+            }
         }
     }
 
@@ -746,6 +798,30 @@ w_rc_t ShoreTPCHEnv::run_one_xct(Request* prequest)
     case XCT_TPCH_Q22:
         return (run_q22(prequest));
 
+    case XCT_TPCH_QLINEITEM:
+	return (run_qlineitem(prequest));
+
+    case XCT_TPCH_QORDERS:
+	return (run_qorders(prequest));
+
+    case XCT_TPCH_QREGION:
+	return (run_qregion(prequest));
+
+    case XCT_TPCH_QNATION:
+	return (run_qnation(prequest));
+
+    case XCT_TPCH_QCUSTOMER:
+	return (run_qcustomer(prequest));
+
+    case XCT_TPCH_QSUPPLIER:
+	return (run_qsupplier(prequest));
+
+    case XCT_TPCH_QPART:
+	return (run_qpart(prequest));
+
+    case XCT_TPCH_QPARTSUPP:
+	return (run_qpartsupp(prequest));
+
     default:
         //assert (0); // UNKNOWN TRX-ID
         TRACE( TRACE_ALWAYS, "Unknown transaction\n");
@@ -794,10 +870,68 @@ DEFINE_TRX(ShoreTPCHEnv,q19);
 DEFINE_TRX(ShoreTPCHEnv,q20);
 DEFINE_TRX(ShoreTPCHEnv,q21);
 DEFINE_TRX(ShoreTPCHEnv,q22);
+DEFINE_TRX(ShoreTPCHEnv,qlineitem);
+DEFINE_TRX(ShoreTPCHEnv,qorders);
+DEFINE_TRX(ShoreTPCHEnv,qpart);
+DEFINE_TRX(ShoreTPCHEnv,qpartsupp);
+DEFINE_TRX(ShoreTPCHEnv,qsupplier);
+DEFINE_TRX(ShoreTPCHEnv,qnation);
+DEFINE_TRX(ShoreTPCHEnv,qregion);
+DEFINE_TRX(ShoreTPCHEnv,qcustomer);
 
 
 // uncomment the line below if want to dump (part of) the trx results
 //#define PRINT_TRX_RESULTS
+
+//TODO: MA: remove them when implemented
+w_rc_t ShoreTPCHEnv::xct_qlineitem  (const int /* xct_id */, qlineitem_input_t&)
+{
+    TRACE( TRACE_ALWAYS, "********** SCAN *********\n");
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
+w_rc_t ShoreTPCHEnv::xct_qorders  (const int /* xct_id */, qorders_input_t&)
+{
+    TRACE( TRACE_ALWAYS, "********** SCAN *********\n");
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
+w_rc_t ShoreTPCHEnv::xct_qnation  (const int /* xct_id */, qnation_input_t&)
+{
+    TRACE( TRACE_ALWAYS, "********** SCAN *********\n");
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
+w_rc_t ShoreTPCHEnv::xct_qregion  (const int /* xct_id */, qregion_input_t&)
+{
+    TRACE( TRACE_ALWAYS, "********** SCAN *********\n");
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
+w_rc_t ShoreTPCHEnv::xct_qcustomer(const int /* xct_id */, qcustomer_input_t&)
+{
+    TRACE( TRACE_ALWAYS, "********** SCAN *********\n");
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
+w_rc_t ShoreTPCHEnv::xct_qsupplier(const int /* xct_id */, qsupplier_input_t&)
+{
+    TRACE( TRACE_ALWAYS, "********** SCAN *********\n");
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
+w_rc_t ShoreTPCHEnv::xct_qpart    (const int /* xct_id */, qpart_input_t&)
+{
+    TRACE( TRACE_ALWAYS, "********** SCAN *********\n");
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
+w_rc_t ShoreTPCHEnv::xct_qpartsupp(const int /* xct_id */, qpartsupp_input_t&)
+{
+    TRACE( TRACE_ALWAYS, "********** SCAN *********\n");
+    return (RC(smlevel_0::eNOTIMPLEMENTED));
+}
+
 
 
 /******************************************************************** 

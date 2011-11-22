@@ -43,6 +43,40 @@ using namespace dbgentpch; // for random MODES etc..
 ENTER_NAMESPACE(tpch);
 
 
+//Dummy input for scans
+qlineitem_input_t& qlineitem_input_t::operator=(const qlineitem_input_t& rhs){dummy=rhs.dummy; return (*this);}
+qlineitem_input_t    create_qlineitem_input(const double sf,
+                              const int specificWH){qlineitem_input_t r;r.dummy=0;return r;}
+
+qorders_input_t& qorders_input_t::operator=(const qorders_input_t& rhs){dummy=rhs.dummy; return (*this);}
+qorders_input_t    create_qorders_input(const double sf,
+                              const int specificWH){qorders_input_t r;r.dummy=0;return r;}
+
+qnation_input_t& qnation_input_t::operator=(const qnation_input_t& rhs){dummy=rhs.dummy; return (*this);}
+qnation_input_t    create_qnation_input(const double sf,
+                              const int specificWH){qnation_input_t r;r.dummy=0;return r;}
+
+qregion_input_t& qregion_input_t::operator=(const qregion_input_t& rhs){dummy=rhs.dummy; return (*this);}
+qregion_input_t    create_qregion_input(const double sf,
+                              const int specificWH ){qregion_input_t r;r.dummy=0;return r;}
+
+qsupplier_input_t& qsupplier_input_t::operator=(const qsupplier_input_t& rhs){dummy=rhs.dummy; return (*this);}
+qsupplier_input_t    create_qsupplier_input(const double sf,
+                              const int specificWH){qsupplier_input_t r;r.dummy=0;return r;}
+
+qpart_input_t& qpart_input_t::operator=(const qpart_input_t& rhs){dummy=rhs.dummy; return (*this);}
+qpart_input_t    create_qpart_input(const double sf,
+                              const int specificWH){qpart_input_t r;r.dummy=0;return r;}
+
+qpartsupp_input_t& qpartsupp_input_t::operator=(const qpartsupp_input_t& rhs){dummy=rhs.dummy; return (*this);}
+qpartsupp_input_t    create_qpartsupp_input(const double sf,
+                              const int specificWH){qpartsupp_input_t r;r.dummy=0;return r;}
+
+qcustomer_input_t& qcustomer_input_t::operator=(const qcustomer_input_t& rhs){dummy=rhs.dummy; return (*this);}
+qcustomer_input_t    create_qcustomer_input(const double sf,
+                              const int specificWH){qcustomer_input_t r;r.dummy=0;return r;}
+
+
 
 /******************************************************************** 
  *

@@ -92,16 +92,16 @@ class ShoreTPCHEnv::table_builder_t : public thread_t
     long _cust_start;
     long _cust_end;
     double _sf;
-
+    int _loaders;
 public:
     table_builder_t(ShoreTPCHEnv* env, const int id,
                     const long part_start, const long part_end,
                     const long cust_start, const long cust_end,
-                    const double sf)
+                    const double sf, const int loaders)
 	: thread_t(c_str("TPC-H L-%d",id)), _env(env), 
           _part_start(part_start), _part_end(part_end), 
           _cust_start(cust_start), _cust_end(cust_end),
-          _sf(sf)
+          _sf(sf), _loaders(loaders)
     { }
     virtual void work();
 };
@@ -210,6 +210,11 @@ void ShoreTPCHEnv::table_builder_t::work()
 {
     w_rc_t e = RCOK;
 
+    if (_loaders==1)
+    {
+        TRACE( TRACE_ALWAYS, "Using simple loader with 1 thread.\n");
+        return;
+    }
     // 1. Load Part-related (~140MB)
     for(int i=_part_start ; i < _part_end; i+=PART_POP_UNIT) {
 	while(_env->get_measure() != MST_MEASURE) {
@@ -512,7 +517,7 @@ w_rc_t ShoreTPCHEnv::loaddata()
 	loaders[i] = new table_builder_t(this, i, 
                                          part_start, part_end, 
                                          cust_start, cust_end,
-                                         _scaling_factor);
+                                         _scaling_factor, loaders_to_use);
 	loaders[i]->fork();
     }
 

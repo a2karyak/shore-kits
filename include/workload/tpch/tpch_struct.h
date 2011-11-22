@@ -181,6 +181,8 @@ enum tpch_pname{
 const int NO_NATIONS = 25;
 const int NO_REGIONS = 5;
 const int SUPPLIER_PER_SF = 10000;
+const int PART_PER_SF = 200000;
+const int CUSTOMER_PER_SF = 150000;
 const int ORDERS_PER_CUSTOMER = 10;
 const int LINEITEM_PER_ORDER = 7;
 

@@ -95,7 +95,14 @@ DEFINE_QPIPE_TRX(ShoreTPCHEnv,q19);
 DEFINE_QPIPE_TRX(ShoreTPCHEnv,q20);
 DEFINE_QPIPE_TRX(ShoreTPCHEnv,q21);
 DEFINE_QPIPE_TRX(ShoreTPCHEnv,q22);
-
+DEFINE_QPIPE_TRX(ShoreTPCHEnv,qlineitem);
+DEFINE_QPIPE_TRX(ShoreTPCHEnv,qorders);
+DEFINE_QPIPE_TRX(ShoreTPCHEnv,qpart);
+DEFINE_QPIPE_TRX(ShoreTPCHEnv,qpartsupp);
+DEFINE_QPIPE_TRX(ShoreTPCHEnv,qsupplier);
+DEFINE_QPIPE_TRX(ShoreTPCHEnv,qnation);
+DEFINE_QPIPE_TRX(ShoreTPCHEnv,qregion);
+DEFINE_QPIPE_TRX(ShoreTPCHEnv,qcustomer);
 
 
 /********************************************************************* 
@@ -189,13 +196,37 @@ w_rc_t ShoreTPCHEnv::run_one_qpipe_xct(Request* prequest)
     case XCT_TPCH_Q22:
         return (run_qpipe_q22(prequest));
 
+    case XCT_TPCH_QLINEITEM:
+	return (run_qpipe_qlineitem(prequest));
+
+    case XCT_TPCH_QORDERS:
+	return (run_qpipe_qorders(prequest));
+
+    case XCT_TPCH_QREGION:
+	return (run_qpipe_qregion(prequest));
+
+    case XCT_TPCH_QNATION:
+	return (run_qpipe_qnation(prequest));
+
+    case XCT_TPCH_QCUSTOMER:
+	return (run_qpipe_qcustomer(prequest));
+
+    case XCT_TPCH_QSUPPLIER:
+	return (run_qpipe_qsupplier(prequest));
+
+    case XCT_TPCH_QPART:
+	return (run_qpipe_qpart(prequest));
+
+    case XCT_TPCH_QPARTSUPP:
+	return (run_qpipe_qpartsupp(prequest));
+
+	
     default:
         //assert (0); // UNKNOWN TRX-ID
         TRACE( TRACE_ALWAYS, "Unknown transaction\n");
     }
     return (RCOK);
 }
-
 
 // // --- with input specified --- //
 

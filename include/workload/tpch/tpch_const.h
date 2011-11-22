@@ -100,6 +100,14 @@ const int XCT_TPCH_Q20      = 60;
 const int XCT_TPCH_Q21      = 61;
 const int XCT_TPCH_Q22      = 62;
 
+const int XCT_TPCH_QLINEITEM = 70;
+const int XCT_TPCH_QORDERS   = 71;
+const int XCT_TPCH_QREGION   = 72;
+const int XCT_TPCH_QNATION   = 73;
+const int XCT_TPCH_QSUPPLIER = 74;
+const int XCT_TPCH_QPART     = 75;
+const int XCT_TPCH_QPARTSUPP = 76;
+const int XCT_TPCH_QCUSTOMER = 77;
 
 const int XCT_QPIPE_TPCH_MIX      = 1040;
 

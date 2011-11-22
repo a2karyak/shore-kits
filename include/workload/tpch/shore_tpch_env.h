@@ -116,6 +116,14 @@ struct ShoreTPCHTrxCount
     uint q20;
     uint q21;
     uint q22;
+    uint qlineitem;
+    uint qnation;
+    uint qregion;
+    uint qorders;
+    uint qpart;
+    uint qpartsupp;
+    uint qsupplier;
+    uint qcustomer;
 
     uint qNP;
 
@@ -142,7 +150,15 @@ struct ShoreTPCHTrxCount
         q19 += rhs.q19; 
         q20 += rhs.q20; 
         q21 += rhs.q21; 
-        q22 += rhs.q22; 
+        q22 += rhs.q22;
+        qlineitem += rhs.qlineitem;
+        qnation += rhs.qnation;
+        qregion += rhs.qregion;
+        qorders += rhs.qorders;
+        qpart += rhs.qpart;
+        qpartsupp += rhs.qpartsupp;
+        qsupplier += rhs.qsupplier;
+        qcustomer += rhs.qcustomer;
 
         qNP += rhs.qNP;
 
@@ -172,6 +188,14 @@ struct ShoreTPCHTrxCount
         q20 -= rhs.q20; 
         q21 -= rhs.q21; 
         q22 -= rhs.q22; 
+        qlineitem -= rhs.qlineitem;
+        qnation -= rhs.qnation;
+        qregion -= rhs.qregion;
+        qorders -= rhs.qorders;
+        qpart -= rhs.qpart;
+        qpartsupp -= rhs.qpartsupp;
+        qsupplier -= rhs.qsupplier;
+        qcustomer -= rhs.qcustomer;
         
         qNP -= rhs.qNP;
         
@@ -181,7 +205,7 @@ struct ShoreTPCHTrxCount
     uint total() const {
         return (q1+q2+q3+q4+q5+q6+q7+q8+q9+q10+
                 q11+q12+q13+q14+q15+q16+q17+q18+q19+q20+
-                q21+q22+
+                q21+q22+qlineitem+qnation+qregion+qorders+qpart+qpartsupp+qsupplier+qcustomer+
                 qNP);
     }
 
@@ -315,7 +339,15 @@ public:
     DECLARE_TRX(q20);
     DECLARE_TRX(q21);
     DECLARE_TRX(q22);
-
+    DECLARE_TRX(qlineitem);
+    DECLARE_TRX(qorders);
+    DECLARE_TRX(qnation);
+    DECLARE_TRX(qregion);
+    DECLARE_TRX(qpart);
+    DECLARE_TRX(qsupplier);
+    DECLARE_TRX(qpartsupp);
+    DECLARE_TRX(qcustomer);
+    
     // QUERIES for the non-partition aligned benchmark
     DECLARE_TRX(qNP);
 
@@ -374,6 +406,14 @@ public:
     DECLARE_QPIPE_TRX(q20);
     DECLARE_QPIPE_TRX(q21);
     DECLARE_QPIPE_TRX(q22);
+    DECLARE_QPIPE_TRX(qlineitem);
+    DECLARE_QPIPE_TRX(qorders);
+    DECLARE_QPIPE_TRX(qnation);
+    DECLARE_QPIPE_TRX(qregion);
+    DECLARE_QPIPE_TRX(qpart);
+    DECLARE_QPIPE_TRX(qsupplier);
+    DECLARE_QPIPE_TRX(qpartsupp);
+    DECLARE_QPIPE_TRX(qcustomer);
 #endif
 
 

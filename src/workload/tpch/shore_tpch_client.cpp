@@ -110,6 +110,15 @@ int baseline_tpch_client_t::load_sup_xct(mapSupTrxs& stmap)
      
      stmap[XCT_TPCH_Q22]          = "TPCH-Q22";
 
+//    stmap[XCT_TPCH_QLINEITEM]         = "TPCH-QLINEITEM";
+//    stmap[XCT_TPCH_QORDERS]         = "TPCH-QORDERS";
+//    stmap[XCT_TPCH_QREGION]         = "TPCH-QREGION";
+//    stmap[XCT_TPCH_QNATION]         = "TPCH-QNATION";
+//    stmap[XCT_TPCH_QSUPPLIER]         = "TPCH-QSUPPLIER";
+//    stmap[XCT_TPCH_QPART]         = "TPCH-QPART";
+//    stmap[XCT_TPCH_QPARTSUPP]         = "TPCH-QPARTSUPP";
+//    stmap[XCT_TPCH_QCUSTOMER]         = "TPCH-QCUSTOMER";
+
 
 
 #ifdef CFG_QPIPE
@@ -139,7 +148,14 @@ int baseline_tpch_client_t::load_sup_xct(mapSupTrxs& stmap)
     // stmap[qpipebase + XCT_TPCH_Q20]         = "QPIPE-TPCH-Q20";
     // stmap[qpipebase + XCT_TPCH_Q21]         = "QPIPE-TPCH-Q21";
     // stmap[qpipebase + XCT_TPCH_Q22]         = "QPIPE-TPCH-Q22";
-
+    stmap[qpipebase + XCT_TPCH_QLINEITEM]         = "QPIPE-TPCH-QLINEITEM";
+    stmap[qpipebase + XCT_TPCH_QORDERS]         = "QPIPE-TPCH-QORDERS";
+    stmap[qpipebase + XCT_TPCH_QREGION]         = "QPIPE-TPCH-QREGION";
+    stmap[qpipebase + XCT_TPCH_QNATION]         = "QPIPE-TPCH-QNATION";
+    stmap[qpipebase + XCT_TPCH_QSUPPLIER]         = "QPIPE-TPCH-QSUPPLIER";
+    stmap[qpipebase + XCT_TPCH_QPART]         = "QPIPE-TPCH-QPART";
+    stmap[qpipebase + XCT_TPCH_QPARTSUPP]         = "QPIPE-TPCH-QPARTSUPP";
+    stmap[qpipebase + XCT_TPCH_QCUSTOMER]         = "QPIPE-TPCH-QCUSTOMER";
 #endif
 
     

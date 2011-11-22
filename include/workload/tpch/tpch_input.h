@@ -41,9 +41,78 @@ ENTER_NAMESPACE(tpch);
 
 // Inputs for the Queries
 
+//Dummy input for scans
+struct qlineitem_input_t
+{
+    int dummy;
+    qlineitem_input_t& operator=(const qlineitem_input_t& rhs);
+};
 
+qlineitem_input_t    create_qlineitem_input(const double sf,
+                              const int specificWH = 0);
 
+struct qorders_input_t
+{
+    int dummy;
+    qorders_input_t& operator=(const qorders_input_t& rhs);
+};
 
+qorders_input_t    create_qorders_input(const double sf,
+                              const int specificWH = 0);
+
+struct qnation_input_t
+{
+    int dummy;
+    qnation_input_t& operator=(const qnation_input_t& rhs);
+};
+
+qnation_input_t    create_qnation_input(const double sf,
+                              const int specificWH = 0);
+
+struct qregion_input_t
+{
+    int dummy;
+    qregion_input_t& operator=(const qregion_input_t& rhs);
+};
+
+qregion_input_t    create_qregion_input(const double sf,
+                              const int specificWH = 0);
+
+struct qsupplier_input_t
+{
+    int dummy;
+    qsupplier_input_t& operator=(const qsupplier_input_t& rhs);
+};
+
+qsupplier_input_t    create_qsupplier_input(const double sf,
+                              const int specificWH = 0);
+
+struct qpart_input_t
+{
+    int dummy;
+    qpart_input_t& operator=(const qpart_input_t& rhs);
+};
+
+qpart_input_t    create_qpart_input(const double sf,
+                              const int specificWH = 0);
+
+struct qpartsupp_input_t
+{
+    int dummy;
+    qpartsupp_input_t& operator=(const qpartsupp_input_t& rhs);
+};
+
+qpartsupp_input_t    create_qpartsupp_input(const double sf,
+                              const int specificWH = 0);
+
+struct qcustomer_input_t
+{
+    int dummy;
+    qcustomer_input_t& operator=(const qcustomer_input_t& rhs);
+};
+
+qcustomer_input_t    create_qcustomer_input(const double sf,
+                              const int specificWH = 0);
 
 /******************************************************************** 
  *
