@@ -434,8 +434,9 @@ w_rc_t ShoreTPCHEnv::_gen_one_cust_based(const int id,
 
             // 2. Orders            
             dbgentpch::order_t ao;
-            mk_order(id, &ao, 0);
-	    //mk_order(id*10+i, &ao, 0);
+            //mk_order(id, &ao, 0);
+	    //MA: I dont't know why somebody did that. But the above line create duplicates in orders.
+            mk_order(id*10+i, &ao, 0);
 
 #ifdef DO_PRINT_TPCH_RECS
             if (id%100==0) {
