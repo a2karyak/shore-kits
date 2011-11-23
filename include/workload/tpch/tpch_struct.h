@@ -93,7 +93,7 @@ enum tpch_n_name{
     VIETNAM,
     RUSSIA,
     UNITED_KINGDOM,
-    UNITED_STATEs,
+    UNITED_STATES,
     END_N_NAME
 };
 
