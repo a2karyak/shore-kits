@@ -1,19 +1,19 @@
 /* -*- mode:C++; c-basic-offset:4 -*-
      Shore-kits -- Benchmark implementations for Shore-MT
-   
+
                        Copyright (c) 2007-2009
       Data Intensive Applications and Systems Labaratory (DIAS)
                Ecole Polytechnique Federale de Lausanne
-   
+
                          All Rights Reserved.
-   
+
    Permission to use, copy, modify and distribute this software and
    its documentation is hereby granted, provided that both the
    copyright notice and this permission notice appear in all copies of
    the software, derivative works or modified versions, and any
    portions thereof, and that both notices appear in supporting
    documentation.
-   
+
    This code is distributed in the hope that it will be useful, but
    WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. THE AUTHORS
@@ -65,11 +65,14 @@ void pname_to_str(int p, char* srt);
 
 tpch_o_priority str_to_priority(char * str );
 
-void segment_to_str(char str, tpch_c_segment seg);
+void segment_to_str(char* str, int seg);
 tpch_c_segment str_to_segment(char *str);
 
 tpch_n_name str_to_nation(char* str );
 void nation_to_str( int n_nation , char* str );
+
+tpch_r_name str_to_region(char* str);
+void region_to_str(int r_name, char* str);
 
 EXIT_NAMESPACE(tpch);
 #endif

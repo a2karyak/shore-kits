@@ -61,7 +61,7 @@ struct sieve_packet_t : public packet_t {
     static query_plan* create_plan(tuple_filter_t* filter, tuple_sieve_t* sieve,
                                    query_plan const* child)
     {
-        c_str action("%s:%s:%s", PACKET_TYPE.data(), sieve->to_string().data());
+        c_str action("%s:%s", PACKET_TYPE.data(), sieve->to_string().data());
         query_plan const** children = new query_plan const*[1];
         children[0] = child;
         return new query_plan(action, filter->to_string(), children, 1);

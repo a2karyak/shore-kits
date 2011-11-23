@@ -1,19 +1,19 @@
 /* -*- mode:C++; c-basic-offset:4 -*-
      Shore-kits -- Benchmark implementations for Shore-MT
-   
+
                        Copyright (c) 2007-2009
       Data Intensive Applications and Systems Labaratory (DIAS)
                Ecole Polytechnique Federale de Lausanne
-   
+
                          All Rights Reserved.
-   
+
    Permission to use, copy, modify and distribute this software and
    its documentation is hereby granted, provided that both the
    copyright notice and this permission notice appear in all copies of
    the software, derivative works or modified versions, and any
    portions thereof, and that both notices appear in supporting
    documentation.
-   
+
    This code is distributed in the hope that it will be useful, but
    WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. THE AUTHORS
@@ -39,27 +39,27 @@ ENTER_NAMESPACE(tpch);
 tpch_l_shipmode str_to_shipmode(char* shipmode)
 {
   tpch_l_shipmode ret;
-  if ( !strcmp(shipmode,"REG_AIR") || !strcmp(shipmode,"REG AIR") ) 
+  if ( !strcmp(shipmode,"REG_AIR") || !strcmp(shipmode,"REG AIR") )
     { ret=REG_AIR; }
   else if (!strcmp(shipmode,"AIR"))
-    { ret=AIR;  } 
+    { ret=AIR;  }
   else if (!strcmp(shipmode,"RAIL"))
-    { ret=RAIL;  } 
+    { ret=RAIL;  }
   else if (!strcmp(shipmode,"TRUCK"))
-    { ret=TRUCK; } 
+    { ret=TRUCK; }
   else if (!strcmp(shipmode,"MAIL"))
-    { ret=MAIL;  } 
+    { ret=MAIL;  }
   else if (!strcmp(shipmode,"FOB"))
-    { ret=FOB;  } 
+    { ret=FOB;  }
   else //if (strcmp(shipmode,"SHIP")==0)
-    { ret=SHIP;  } 
+    { ret=SHIP;  }
 
   return ret;
 }
 
 void shipmode_to_str(char* str, tpch_l_shipmode shipmode)
 {
-  
+
   if ( shipmode == REG_AIR )
     { strcpy(str,"REG AIR"); }
   else if ( shipmode == AIR )
@@ -122,19 +122,19 @@ tpch_p_type_s1 str_to_types1(char *s1){
 
   if(strcmp(s1, "STANDARD") == 0)
     return STANDARD;
-  
+
   else if(strcmp(s1, "SMALL") == 0)
     return SMALL;
 
   else if(strcmp(s1, "MEDIUM") == 0)
     return MEDIUM;
-  
+
   else if(strcmp(s1, "LARGE") == 0)
     return LARGE;
-  
+
   else if(strcmp(s1, "ECONOMY") == 0)
     return ECONOMY;
-  
+
   else if(strcmp(s1, "PROMO") == 0)
     return PROMO;
 
@@ -144,13 +144,13 @@ void types2_to_str(char* str , int s2){
 
   if( s2 == ANODIZED )
     strcpy(str, "ANODIZED");
-  
+
   else if( s2 == BURNISHED )
     strcpy(str, "BURNISHED");
-  
+
   else if( s2 == PLATED)
     strcpy(str, "PLATED");
-  
+
   else if( s2 == POLISHED)
     strcpy(str, "POLISHED");
 
@@ -164,10 +164,10 @@ tpch_p_type_s2 str_to_types2(char* s2){
 
   if( strcmp(s2, "ANODIZED") == 0)
     return ANODIZED;
-  
+
   else if( strcmp(s2, "BURNISHED") ==0)
     return BURNISHED;
-  
+
   else if( strcmp(s2, "PLATED") ==0)
     return PLATED;
 
@@ -176,7 +176,7 @@ tpch_p_type_s2 str_to_types2(char* s2){
 
   else if( strcmp(s2, "BRUSHED") ==0)
     return BRUSHED;
-  
+
 }
 
 void types3_to_str(char* str , int s3){
@@ -269,7 +269,7 @@ tpch_p_container_s2 str_to_containers2(char* s2){
     return CAN;
   else if ( strcmp(s2, "DRUM") == 0)
     return DRUM;
-  
+
 }
 
 void containers2_to_str( tpch_p_container_s2 s2, char* str){
@@ -295,7 +295,7 @@ void containers2_to_str( tpch_p_container_s2 s2, char* str){
 void pname_to_str(int p, char* srt){
 
   switch(p){
-    
+
   case almond:
     strcpy(srt,"almond");
     break;
@@ -591,15 +591,33 @@ tpch_o_priority str_to_priority(char * str ){
     ret = O_LOW;
 
   return ret;
-  
+
 }
 
-void segment_to_str(char str, tpch_c_segment seg){}
+void segment_to_str(char* str, int seg){
+    switch(seg) {
+        case AUTOMOBILE:
+            strcpy(str, "AUTOMOBILE");
+            break;
+        case BUILDING:
+            strcpy(str, "BUILDING");
+            break;
+        case FURNITURE:
+            strcpy(str, "FURNITURE");
+            break;
+        case MACHINERY:
+            strcpy(str, "MACHINERY");
+            break;
+        case HOUSEHOLD:
+            strcpy(str, "HOUSEHOLD");
+            break;
+    }
+}
 
 tpch_c_segment str_to_segment(char *str){
 
   tpch_c_segment ret;
-  
+
   if( !strcmp(str, "AUTOMOBILE"))
     ret = AUTOMOBILE;
   else if( !strcmp(str, "BUILDING"))
@@ -610,7 +628,7 @@ tpch_c_segment str_to_segment(char *str){
     ret = MACHINERY;
   else if( !strcmp(str, "HOUSEHOLD"))
     ret = HOUSEHOLD;
-  
+
   return ret;
 }
 
@@ -662,11 +680,11 @@ tpch_n_name str_to_nation(char* str ){
     return VIETNAM;
   else if(strcmp( "RUSSIA", str) == 0 )
     return RUSSIA;
-  else if(strcmp( "UNITED_KINGDOM", str) == 0 )
+  else if(strcmp( "UNITED KINGDOM", str) == 0 )
     return UNITED_KINGDOM;
-  else if(strcmp( "UNITED_STATEs", str) == 0 )
-    return UNITED_STATEs;
-  
+  else if(strcmp( "UNITED STATES", str) == 0 )
+    return UNITED_STATES;
+
 }
 
 void nation_to_str( int n_nation , char* str ){
@@ -675,106 +693,142 @@ void nation_to_str( int n_nation , char* str ){
   case ALGERIA:
     strcpy(str,"ALGERIA");
     break;
-    
+
   case ARGENTINA:
     strcpy(str,"ARGENTINA");
     break;
-    
+
   case BRAZIL:
     strcpy(str,"BRAZIL");
     break;
-    
+
   case CANADA:
     strcpy(str,"CANADA");
     break;
-    
+
   case EGYPT:
     strcpy(str,"EGYPT");
     break;
-    
+
   case ETHIOPIA:
     strcpy(str,"ETHIOPIA");
     break;
-    
+
   case FRANCE:
     strcpy(str,"FRANCE");
     break;
-    
+
   case GERMANY:
     strcpy(str,"GERMANY");
     break;
-    
+
   case INDIA:
     strcpy(str,"INDIA");
     break;
-    
+
   case INDONESIA:
     strcpy(str,"INDONESIA");
     break;
-    
+
   case IRAN:
     strcpy(str,"IRAN");
     break;
-    
+
   case IRAQ:
     strcpy(str,"IRAQ");
     break;
-    
+
   case JAPAN:
     strcpy(str,"JAPAN");
     break;
-    
+
   case JORDAN:
     strcpy(str,"JORDAN");
     break;
-    
+
   case KENYA:
     strcpy(str,"KENYA");
     break;
-    
+
   case MOROCCO:
     strcpy(str,"MOROCCO");
     break;
-    
+
   case MOZAMBIQUE:
     strcpy(str,"MOZAMBIQUE");
     break;
-    
+
   case PERU:
     strcpy(str,"PERU");
     break;
-    
+
   case CHINA:
     strcpy(str,"CHINA");
     break;
-    
+
   case ROMANIA:
     strcpy(str,"ROMANIA");
     break;
-    
+
   case SAUDI_ARABIA:
     strcpy(str,"SAUDI_ARABIA");
     break;
-    
+
   case VIETNAM:
     strcpy(str,"VIETNAM");
     break;
-    
+
   case RUSSIA:
     strcpy(str,"RUSSIA");
     break;
-    
+
   case UNITED_KINGDOM:
-    strcpy(str,"UNITED_KINGDOM");
+    strcpy(str,"UNITED KINGDOM");
     break;
-    
-  case UNITED_STATEs:
-    strcpy(str,"UNITED_STATEs");
+
+  case UNITED_STATES:
+    strcpy(str,"UNITED STATES");
     break;
   }
 
   return;
 }
 
+tpch_r_name str_to_region(char* str) {
+    if(strcmp( "AFRICA", str) == 0 )
+    return AFRICA;
+  else if(strcmp( "AMERICA", str) == 0 )
+    return AMERICA;
+  else if(strcmp( "ASIA", str) == 0 )
+    return ASIA;
+  else if(strcmp( "EUROPE", str) == 0 )
+    return EUROPE;
+  else if(strcmp( "MIDDLE EAST", str) == 0 )
+    return MIDDLE_EAST;
+}
+
+void region_to_str(int r_name, char* str) {
+    switch(r_name){
+  case AFRICA:
+    strcpy(str,"AFRICA");
+    break;
+
+  case AMERICA:
+    strcpy(str,"AMERICA");
+    break;
+
+  case ASIA:
+    strcpy(str,"ASIA");
+    break;
+
+  case EUROPE:
+    strcpy(str,"EUROPE");
+    break;
+
+  case MIDDLE_EAST:
+    strcpy(str,"MIDDLE EAST");
+    break;
+    }
+}
 
 EXIT_NAMESPACE(tpch);
