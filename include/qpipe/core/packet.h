@@ -140,7 +140,9 @@ private:
     guard<tuple_fifo> _output_buffer;
 
 public:
-    guard<tuple_filter_t> _output_filter;
+    //guard<tuple_filter_t> _output_filter;
+    //MA: Dirty solution to avoid the double-free bug.
+    tuple_filter_t* _output_filter;
 
     
     /** Should be set to the stage's _stage_next_tuple field when this
