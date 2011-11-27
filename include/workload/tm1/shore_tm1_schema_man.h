@@ -97,15 +97,6 @@ public:
                             const uint range,
                             lock_mode_t alm = SH,
                             bool need_tuple = true);
-
-    w_rc_t sub_get_idx_iter_nl(ss_m* db,
-                               sub_idx_iter* &iter,
-                               sub_tuple* ptuple,
-                               rep_row_t &replow,
-                               rep_row_t &rephigh,
-                               const int sub_id,
-                               const uint range,
-                               bool need_tuple = true);
     
     
 }; // EOF: sub_man_impl

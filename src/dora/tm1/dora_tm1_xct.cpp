@@ -934,7 +934,7 @@ w_rc_t DoraTM1Env::dora_get_sub_nbr(const int xct_id,
                 e = _psub_man->sub_get_idx_iter(_pssm, tmp_sub_iter, prsub, 
                                                 lowrep,highrep,
                                                 in._s_id, in._range,
-                                                SH, true);
+                                                SH, false);
                 if (e.is_error()) { goto done; }                   
                 sub_iter = tmp_sub_iter;
             }

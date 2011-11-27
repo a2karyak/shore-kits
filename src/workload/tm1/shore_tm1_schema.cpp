@@ -74,7 +74,7 @@ subscriber_t::subscriber_t(const uint4_t& pd)
     // Schema
     _desc[0].setup(SQL_INT,         "S_ID");         // UNIQUE [1..SF]
 
-    _desc[1].setup(SQL_VARCHAR,     "SUB_NBR", TM1_SUB_NBR_SZ);  
+    _desc[1].setup(SQL_FIXCHAR,     "SUB_NBR", TM1_SUB_NBR_SZ);  
 
     _desc[2].setup(SQL_BIT,         "BIT_1");        // BIT (0,1)
     _desc[3].setup(SQL_BIT,         "BIT_2");
@@ -131,7 +131,7 @@ subscriber_t::subscriber_t(const uint4_t& pd)
             // This index will be accessed arbitrarily by multiple threads. 
             // Therefore, normal concurrency control will be used.
             uint keys2_ext[2] = { 1, 0 }; // IDX { SUB_NBR, S_ID }
-            create_index_desc("SUB_NBR_IDX", 0, keys2_ext, 1, true, false, (pd ^ PD_NOLOCK));
+            create_index_desc("SUB_NBR_IDX", 0, keys2_ext, 2, true, false, (pd ^ PD_NOLOCK));
     }
     else
 #endif

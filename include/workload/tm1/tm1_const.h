@@ -91,7 +91,7 @@ const int TM1_CF_FCOUNT   = 5;
 
 
 // some field sizes
-const int TM1_SUB_NBR_SZ    = 15;
+const int TM1_SUB_NBR_SZ    = 16;
 const int TM1_AI_DATA3_SZ   = 3;
 const int TM1_AI_DATA4_SZ   = 5;
 const int TM1_SF_DATA_B_SZ  = 5;

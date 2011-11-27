@@ -125,8 +125,9 @@ w_rc_t sub_man_impl::sub_get_idx_iter(ss_m* db,
     assert (pindex);
 
     int lowsz, highsz;
-    char aSubNbr[15];
-
+    char aSubNbr[STRSIZE(TM1_SUB_NBR_SZ)];
+    memset(aSubNbr,0,STRSIZE(TM1_SUB_NBR_SZ));
+	
     // SUB_NBR_IDX: {1}
 
     // Low bound
@@ -135,7 +136,7 @@ w_rc_t sub_man_impl::sub_get_idx_iter(ss_m* db,
 
 #ifdef USE_DORA_EXT_IDX
     // The extended DORA index: SUB_NBR_IDX: {1 - 0}
-    if (alm == NL) ptuple->set_value(0, 0);
+    if(!need_tuple) { ptuple->set_value(0, 0); }
 #endif
 
     lowsz = format_key(pindex, ptuple, replow);
@@ -144,9 +145,9 @@ w_rc_t sub_man_impl::sub_get_idx_iter(ss_m* db,
     // High bound
     sprintf(aSubNbr,"%015d",(sub_id+range));
     ptuple->set_value(1, aSubNbr);
-
+	
 #ifdef USE_DORA_EXT_IDX
-    if (alm == NL) ptuple->set_value(0, MAX_INT); // largest S_ID
+    if(!need_tuple) { ptuple->set_value(0, MAX_INT); } // largest S_ID
 #endif
 
     highsz = format_key(pindex, ptuple, rephigh);
@@ -158,25 +159,6 @@ w_rc_t sub_man_impl::sub_get_idx_iter(ss_m* db,
 				 scan_index_i::ge, vec_t(replow._dest, lowsz),
 				 scan_index_i::lt, vec_t(rephigh._dest, highsz)));
     return (RCOK);
-}
-
-
-w_rc_t sub_man_impl::sub_get_idx_iter_nl(ss_m* db,
-                                         sub_idx_iter* &iter,
-                                         sub_tuple* ptuple,
-                                         rep_row_t &replow,
-                                         rep_row_t &rephigh,
-                                         const int sub_id,
-                                         const uint range,
-                                         bool need_tuple)
-{
-#ifdef USE_DORA_EXT_IDX
-    // If extended DORA index cannot retrieve tuple
-    (void)need_tuple;
-    return (sub_get_idx_iter(db,iter,ptuple,replow,rephigh,sub_id,range,NL,false));
-#else
-    return (sub_get_idx_iter(db,iter,ptuple,replow,rephigh,sub_id,range,NL,need_tuple));
-#endif
 }
 
 
