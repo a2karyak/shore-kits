@@ -1647,7 +1647,8 @@ w_rc_t table_man_t::update_tuple(ss_m* /* db */,
  *********************************************************************/
 
 w_rc_t table_man_t::read_tuple(table_tuple* ptuple,
-                               const lock_mode_t lock_mode)
+                               lock_mode_t lock_mode,
+			       latch_mode_t heap_latch_mode)
 {
     assert (_ptable);
     assert (ptuple);
@@ -1655,14 +1656,9 @@ w_rc_t table_man_t::read_tuple(table_tuple* ptuple,
     if (!ptuple->is_rid_valid()) return RC(se_NO_CURRENT_TUPLE);
 
     uint4_t system_mode = _ptable->get_pd();
-    latch_mode_t heap_latch_mode = LATCH_EX;
     if (system_mode & ( PD_MRBT_LEAF | PD_MRBT_PART) ) {
         heap_latch_mode = LATCH_NL;
-	// pin: right now we don't have a case where mrbt_leaf & mrbt_part are used
-	//      without dora but i'm including the check here
-	if(system_mode & PD_NOLOCK) {
-	    //TODO: lock_mode = NL;
-	}
+	lock_mode = NL;
     }
 
     pin_i  pin;

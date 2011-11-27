@@ -430,7 +430,8 @@ public:
 
     // Direct access through the rid
     w_rc_t    read_tuple(table_tuple* ptuple, 
-                         const lock_mode_t lock_mode = SH);
+                         lock_mode_t lock_mode = SH,
+			 latch_mode_t heap_latch_mode = LATCH_SH);
 
 
     
