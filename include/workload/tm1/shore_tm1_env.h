@@ -246,6 +246,8 @@ public:
     void start_load_imbalance();
     void reset_skew();
     
+    //print the current tables into files
+    w_rc_t db_print(int lines);
     
 }; // EOF ShoreTM1Env
    

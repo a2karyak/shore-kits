@@ -353,7 +353,7 @@ void  ShoreTM1Env::table_creator_t::work()
             
         for (int j=0; j<_preloads_per_worker; j++) {
             sub_id = i*_subs_per_worker + j;
-            W_COERCE(_env->xct_populate_one(sub_id));
+            W_COERCE(_env->xct_populate_one(sub_id+1));
         }
         W_COERCE(_env->db()->commit_xct());
     }
@@ -402,7 +402,7 @@ void ShoreTM1Env::table_builder_t::work()
 	int sub_id = _start + subsadded;
 
         // insert row
-	e = _env->xct_populate_one(sub_id);
+	e = _env->xct_populate_one(sub_id+1);
 
 	if(e.is_error()) {
 	    W_COERCE(_env->db()->abort_xct());
@@ -606,5 +606,30 @@ w_rc_t ShoreTM1Env::_post_init_impl()
     return (RCOK);
 }
 
- 
+
+/********************************************************************* 
+ *
+ *  @fn:   db_print
+ *
+ *  @brief: Prints the current tm1 tables to files
+ *
+ *********************************************************************/ 
+
+w_rc_t ShoreTM1Env::db_print(int lines) 
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+
+    // print tables
+    W_DO(_psub_man->print_table(_pssm, lines));
+    W_DO(_pai_man->print_table(_pssm, lines));    
+    W_DO(_psf_man->print_table(_pssm, lines));
+    W_DO(_pcf_man->print_table(_pssm, lines));    
+
+    return (RCOK);
+}
+
+
 EXIT_NAMESPACE(tm1);
