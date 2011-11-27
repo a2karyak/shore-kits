@@ -146,6 +146,9 @@ public:
 	row_cache::tuple_factory::ptable() = aTableDesc;
     }
 
+    // Direct access through the rid
+    w_rc_t    read_tuple(table_tuple* ptuple, lock_mode_t lm = SH);
+
 
     /* ------------------------------------------- */
     /* --- iterators for index and table scans --- */
@@ -424,6 +427,39 @@ public:
  *  table_man_impl methods
  *
  *********************************************************************/ 
+
+/********************************************************************* 
+ *
+ *  @fn:    read_tuple
+ *
+ *  @brief: Read a tuple directly through its RID
+ *
+ *  @note:  This function should be called in the context of a trx
+ *          The passed RID should be valid.
+ *
+ *********************************************************************/
+
+template <class TableDesc>
+w_rc_t table_man_impl<TableDesc>::read_tuple(table_tuple* ptuple,
+                                             lock_mode_t lm)
+{
+    assert (_ptable);
+    assert (ptuple);
+
+    if (!ptuple->is_rid_valid()) return RC(se_NO_CURRENT_TUPLE);
+
+    pin_i  pin;
+    W_DO(pin.pin(ptuple->rid(), 0, lm));
+    if (!load(ptuple, pin.body())) {
+        pin.unpin();
+        return RC(se_WRONG_DISK_DATA);
+    }
+    pin.unpin();
+
+    return (RCOK);
+}
+
+
 
 
 /* ------------------------------------------- */
