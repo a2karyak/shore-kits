@@ -112,7 +112,7 @@ w_rc_t baseline_tm1_client_t::submit_one(int xct_type, int xctid)
     }
 
     // Decide which ID inside that SF to use
-    int selid = (selsf-1)*TM1_SUBS_PER_SF + URand(0,TM1_SUBS_PER_SF-1);
+    int selid = (selsf-1)*TM1_SUBS_PER_SF + URand(1,TM1_SUBS_PER_SF);
 
     // Get one action from the trash stack
     trx_request_t* arequest = new (_env->_request_pool) trx_request_t;

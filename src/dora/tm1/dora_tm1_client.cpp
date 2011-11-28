@@ -123,7 +123,7 @@ w_rc_t dora_tm1_client_t::submit_one(int xct_type, int xctid)
     }
 
     // decide which ID inside that SF to use
-    int selid = (selsf-1)*TM1_SUBS_PER_SF + URand(0,TM1_SUBS_PER_SF-1);
+    int selid = (selsf-1)*TM1_SUBS_PER_SF + URand(1,TM1_SUBS_PER_SF);
 
     trx_result_tuple_t atrt;
     if (condex* c = _cp->take_one()) {
