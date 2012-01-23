@@ -99,7 +99,6 @@ w_rc_t account_permission_man_impl::ap_update_acl(ss_m* db,
                                                   lock_mode_t lm)
 {
     assert (ptuple); 
-    W_DO(index_probe_forupdate_by_name(db, "AP_INDEX", ptuple));
     ptuple->set_value(1, acl);
     return (update_tuple(db, ptuple, lm));
 }
@@ -136,7 +135,6 @@ w_rc_t address_man_impl::ad_update_line2(ss_m* db,
                                          lock_mode_t lm)
 {
     assert (ptuple);
-
     ptuple->set_value(2, line2);
     return (update_tuple(db, ptuple, lm));
 }
@@ -383,7 +381,6 @@ w_rc_t company_man_impl::co_update_sprate(ss_m* db, company_tuple* ptuple, const
 {
     assert (ptuple);
     ptuple->set_value(4, sprate);
-    
     return (update_tuple(db, ptuple, lm));
 }
 
@@ -486,7 +483,6 @@ w_rc_t customer_man_impl::c_index_probe_forupdate(ss_m* db, customer_tuple* ptup
 w_rc_t customer_man_impl::c_update_email2(ss_m* db, customer_tuple* ptuple, const char* email2, lock_mode_t lm)
 {
     assert (ptuple);
-    
     ptuple->set_value(23, email2);    
     return (update_tuple(db, ptuple, lm));
 }
@@ -675,8 +671,10 @@ w_rc_t customer_taxrate_man_impl::cx_update_txid(ss_m* db,
                                                  const char* new_tax_rate,
                                                  lock_mode_t lm)
 {
-    // 1. idx probe for update the cx
-    W_DO(index_probe_forupdate_by_name(db, "CX_INDEX", ptuple));
+    assert (ptuple);
+	
+    // 1. fill the ptuple
+    W_DO(read_tuple(ptuple));
 
     // 2. delete the old entry from the index
     W_DO(delete_index_entry(db, "CX_INDEX", ptuple));
@@ -710,7 +708,12 @@ w_rc_t daily_market_man_impl::dm_update_vol(ss_m* db,
                                             const int vol_incr,
                                             lock_mode_t lm)
 {
-    assert (ptuple);    
+    assert (ptuple);
+    
+    // 1. fill the ptuple
+    W_DO(read_tuple(ptuple));
+
+    // 2. update the tuple
     int ex_vol;
     ptuple->get_value(5, ex_vol);
     ptuple->set_value(5, (ex_vol + vol_incr));
@@ -1476,6 +1479,20 @@ w_rc_t taxrate_man_impl::tx_index_probe(ss_m* db, taxrate_tuple* ptuple, const c
     return (index_probe_by_name(db, "TX_INDEX", ptuple));
 }
 
+w_rc_t taxrate_man_impl::tx_index_probe_forupdate(ss_m* db, taxrate_tuple* ptuple, const char* tx_id)
+{
+    assert (ptuple);    
+    ptuple->set_value(0, tx_id);
+    return (index_probe_forupdate_by_name(db, "TX_INDEX", ptuple));
+}
+
+w_rc_t taxrate_man_impl::tx_update_name(ss_m* db, taxrate_tuple* ptuple, const char* tx_name, lock_mode_t lm)
+{
+    assert (ptuple);
+    ptuple->set_value(1, tx_name);
+    return (update_tuple(db, ptuple, lm));
+}
+
 
 /* --------------- */
 /* ---- TRADE ---- */
@@ -1834,6 +1851,7 @@ w_rc_t trade_request_man_impl::tr_get_iter_by_index4(ss_m* db,
     return (RCOK);
 }
 
+/*
 w_rc_t trade_request_man_impl::tr_get_iter_by_index(ss_m* db,
 						    trade_request_index_iter* &iter,
 						    trade_request_tuple* ptuple,
@@ -1861,12 +1879,13 @@ w_rc_t trade_request_man_impl::tr_get_iter_by_index(ss_m* db,
     int highsz = format_key(pindex, ptuple, rephigh);
     assert (rephigh._dest);    
 
-    /* index only access */
+    // index only access
     W_DO(get_iter_for_index_scan(db, pindex, iter, alm, need_tuple,
 				 scan_index_i::ge, vec_t(replow._dest, lowsz),
 				 scan_index_i::le, vec_t(rephigh._dest, highsz)));
     return (RCOK);
 }
+*/
 
 
 /* -------------------- */

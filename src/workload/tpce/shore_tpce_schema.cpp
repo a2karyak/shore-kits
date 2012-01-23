@@ -396,13 +396,14 @@ trade_request_t::trade_request_t(const uint4_t& pd)
     _desc[4].setup(SQL_FLOAT,   "TR_BID_PRICE");
     _desc[5].setup(SQL_LONG,    "TR_B_ID"); //called TR_CA_ID in EGEN?, (FK B_)
 
-    uint  keys[1] = { 0 };
+    //@note: PIN: no one is using it
+    //uint  keys[1] = { 0 };  // MSSQL - not used
     //@note: PIN: have to go to the tuple regardless of using key2 and key3 so key4 makes more sense
     //uint  keys2[3] = { 5, 2, 0 }; // MSSQL - not used
     //uint  keys3[5] = { 2, 0, 1, 4, 3 };  // MSSQL - not used
     uint  keys4[2] = { 2, 5 };
     
-    create_primary_idx_desc("TR_INDEX", 0, keys, 1, pd); //unique
+    //create_primary_idx_desc("TR_INDEX", 0, keys, 1, pd); //unique
     //create_index_desc("TR_INDEX_2", 0, keys2, 3); //unique
     //create_index_desc("TR_INDEX_3", 0, keys3, 5); //unique   
     create_index_desc("TR_INDEX_4", 0, keys4, 2, false, false, pd); //non-unique

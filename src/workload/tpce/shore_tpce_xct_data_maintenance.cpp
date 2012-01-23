@@ -45,9 +45,6 @@
 using namespace shore;
 using namespace TPCE;
 
-//#define TRACE_TRX_FLOW TRACE_ALWAYS
-//#define TRACE_TRX_RESULT TRACE_ALWAYS
-
 ENTER_NAMESPACE(tpce);
 
 /******************************************************************** 
@@ -96,6 +93,9 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
     table_row_t* prnewsxref= _pnews_xref_man->get_tuple();
     assert (prnewsxref);
 
+    table_row_t* prtaxrate = _ptaxrate_man->get_tuple();
+    assert (prtaxrate);
+
     table_row_t* prwatchitem = _pwatch_item_man->get_tuple();
     assert (prwatchitem);
 
@@ -117,6 +117,7 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
     prsecurity->_rep = &areprow;
     prnewsitem->_rep = &areprow;
     prnewsxref->_rep = &areprow;
+    prtaxrate->_rep = &areprow;
     prwatchitem->_rep = &areprow;
     prwatchlist->_rep = &areprow;
 
@@ -163,6 +164,14 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 	    TRACE( TRACE_TRX_FLOW, "App: %d DM:ap-iter-next \n", xct_id);
 	    e = ap_iter->next(_pssm, eof, *pracctperm);
 	    if (e.is_error()) {  goto done; }
+
+	    if(eof) {
+		TRACE( TRACE_TRX_FLOW, "App: %d DM: no account permission tuple with acct_id (%d) \n",
+		       xct_id, pdmin._acct_id);
+		e = RC(se_NOT_FOUND);
+		goto done;		 
+	    }
+		    
 	    while(!eof){
 		char acl[5]; //4
 		pracctperm->get_value(1, acl, 5);
@@ -174,7 +183,6 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		e = ap_iter->next(_pssm, eof, *pracctperm);
 		if (e.is_error()) {  goto done; }
 	    }
-	    assert (ap_sorter.count());
 
 	    desc_sort_iter_impl ap_list_sort_iter(_pssm, &ap_list, &ap_sorter);
 
@@ -185,7 +193,8 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 	    char acl[5]; //4
 	    rsb.get_value(0, acl, 5);
 
-	    if(strcmp(acl, "1111") == 0){
+	    char new_acl[5]; //4
+	    if(strcmp(acl, "1111") != 0){
 		/**
 		   update
 		   ACCOUNT_PERMISSION
@@ -195,37 +204,7 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		   AP_CA_ID = acct_id and
 		   AP_ACL = acl
 		*/
-		{
-		    index_scan_iter_impl<account_permission_t>* tmp_ap_iter;
-		    TRACE( TRACE_TRX_FLOW, "App: %d DM:ap-get-iter-by-idx %ld \n", xct_id, pdmin._acct_id);
-		    e = _paccount_permission_man->ap_get_iter_by_index(_pssm, tmp_ap_iter,
-								       pracctperm, lowrep, highrep,
-								       pdmin._acct_id);
-		    if (e.is_error()) {   goto done; }
-		    ap_iter = tmp_ap_iter;
-		}
-
-		TRACE( TRACE_TRX_FLOW, "App: %d DM:ap-iter-next \n", xct_id);
-		e = ap_iter->next(_pssm, eof, *pracctperm);
-		if (e.is_error()) {  goto done; }
-		while(!eof){
-		    TIdent ap_ca_id;
-		    char ap_acl[5]; //4
-
-		    pracctperm->get_value(0, ap_ca_id);
-		    pracctperm->get_value(1, ap_acl, 5);
-
-		    if(ap_ca_id == pdmin._acct_id && strcmp(ap_acl, acl) == 0){
-			char new_acl[5] = "1111"; //4
-			TRACE( TRACE_TRX_FLOW, "App: %d DM:ap-update (%s) \n", xct_id, new_acl);
-			e = _paccount_permission_man->ap_update_acl(_pssm, pracctperm, new_acl);
-			if (e.is_error()) {  goto done; }
-		    }
-
-		    TRACE( TRACE_TRX_FLOW, "App: %d DM:ap-iter-next \n", xct_id);
-		    e = ap_iter->next(_pssm, eof, *pracctperm);
-		    if (e.is_error()) {  goto done; }
-		}
+		strcmp(new_acl, "1111");
 	    }
 	    else{
 		/**
@@ -237,35 +216,37 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		   AP_CA_ID = acct_id and
 		   AP_ACL = acl
 		*/
-		{
-		    index_scan_iter_impl<account_permission_t>* tmp_ap_iter;
-		    TRACE( TRACE_TRX_FLOW, "App: %d DM:ap-get-iter-by-idx \n", xct_id);
-		    e = _paccount_permission_man->ap_get_iter_by_index(_pssm, tmp_ap_iter, pracctperm, lowrep, highrep, pdmin._acct_id);
+		strcmp(new_acl, "0011");
+	    }
+	    {
+		index_scan_iter_impl<account_permission_t>* tmp_ap_iter;
+		TRACE( TRACE_TRX_FLOW, "App: %d DM:ap-get-iter-by-idx %ld \n", xct_id, pdmin._acct_id);
+		e = _paccount_permission_man->ap_get_iter_by_index(_pssm, tmp_ap_iter,
+								   pracctperm, lowrep, highrep,
+								   pdmin._acct_id);
+		if (e.is_error()) {   goto done; }
+		ap_iter = tmp_ap_iter;
+	    }
+	    
+	    TRACE( TRACE_TRX_FLOW, "App: %d DM:ap-iter-next \n", xct_id);
+	    e = ap_iter->next(_pssm, eof, *pracctperm);
+	    if (e.is_error()) {  goto done; }
+	    while(!eof){
+		char ap_acl[5]; //4
+		pracctperm->get_value(1, ap_acl, 5);
+		
+		if(strcmp(ap_acl, acl) == 0){
+		    TRACE( TRACE_TRX_FLOW, "App: %d DM:ap-update (%s) \n", xct_id, new_acl);
+		    e = _paccount_permission_man->ap_update_acl(_pssm, pracctperm, new_acl);
 		    if (e.is_error()) {  goto done; }
-		    ap_iter = tmp_ap_iter;
 		}
+		
 		TRACE( TRACE_TRX_FLOW, "App: %d DM:ap-iter-next \n", xct_id);
 		e = ap_iter->next(_pssm, eof, *pracctperm);
 		if (e.is_error()) {  goto done; }
-		while(!eof){
-		    char ap_acl[5]; //4
-		    pracctperm->get_value(1, ap_acl, 5);
-
-		    if(strcmp(ap_acl, acl) == 0){
-			char new_acl[5] = "0011"; //4
-
-			TRACE( TRACE_TRX_FLOW, "App: %d DM:ap-update (%s) \n", xct_id, new_acl);
-			e = _paccount_permission_man->ap_update_acl(_pssm, pracctperm, new_acl);
-			if (e.is_error()) {  goto done; }
-		    }
-
-		    TRACE( TRACE_TRX_FLOW, "App: %d DM:ap-iter-next \n", xct_id);
-		    e = ap_iter->next(_pssm, eof, *pracctperm);
-		    if (e.is_error()) {  goto done; }
-		}
 	    }
-	}
-	else if(strcmp(pdmin._table_name, "ADDRESS") == 0){
+	    
+	} else if(strcmp(pdmin._table_name, "ADDRESS") == 0){
 	    char line2[81] = "\0"; //80
 	    TIdent ad_id = 0;
 
@@ -284,18 +265,9 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		TRACE( TRACE_TRX_FLOW, "App: %d DM:c-idx-probe (%ld) \n", xct_id,  pdmin._c_id);
 		e =  _pcustomer_man->c_index_probe(_pssm, prcustomer, pdmin._c_id);
 		if (e.is_error()) {  goto done; }
+		prcustomer->get_value(9, ad_id);
 
-		TIdent c_ad_id;
-		prcustomer->get_value(9, c_ad_id);
-
-		TRACE( TRACE_TRX_FLOW, "App: %d DM:ad-idx-probe-for-update (%d) \n", xct_id,  c_ad_id);
-		e =  _paddress_man->ad_index_probe_forupdate(_pssm, praddress, c_ad_id);
-		if (e.is_error()) {  goto done; }
-
-		praddress->get_value(2, line2, 81);
-		praddress->get_value(0, ad_id);
-	    }
-	    else{
+	    } else {
 		/**
 		   select
 		   line2 = AD_LINE2,
@@ -310,17 +282,15 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		TRACE( TRACE_TRX_FLOW, "App: %d DM:co-idx-probe (%ld) \n", xct_id,  pdmin._co_id);
 		e =  _pcompany_man->co_index_probe(_pssm, prcompany, pdmin._co_id);
 		if (e.is_error()) {  goto done; }
-
-		TIdent co_ad_id;
-		prcompany->get_value(6, co_ad_id);
-
-		TRACE( TRACE_TRX_FLOW, "App: %d DM:ad-idx-probe (%ld) \n", xct_id,  co_ad_id);
-		e =  _paddress_man->ad_index_probe_forupdate(_pssm, praddress, co_ad_id);
-		if (e.is_error()) {  goto done; }
-
-		praddress->get_value(2, line2, 81);
-		praddress->get_value(0, ad_id);
+		prcompany->get_value(6, ad_id);
 	    }
+	    TRACE( TRACE_TRX_FLOW, "App: %d DM:ad-idx-probe-for-update (%ld) \n", xct_id,  ad_id);
+	    e =  _paddress_man->ad_index_probe_forupdate(_pssm, praddress, ad_id);
+	    if (e.is_error()) {  goto done; }	    
+	    praddress->get_value(2, line2, 81);
+
+
+	    char new_line2[81];
 	    if(strcmp(line2, "Apt. 10C") != 0){
 		/**
 		   update
@@ -330,13 +300,8 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		   where
 		   AD_ID = ad_id
 		*/
-
-		char new_line2[81] = "Apt. 10C" ;
-		TRACE( TRACE_TRX_FLOW, "App: %d DM:ad-update (%ld) (%s) \n", xct_id, ad_id, new_line2);
-		e = _paddress_man->ad_update_line2(_pssm, praddress, new_line2);
-		if (e.is_error()) {  goto done; }
-	    }
-	    else{
+		strcpy(new_line2, "Apt. 10C");
+	    } else{
 		/**
 		   update
 		   ADDRESS
@@ -345,22 +310,21 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		   where
 		   AD_ID = ad_id
 		*/
-
-		char new_line2[81] = "Apt. 22";
-		TRACE( TRACE_TRX_FLOW, "App: %d DM:ad-update (%ld) (%s) \n", xct_id, ad_id, new_line2);
-		e = _paddress_man->ad_update_line2(_pssm, praddress, new_line2);
-		if (e.is_error()) {  goto done; }
+		strcpy(new_line2, "Apt. 22");
 	    }
-	}
-	else if(strcmp(pdmin._table_name, "COMPANY") == 0){
+	    TRACE( TRACE_TRX_FLOW, "App: %d DM:ad-update (%ld) (%s) \n", xct_id, ad_id, new_line2);
+	    e = _paddress_man->ad_update_line2(_pssm, praddress, new_line2);
+	    if (e.is_error()) {  goto done; }
+
+	} else if(strcmp(pdmin._table_name, "COMPANY") == 0){
 	    char sprate[5] = "\0"; //4
 
 	    TRACE( TRACE_TRX_FLOW, "App: %d DM:co-idx-probe (%ld) \n", xct_id,  pdmin._co_id);
 	    e =  _pcompany_man->co_index_probe_forupdate(_pssm, prcompany, pdmin._co_id);
 	    if(e.is_error()) {  goto done; }
-
 	    prcompany->get_value(4, sprate, 5);
 
+	    char new_sprate[5];
 	    if(strcmp(sprate, "ABA") != 0){
 		/**
 		   update
@@ -370,13 +334,8 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		   where
 		   CO_ID = co_id
 		*/
-
-		char new_sprate[5] = "ABA";
-		TRACE( TRACE_TRX_FLOW, "App: %d DM:co-update (%s) \n", xct_id, new_sprate);
-		e = _pcompany_man->co_update_sprate(_pssm, prcompany, new_sprate);
-		if (e.is_error()) {  goto done; }
-	    }
-	    else{
+		strcpy(new_sprate, "ABA");
+	    } else {
 		/**
 		   update
 		   COMPANY
@@ -385,14 +344,13 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		   where
 		   CO_ID = co_id
 		*/
-
-		char new_sprate[5] = "AAA";
-		TRACE( TRACE_TRX_FLOW, "App: %d DM:co-update (%s) \n", xct_id,new_sprate);
-		e = _pcompany_man->co_update_sprate(_pssm, prcompany, new_sprate);
-		if (e.is_error()) {   goto done; }
+		strcpy(new_sprate, "AAA");
 	    }
-	}
-	else if(strcmp(pdmin._table_name, "CUSTOMER") == 0){
+	    TRACE( TRACE_TRX_FLOW, "App: %d DM:co-update (%s) \n", xct_id, new_sprate);
+	    e = _pcompany_man->co_update_sprate(_pssm, prcompany, new_sprate);
+	    if (e.is_error()) {  goto done; }
+
+	} else if(strcmp(pdmin._table_name, "CUSTOMER") == 0){
 	    char email2[51] = "\0"; //50
 	    int len = 0;
 	    int lenMindspring = strlen("@mindspring.com");
@@ -414,7 +372,9 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 
 	    len = strlen(email2);
 	    string temp_email2(email2);
-	    if( ((len - lenMindspring) > 0 && (temp_email2.substr(len-lenMindspring, lenMindspring).compare("@mindspring.com") == 0))){
+	    char new_email2[51];
+	    if( ((len - lenMindspring) > 0 &&
+		 (temp_email2.substr(len-lenMindspring, lenMindspring).compare("@mindspring.com") == 0))){
 		/**
 		   update
 		   CUSTOMER
@@ -424,16 +384,9 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		   where
 		   C_ID = c_id
 		*/
-
-		char new_email2[51];
 		string temp_new_email2 = temp_email2.substr(1, temp_email2.find_first_of('@')) + "earthlink.com";
 		strcpy(new_email2, temp_new_email2.c_str());
-
-		TRACE( TRACE_TRX_FLOW, "App: %d DM:c-update (%s) \n", xct_id, new_email2);
-		e = _pcustomer_man->c_update_email2(_pssm, prcustomer, new_email2);
-		if (e.is_error()) {  goto done; }
-	    }
-	    else{
+	    } else{
 		/**
 		   update
 		   CUSTOMER
@@ -443,17 +396,15 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		   where
 		   C_ID = c_id
 		*/
-		char new_email2[51]; //50
 		string temp_new_email2 = temp_email2.substr(1, temp_email2.find_first_of('@')) + "mindspring.com";
 		strcpy(new_email2, temp_new_email2.c_str());
-
-		TRACE( TRACE_TRX_FLOW, "App: %d DM:c-update (%s) \n", xct_id, new_email2);
-		e = _pcustomer_man->c_update_email2(_pssm, prcustomer, new_email2);
-		if (e.is_error()) {  goto done; }
 	    }
-	}
-	else if(strcmp(pdmin._table_name, "CUSTOMER_TAXRATE") == 0){
-#warning Djole CHECK
+
+	    TRACE( TRACE_TRX_FLOW, "App: %d DM:c-update (%s) \n", xct_id, new_email2);
+	    e = _pcustomer_man->c_update_email2(_pssm, prcustomer, new_email2);
+	    if (e.is_error()) {  goto done; }
+
+	} else if(strcmp(pdmin._table_name, "CUSTOMER_TAXRATE") == 0){
 	    char old_tax_rate[5];//4
 	    char new_tax_rate[5];//4
 	    int tax_num;
@@ -481,33 +432,27 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 	    e = cx_iter->next(_pssm, eof, *prcustomertaxrate);
 	    if (e.is_error()) {  goto done; }
 	    while(!eof){
-		char cx_tx_id[5];//4
-		prcustomertaxrate->get_value(0, cx_tx_id, 5);
+		prcustomertaxrate->get_value(0, old_tax_rate, 5);
 
-		string temp_cx_tx_id(cx_tx_id);
-		if(temp_cx_tx_id.substr(0,2).compare("US") == 0 || temp_cx_tx_id.substr(0,2).compare("CN") == 0 ){
-		    strcpy(old_tax_rate, cx_tx_id);				
+		string temp_old_tax_rate(old_tax_rate);
+		if(temp_old_tax_rate.substr(0,2).compare("US") == 0 || temp_old_tax_rate.substr(0,2).compare("CN") == 0 ){
 
-		    string temp_old_tax_rate(old_tax_rate);
 		    if(temp_old_tax_rate.substr(0,2).compare("US") == 0){
 			if(temp_old_tax_rate.compare("US5") == 0){
 			    strcpy(new_tax_rate, "US1");
-			}
-			else{
-			    tax_num = atoi(temp_old_tax_rate.substr(2, 1).c_str());
+			} else {
+			    tax_num = atoi(temp_old_tax_rate.substr(2, 1).c_str()) + 1;
 			    stringstream temp_new_tax_rate;
-			    temp_new_tax_rate << "US" << (++tax_num);
+			    temp_new_tax_rate << "US" << tax_num;
 			    strcpy(new_tax_rate, temp_new_tax_rate.str().c_str());
 			}
-		    }
-		    else{
+		    } else {
 			if(temp_old_tax_rate.compare("CN4") == 0){
 			    strcpy(new_tax_rate, "CN1");
-			}
-			else{
-			    tax_num = atoi(temp_old_tax_rate.substr(2, 1).c_str());
+			} else {
+			    tax_num = atoi(temp_old_tax_rate.substr(2, 1).c_str()) + 1;
 			    stringstream temp_new_tax_rate;
-			    temp_new_tax_rate << "CN" << (++tax_num);
+			    temp_new_tax_rate << "CN" << tax_num;
 			    strcpy(new_tax_rate, temp_new_tax_rate.str().c_str());
 			}
 		    }
@@ -530,8 +475,8 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		e = cx_iter->next(_pssm, eof, *prcustomertaxrate);
 		if (e.is_error()) {  goto done; }
 	    }
-	}
-	else if(strcmp(pdmin._table_name, "DAILY_MARKET") == 0){
+	    
+	} else if(strcmp(pdmin._table_name, "DAILY_MARKET") == 0){
 	    /**
 	       update
 	       DAILY_MARKET
@@ -547,8 +492,9 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		index_scan_iter_impl<daily_market_t>* tmp_dm_iter;
 		TRACE( TRACE_TRX_FLOW, "App: %d DM:dm-get-iter-by-idx4 (%s) \n", xct_id, pdmin._symbol);
 		e = _pdaily_market_man->dm_get_iter_by_index(_pssm, tmp_dm_iter, prdailymarket,
-							     lowrep, highrep, pdmin._symbol);
-		if (e.is_error()) {  goto done; }
+							     lowrep, highrep, pdmin._symbol,
+							     0, SH, false);
+		if (e.is_error()) { goto done; }
 		dm_iter = tmp_dm_iter;
 	    }
 
@@ -566,10 +512,10 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		}
 
 		e = dm_iter->next(_pssm, eof, *prdailymarket);
-		if (e.is_error()) {  goto done; }
-	    }			
-	}
-	else if(strcmp(pdmin._table_name, "EXCHANGE") == 0){
+		if (e.is_error()) { goto done; }
+	    }
+	    
+	} else if(strcmp(pdmin._table_name, "EXCHANGE") == 0){
 	    int rowcount = 0;
 	    /**
 	       select
@@ -604,6 +550,7 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		e = ex_iter->next(_pssm, eof, *prexchange);
 		if (e.is_error()) {  goto done; }
 	    }
+	    
 	    if(rowcount == 0){
 		/**
 		   update
@@ -635,8 +582,8 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		    e = ex_iter->next(_pssm, eof, *prexchange);
 		    if (e.is_error()) {  goto done; }
 		}
-	    }
-	    else{
+
+	    } else {
 		/**
 		   update
 		   EXCHANGE
@@ -670,8 +617,8 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		    if (e.is_error()) { goto done; }
 		}
 	    }
-	}
-	else if(strcmp(pdmin._table_name, "FINANCIAL") == 0){
+	    
+	} else if(strcmp(pdmin._table_name, "FINANCIAL") == 0){
 	    int rowcount = 0;
 
 	    /**
@@ -711,6 +658,7 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		e = fi_iter->next(_pssm, eof, *prfinancial);
 		if (e.is_error()) {  goto done; }
 	    }
+
 	    if(rowcount > 0){
 		/**
 		   update
@@ -745,8 +693,7 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		    e = fi_iter->next(_pssm, eof, *prfinancial);
 		    if (e.is_error()) {  goto done; }
 		}
-	    }
-	    else{
+	    } else {
 		/**
 		   update
 		   FINANCIAL
@@ -781,8 +728,8 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		    if (e.is_error()) {  goto done; }
 		}
 	    }
-	}
-	else if(strcmp(pdmin._table_name, "NEWS_ITEM") == 0){
+	    
+	} else if(strcmp(pdmin._table_name, "NEWS_ITEM") == 0){
 	    /**
 	       update
 	       NEWS_ITEM
@@ -830,8 +777,8 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		e = nx_iter->next(_pssm, eof, *prnewsxref);
 		if (e.is_error()) {  goto done; }
 	    }
-	}
-	else if(strcmp(pdmin._table_name, "SECURITY") == 0){
+	    
+	} else if(strcmp(pdmin._table_name, "SECURITY") == 0){
 	    /**
 	       update
 	       SECURITY
@@ -853,8 +800,8 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 	    TRACE( TRACE_TRX_FLOW, "App: %d DM:s-update-ed (%d) \n", xct_id, s_exch_date );
 	    e =  _psecurity_man->s_update_ed(_pssm, prsecurity, s_exch_date);
 	    if (e.is_error()) {  goto done; }
-	}
-	else if(strcmp(pdmin._table_name, "TAXRATE") == 0){
+
+	} else if(strcmp(pdmin._table_name, "TAXRATE") == 0){
 	    /**
 	       select
 	       tx_name = TX_NAME
@@ -863,42 +810,40 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 	       where
 	       TX_ID = tx_id	
 	    */
-	    /*
-	      char tx_name[51]; //50
+	    
+	    char tx_name[51]; //50
+	    
+	    TRACE( TRACE_TRX_FLOW, "App: %d DM:tx-idx-probe (%d) \n", xct_id, pdmin._tx_id);
+	    e =  _ptaxrate_man->tx_index_probe_forupdate(_pssm, prtaxrate, pdmin._tx_id);
+	    if (e.is_error()) {  goto done; }
 
-	      TRACE( TRACE_TRX_FLOW, "App: %d DM:tx-idx-probe (%d) \n", xct_id, pdmin._tx_id);
-	      e =  _ptaxrate_man->tx_index_probe_forupdate(_pssm, prtaxrate, pdmin._tx_id);
-	      if (e.is_error()) {  goto done; }
+	    prtaxrate->get_value(1, tx_name, 51);
 
-	      prtaxrate->get_value(1, tx_name, 51);
+	    string temp(tx_name);
+	    size_t index = temp.find("Tax");
+	    if(index != string::npos){
+		temp.replace(index, 3, "tax");
+	    } else {
+		index = temp.find("tax");
+		temp.replace(index, 3, "Tax");
+	    }
 
-	      //printf("Tax Name %s \n", tx_name);
-	      string temp(tx_name);
-	      size_t index = temp.find("Tax");
-	      if(index != string::npos){
-	      temp.replace(index, 3, "tax");
-	      }
-	      else{
-	      index = temp.find("tax");
-	      temp.replace(index, 3, "Tax");
-	      }
-	      strcpy(tx_name, temp.c_str());
-
-	      /**
-	      update
-	      TAXRATE
-	      set
-	      TX_NAME = tx_name
-	      where
-	      TX_ID = tx_id
+	    /**
+	       update
+	       TAXRATE
+	       set
+	       TX_NAME = tx_name
+	       where
+	       TX_ID = tx_id
 	    */
-	    /*
-	      TRACE( TRACE_TRX_FLOW, "App: %d DM:tx-update-name (%s) \n", xct_id, tx_name);
-	      e =  _ptaxrate_man->tx_update_name(_pssm, prtaxrate, tx_name);
-	      if (e.is_error()) {  goto done; }
-	    */
-	}
-	else if(strcmp(pdmin._table_name, "WATCH_ITEM") == 0){
+	    
+	    TRACE( TRACE_TRX_FLOW, "App: %d DM:tx-update-name (%s) \n", xct_id, tx_name);
+	    e =  _ptaxrate_man->tx_update_name(_pssm, prtaxrate, temp.c_str());
+	    if (e.is_error()) {  goto done; }
+	    
+	} else if(strcmp(pdmin._table_name, "WATCH_ITEM") == 0){
+	    // PIN: TODO: this part can be optimized, the same stuff is scanned bizillion times
+	    
 	    /**
 	       select
 	       cnt = count(*)     // number of rows is [50..150]
@@ -1176,9 +1121,9 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
     _psecurity_man->give_tuple(prsecurity);
     _pnews_item_man->give_tuple(prnewsitem);
     _pnews_xref_man->give_tuple(prnewsxref);
+    _ptaxrate_man->give_tuple(prtaxrate);
     _pwatch_item_man->give_tuple(prwatchitem);
     _pwatch_list_man->give_tuple(prwatchlist);
-
 
 
     return (e);

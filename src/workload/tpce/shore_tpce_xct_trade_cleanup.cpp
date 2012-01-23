@@ -45,9 +45,6 @@
 using namespace shore;
 using namespace TPCE;
 
-//#define TRACE_TRX_FLOW TRACE_ALWAYS
-//#define TRACE_TRX_RESULT TRACE_ALWAYS
-
 ENTER_NAMESPACE(tpce);
 
 /******************************************************************** 
@@ -102,6 +99,53 @@ w_rc_t ShoreTPCEEnv::xct_trade_cleanup(const int xct_id, trade_cleanup_input_t& 
 	   TR_T_ID
 	*/
 
+	/* PIN: To get rid of the primary index TRADE_REQUEST,
+	   since TRADE_CLEANUP is not performance critical and
+	   since we have to touch all the TRADE_REQUEST tuples anyway here,
+	   I think this won't hurt
+	   Also I'm going to do the deleting of TRADE_REQUEST tuples here as well
+	*/
+
+	guard<table_scan_iter_impl<trade_request_t> > tr_iter;
+	{
+	    table_scan_iter_impl<trade_request_t>* tmp_tr_iter;
+	    TRACE( TRACE_TRX_FLOW, "App: %d TC:tr-get-table-iter \n", xct_id);
+	    e = _ptrade_request_man->get_iter_for_file_scan(_pssm, tmp_tr_iter);
+	    if (e.is_error()) {  goto done; }
+	    tr_iter = tmp_tr_iter;
+	}
+
+	//ascending order
+	rep_row_t sortrep(_ptrade_man->ts());
+	sortrep.set(_ptrade_desc->maxsize());
+
+	asc_sort_buffer_t tr_list(1);
+	
+	tr_list.setup(0, SQL_LONG);
+
+	table_row_t rsb(&tr_list);
+	asc_sort_man_impl tr_sorter(&tr_list, &sortrep);
+	
+	bool eof;
+	e = tr_iter->next(_pssm, eof, *prtradereq);
+	if (e.is_error()) { goto done; }
+	while(!eof){
+	    prtradereq->get_value(0, tr_t_id);
+
+	    rsb.set_value(0, tr_t_id);
+	    tr_sorter.add_tuple(rsb);
+
+	    TRACE( TRACE_TRX_FLOW, "App: %d TC:tr-delete- \n", xct_id);
+	    e = _ptrade_request_man->delete_tuple(_pssm, prtradereq);
+	    if (e.is_error()) { goto done; }
+	    	    
+	    e = tr_iter->next(_pssm, eof, *prtradereq);
+	    if (e.is_error()) {  goto done; }
+	}
+
+	asc_sort_iter_impl tr_list_sort_iter(_pssm, &tr_list, &tr_sorter);
+
+	/*
 	guard< index_scan_iter_impl<trade_request_t> > tr_iter;
 	{
 	    index_scan_iter_impl<trade_request_t>* tmp_tr_iter;
@@ -111,14 +155,17 @@ w_rc_t ShoreTPCEEnv::xct_trade_cleanup(const int xct_id, trade_cleanup_input_t& 
 	    tr_iter = tmp_tr_iter;
 	}
 	//already ordered
-
-	bool eof;
+	
 	TRACE( TRACE_TRX_FLOW, "App: %d TC:tr-iter-next \n", xct_id);
 	e = tr_iter->next(_pssm, eof, *prtradereq);
+	*/
+
+	TRACE( TRACE_TRX_FLOW, "App: %d TC:tr-sort-iter-next \n", xct_id);
+	e = tr_list_sort_iter.next(_pssm, eof, rsb);
 	if (e.is_error()) { goto done; }
 	while(!eof){
-	    TIdent tr_t_id;
-	    prtradereq->get_value(0, tr_t_id);
+	    //prtradereq->get_value(0, tr_t_id); // PIN: read above PIN
+	    rsb.get_value(0, tr_t_id);
 
 	    now_dts = time(NULL);
 
@@ -179,8 +226,12 @@ w_rc_t ShoreTPCEEnv::xct_trade_cleanup(const int xct_id, trade_cleanup_input_t& 
 	    e = _ptrade_history_man->add_tuple(_pssm, prtradehist);
 	    if (e.is_error()) { goto done; }
 
+	    /* PIN: read above PIN
 	    TRACE( TRACE_TRX_FLOW, "App: %d TC:tr-iter-next \n", xct_id);
 	    e = tr_iter->next(_pssm, eof, *prtradereq);
+	    */
+	    TRACE( TRACE_TRX_FLOW, "App: %d TC:tr-sort-iter-next \n", xct_id);
+	    e = tr_list_sort_iter.next(_pssm, eof, rsb);
 	    if (e.is_error()) { goto done; }
 	}
 
@@ -190,6 +241,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_cleanup(const int xct_id, trade_cleanup_input_t& 
 	   TRADE_REQUEST
 	*/
 
+	/* PIN: read above PIN
 	index_scan_iter_impl<trade_request_t>* tmp_tr_iter;
 	{
 	    TRACE( TRACE_TRX_FLOW, "App: %d TC:tr-get-iter-by-idx \n", xct_id);
@@ -197,6 +249,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_cleanup(const int xct_id, trade_cleanup_input_t& 
 	    if (e.is_error()) { goto done; }
 	    tr_iter = tmp_tr_iter;
 	}
+	
 	TRACE( TRACE_TRX_FLOW, "App: %d TC:tr-iter-next \n", xct_id);
 	e = tr_iter->next(_pssm, eof, *prtradereq);
 	if (e.is_error()) { goto done; }
@@ -209,7 +262,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_cleanup(const int xct_id, trade_cleanup_input_t& 
 	    e = tr_iter->next(_pssm, eof, *prtradereq);
 	    if (e.is_error()) { goto done; }
 	}
-
+	*/
+	
 	/**
 	   select
 	   T_ID

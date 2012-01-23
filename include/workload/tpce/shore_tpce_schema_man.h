@@ -325,7 +325,7 @@ public:
 				rep_row_t &rephigh,
 				const TIdent cust_id,
 				lock_mode_t alm = SH,
-                                bool need_tuple = true);
+                                bool need_tuple = false);
 				
     w_rc_t cx_update_txid(ss_m* db, customer_taxrate_tuple* ptuple, const char* new_tax_rate, lock_mode_t lm = EX);
     
@@ -561,6 +561,10 @@ public:
 
     w_rc_t tx_index_probe(ss_m* db, taxrate_tuple* ptuple, const char* tx_id);
 
+    w_rc_t tx_index_probe_forupdate(ss_m* db, taxrate_tuple* ptuple, const char* tx_id);
+    
+    w_rc_t tx_update_name(ss_m* db, taxrate_tuple* ptuple, const char* tx_name, lock_mode_t lm = EX);
+    
 }; 
 
 
@@ -855,7 +859,7 @@ public:
 				 const char* tr_s_symb,
 				 lock_mode_t alm = SH,
 				 bool need_tuple = true);
-				
+    /*
     w_rc_t tr_get_iter_by_index(ss_m* db,
 				trade_request_index_iter* &iter,
 				trade_request_tuple* ptuple,
@@ -863,7 +867,7 @@ public:
 				rep_row_t &rephigh,
 				lock_mode_t alm = SH,
 				bool need_tuple = true);
-				
+    */
 };
 
 

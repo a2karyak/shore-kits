@@ -77,7 +77,6 @@ DEFINE_ROW_CACHE_TLS(tpce, watch_item);
 DEFINE_ROW_CACHE_TLS(tpce, news_item);
 DEFINE_ROW_CACHE_TLS(tpce, watch_list);
 DEFINE_ROW_CACHE_TLS(tpce, news_xref);
-DEFINE_ROW_CACHE_TLS(tpce, dimension);
 EXIT_NAMESPACE(shore);
 
 
