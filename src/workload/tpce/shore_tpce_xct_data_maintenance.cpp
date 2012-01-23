@@ -96,9 +96,6 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
     table_row_t* prnewsxref= _pnews_xref_man->get_tuple();
     assert (prnewsxref);
 
-    table_row_t* prtaxrate = _ptaxrate_man->get_tuple();
-    assert (prtaxrate);
-
     table_row_t* prwatchitem = _pwatch_item_man->get_tuple();
     assert (prwatchitem);
 
@@ -120,7 +117,6 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
     prsecurity->_rep = &areprow;
     prnewsitem->_rep = &areprow;
     prnewsxref->_rep = &areprow;
-    prtaxrate->_rep = &areprow;
     prwatchitem->_rep = &areprow;
     prwatchlist->_rep = &areprow;
 
@@ -474,7 +470,8 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 	    {
 		index_scan_iter_impl<customer_taxrate_t>* tmp_cx_iter;
 		TRACE( TRACE_TRX_FLOW, "App: %d DM:cx-get-iter-by-idx (%ld) \n", xct_id, pdmin._c_id);
-		e = _pcustomer_taxrate_man->cx_get_iter_by_index(_pssm, tmp_cx_iter, prcustomertaxrate, lowrep, highrep, pdmin._c_id);
+		e = _pcustomer_taxrate_man->cx_get_iter_by_index(_pssm, tmp_cx_iter, prcustomertaxrate,
+								 lowrep, highrep, pdmin._c_id);
 		if (e.is_error()) {  goto done; }
 		cx_iter = tmp_cx_iter;
 	    }
@@ -549,7 +546,8 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 	    {
 		index_scan_iter_impl<daily_market_t>* tmp_dm_iter;
 		TRACE( TRACE_TRX_FLOW, "App: %d DM:dm-get-iter-by-idx4 (%s) \n", xct_id, pdmin._symbol);
-		e = _pdaily_market_man->dm_get_iter_by_index4(_pssm, tmp_dm_iter, prdailymarket, lowrep, highrep, pdmin._symbol);
+		e = _pdaily_market_man->dm_get_iter_by_index(_pssm, tmp_dm_iter, prdailymarket,
+							     lowrep, highrep, pdmin._symbol);
 		if (e.is_error()) {  goto done; }
 		dm_iter = tmp_dm_iter;
 	    }
@@ -582,11 +580,11 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 	       EX_DESC like “%LAST UPDATED%”
 	    */
 
-	    guard<index_scan_iter_impl<exchange_t> > ex_iter;
+	    guard<table_scan_iter_impl<exchange_t> > ex_iter;
 	    {
-		index_scan_iter_impl<exchange_t>* tmp_ex_iter;
-		TRACE( TRACE_TRX_FLOW, "App: %d DM:ex-get-iter-by-idx \n", xct_id);
-		e = _pexchange_man->ex_get_iter_by_index(_pssm, tmp_ex_iter, prexchange, lowrep, highrep);
+		table_scan_iter_impl<exchange_t>* tmp_ex_iter;
+		TRACE( TRACE_TRX_FLOW, "App: %d DM:ex-get-table-iter \n", xct_id);
+		e = _pexchange_man->get_iter_for_file_scan(_pssm, tmp_ex_iter);
 		if (e.is_error()) {  goto done; }
 		ex_iter = tmp_ex_iter;
 	    }
@@ -614,9 +612,9 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		   EX_DESC = EX_DESC + “ LAST UPDATED “ + getdatetime()
 		*/
 		{
-		    index_scan_iter_impl<exchange_t>* tmp_ex_iter;
-		    TRACE( TRACE_TRX_FLOW, "App: %d DM:ex-get-iter-by-idx \n", xct_id);
-		    e = _pexchange_man->ex_get_iter_by_index(_pssm, tmp_ex_iter, prexchange, lowrep, highrep);
+		    table_scan_iter_impl<exchange_t>* tmp_ex_iter;
+		    TRACE( TRACE_TRX_FLOW, "App: %d DM:ex-get-table-iter \n", xct_id);
+		    e = _pexchange_man->get_iter_for_file_scan(_pssm, tmp_ex_iter);
 		    if (e.is_error()) {  goto done; }
 		    ex_iter = tmp_ex_iter;
 		}
@@ -646,9 +644,9 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		   EX_DESC = substring(EX_DESC,1,
 		   len(EX_DESC)-len(getdatetime())) + getdatetime()
 		*/
-		index_scan_iter_impl<exchange_t>* tmp_ex_iter;
-		TRACE( TRACE_TRX_FLOW, "App: %d DM:ex-get-iter-by-idx \n", xct_id);
-		e = _pexchange_man->ex_get_iter_by_index(_pssm, tmp_ex_iter, prexchange, lowrep, highrep);
+		table_scan_iter_impl<exchange_t>* tmp_ex_iter;
+		TRACE( TRACE_TRX_FLOW, "App: %d DM:ex-get-table-iter \n", xct_id);
+		e = _pexchange_man->get_iter_for_file_scan(_pssm, tmp_ex_iter);
 		if (e.is_error()) { goto done; }
 		ex_iter = tmp_ex_iter;
 
@@ -691,7 +689,8 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 	    {
 		index_scan_iter_impl<financial_t>* tmp_fi_iter;
 		TRACE( TRACE_TRX_FLOW, "App: %d DM:fi-get-iter-by-idx (%ld) \n", xct_id,  pdmin._co_id);
-		e = _pfinancial_man->fi_get_iter_by_index(_pssm, tmp_fi_iter, prfinancial, lowrep, highrep, pdmin._co_id);
+		e = _pfinancial_man->fi_get_iter_by_index(_pssm, tmp_fi_iter, prfinancial,
+							  lowrep, highrep, pdmin._co_id);
 		if (e.is_error()) {  goto done; }
 		fi_iter = tmp_fi_iter;
 	    }
@@ -724,7 +723,8 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		{
 		    index_scan_iter_impl<financial_t>* tmp_fi_iter;
 		    TRACE( TRACE_TRX_FLOW, "App: %d DM:fi-get-iter-by-idx (%ld) \n", xct_id,  pdmin._co_id);
-		    e = _pfinancial_man->fi_get_iter_by_index(_pssm, tmp_fi_iter, prfinancial, lowrep, highrep, pdmin._co_id);
+		    e = _pfinancial_man->fi_get_iter_by_index(_pssm, tmp_fi_iter, prfinancial,
+							      lowrep, highrep, pdmin._co_id);
 		    if (e.is_error()) {  goto done; }
 		    fi_iter = tmp_fi_iter;
 		}
@@ -758,7 +758,8 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		{
 		    index_scan_iter_impl<financial_t>* tmp_fi_iter;
 		    TRACE( TRACE_TRX_FLOW, "App: %d DM:fi-get-iter-by-idx (%ld) \n", xct_id,  pdmin._co_id);
-		    e = _pfinancial_man->fi_get_iter_by_index(_pssm, tmp_fi_iter, prfinancial, lowrep, highrep, pdmin._co_id);
+		    e = _pfinancial_man->fi_get_iter_by_index(_pssm, tmp_fi_iter, prfinancial,
+							      lowrep, highrep, pdmin._co_id);
 		    if (e.is_error()) { goto done; }
 		    fi_iter = tmp_fi_iter;
 		}
@@ -800,7 +801,8 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 	    {
 		index_scan_iter_impl<news_xref_t>* tmp_nx_iter;
 		TRACE( TRACE_TRX_FLOW, "App: %d DM:nx-get-iter-by-idx (%ld) \n", xct_id, pdmin._co_id);
-		e = _pnews_xref_man->nx_get_iter_by_index(_pssm, tmp_nx_iter, prnewsxref, lowrep, highrep, pdmin._co_id, false);
+		e = _pnews_xref_man->nx_get_iter_by_index(_pssm, tmp_nx_iter, prnewsxref,
+							  lowrep, highrep, pdmin._co_id);
 		if (e.is_error()) {  goto done; }
 		nx_iter = tmp_nx_iter;
 	    }
@@ -915,7 +917,8 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 	    {
 		index_scan_iter_impl<watch_list_t>* tmp_wl_iter;
 		TRACE( TRACE_TRX_FLOW, "App: %d DM:wl-get-iter-by-idx2 (%ld) \n", xct_id,  pdmin._c_id);
-		e = _pwatch_list_man->wl_get_iter_by_index2(_pssm, tmp_wl_iter, prwatchlist, lowrep, highrep, pdmin._c_id);
+		e = _pwatch_list_man->wl_get_iter_by_index2(_pssm, tmp_wl_iter, prwatchlist,
+							    lowrep, highrep, pdmin._c_id);
 		if (e.is_error()) {  goto done; }
 		wl_iter = tmp_wl_iter;
 	    }
@@ -931,7 +934,8 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		{
 		    index_scan_iter_impl<watch_item_t>* tmp_wi_iter;
 		    TRACE( TRACE_TRX_FLOW, "App: %d DM:wi-get-iter-by-idx (%ld) \n", xct_id,  wl_id);
-		    e = _pwatch_item_man->wi_get_iter_by_index(_pssm, tmp_wi_iter, prwatchitem, lowrep, highrep, wl_id);
+		    e = _pwatch_item_man->wi_get_iter_by_index(_pssm, tmp_wi_iter, prwatchitem,
+							       lowrep, highrep, wl_id);
 		    if (e.is_error()) {  goto done; }
 		    wi_iter = tmp_wi_iter;
 		}
@@ -977,7 +981,8 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 
 	    index_scan_iter_impl<watch_list_t>* tmp_wl_iter;
 	    TRACE( TRACE_TRX_FLOW, "App: %d DM:wl-get-iter-by-idx2 (%ld) \n", xct_id,  pdmin._c_id);
-	    e = _pwatch_list_man->wl_get_iter_by_index2(_pssm, tmp_wl_iter, prwatchlist, lowrep, highrep, pdmin._c_id);
+	    e = _pwatch_list_man->wl_get_iter_by_index2(_pssm, tmp_wl_iter, prwatchlist,
+							lowrep, highrep, pdmin._c_id);
 	    if (e.is_error()) {  goto done; }
 	    wl_iter = tmp_wl_iter;
 
@@ -991,7 +996,8 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		{
 		    index_scan_iter_impl<watch_item_t>* tmp_wi_iter;
 		    TRACE( TRACE_TRX_FLOW, "App: %d DM:wi-get-iter-by-idx (%ld) \n", xct_id,  wl_id);
-		    e = _pwatch_item_man->wi_get_iter_by_index(_pssm, tmp_wi_iter, prwatchitem, lowrep, highrep, wl_id);
+		    e = _pwatch_item_man->wi_get_iter_by_index(_pssm, tmp_wi_iter, prwatchitem,
+							       lowrep, highrep, wl_id);
 		    if (e.is_error()) {  goto done; }
 		    wi_iter = tmp_wi_iter;
 		}
@@ -1052,7 +1058,8 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 
 		index_scan_iter_impl<watch_list_t>* tmp_wl_iter;
 		TRACE( TRACE_TRX_FLOW, "App: %d DM:wl-get-iter-by-idx2 (%ld) \n", xct_id,  pdmin._c_id);
-		e = _pwatch_list_man->wl_get_iter_by_index2(_pssm, tmp_wl_iter, prwatchlist, lowrep, highrep, pdmin._c_id);
+		e = _pwatch_list_man->wl_get_iter_by_index2(_pssm, tmp_wl_iter, prwatchlist,
+							    lowrep, highrep, pdmin._c_id);
 		if (e.is_error()) {  goto done; }
 		wl_iter = tmp_wl_iter;
 
@@ -1066,7 +1073,8 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		    {
 			index_scan_iter_impl<watch_item_t>* tmp_wi_iter;
 			TRACE( TRACE_TRX_FLOW, "App: %d DM:wi-get-iter-by-idx (%ld) \n", xct_id,  wl_id);
-			e = _pwatch_item_man->wi_get_iter_by_index(_pssm, tmp_wi_iter, prwatchitem, lowrep, highrep, wl_id);
+			e = _pwatch_item_man->wi_get_iter_by_index(_pssm, tmp_wi_iter, prwatchitem,
+								   lowrep, highrep, wl_id);
 			if (e.is_error()) {  goto done; }
 			wi_iter = tmp_wi_iter;
 		    }
@@ -1112,7 +1120,8 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 	    */
 
 	    TRACE( TRACE_TRX_FLOW, "App: %d DM:wl-get-iter-by-idx2 (%ld) \n", xct_id,  pdmin._c_id);
-	    e = _pwatch_list_man->wl_get_iter_by_index2(_pssm, tmp_wl_iter, prwatchlist, lowrep, highrep, pdmin._c_id);
+	    e = _pwatch_list_man->wl_get_iter_by_index2(_pssm, tmp_wl_iter, prwatchlist,
+							lowrep, highrep, pdmin._c_id);
 	    if (e.is_error()) {  goto done; }
 	    wl_iter = tmp_wl_iter;
 
@@ -1122,7 +1131,8 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
 		TIdent wl_id;
 		prwatchlist->get_value(0, wl_id);
 
-		TRACE( TRACE_TRX_FLOW, "App: %d DM:wi-update-symb (%ld) (%s) (%s) \n", xct_id, wl_id, old_symbol, new_symbol);
+		TRACE( TRACE_TRX_FLOW, "App: %d DM:wi-update-symb (%ld) (%s) (%s) \n",
+		       xct_id, wl_id, old_symbol, new_symbol);
 		e =  _pwatch_item_man->wi_update_symb(_pssm, prwatchitem, wl_id, old_symbol, new_symbol);
 		if(e.is_error()) {  goto done; }
 
@@ -1159,14 +1169,13 @@ w_rc_t ShoreTPCEEnv::xct_data_maintenance(const int xct_id, data_maintenance_inp
     _paddress_man->give_tuple(praddress);
     _pcompany_man->give_tuple(prcompany);
     _pcustomer_man->give_tuple(prcustomer);
-    _ptaxrate_man->give_tuple(prtaxrate);
+    _pcustomer_taxrate_man->give_tuple(prcustomertaxrate);
     _pdaily_market_man->give_tuple(prdailymarket);
     _pexchange_man->give_tuple(prexchange);
     _pfinancial_man->give_tuple(prfinancial);
     _psecurity_man->give_tuple(prsecurity);
     _pnews_item_man->give_tuple(prnewsitem);
     _pnews_xref_man->give_tuple(prnewsxref);
-    _ptaxrate_man->give_tuple(prtaxrate);
     _pwatch_item_man->give_tuple(prwatchitem);
     _pwatch_list_man->give_tuple(prwatchlist);
 

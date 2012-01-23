@@ -162,6 +162,7 @@ void ShoreTPCEEnv::reset_stats()
 {
     CRITICAL_SECTION(last_stats_cs, _last_stats_mutex);
     _last_stats = _get_stats();
+    _num_invalid_input = 0;
 }
 
 
@@ -201,11 +202,13 @@ void ShoreTPCEEnv::print_throughput(const double iQueriedSF,
 	   "Secs:      (%.2f)\n"                    \
 	   "IOChars:   (%.2fM/s)\n"                 \
 	   "AvgCPUs:   (%.1f) (%.1f%%)\n"           \
-	   "TPS:       (%.2f)\n",
+	   "TPS:       (%.2f)\n"                    \
+	   "Invalid Input:  (%d)\n",
 	   (iSpread ? "Yes" : "No"),
 	   iNumOfThreads, trxs_att, trxs_abt, trxs_dld,
 	   delay, mioch/delay, avgcpuusage, 100*avgcpuusage/64,
-	   (trxs_att-trxs_abt-trxs_dld)/delay);
+	   (trxs_att-trxs_abt-trxs_dld)/delay,
+	   _num_invalid_input);
 }
 
 /******************************************************************** 
@@ -1021,7 +1024,7 @@ w_rc_t ShoreTPCEEnv::_load_one_last_trade(rep_row_t& areprow,  PLAST_TRADE_ROW r
     pr->set_value(1, EgenTimeToTimeT(record->LT_DTS));
     pr->set_value(2, record->LT_PRICE);
     pr->set_value(3, record->LT_OPEN_PRICE);
-    pr->set_value(4, (double)record->LT_VOL); //int in Egen, INT64 in new Egen
+    pr->set_value(4, (double) record->LT_VOL); //int in Egen, INT64 in new Egen
 
     e = _plast_trade_man->add_tuple(_pssm, pr);
     _plast_trade_man->give_tuple(pr);

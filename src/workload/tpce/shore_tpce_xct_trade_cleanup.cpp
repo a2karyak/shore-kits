@@ -138,7 +138,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_cleanup(const int xct_id, trade_cleanup_input_t& 
 	    prtradehist->set_value(1, now_dts);
 	    prtradehist->set_value(2, ptcin._st_submitted_id);
 
-	    TRACE( TRACE_TRX_FLOW, "App: %d TC:th-add-tuple (%ld) (%ld) (%s) \n", xct_id, tr_t_id, now_dts, ptcin._st_submitted_id);
+	    TRACE( TRACE_TRX_FLOW, "App: %d TC:th-add-tuple (%ld) (%ld) (%s) \n",
+		   xct_id, tr_t_id, now_dts, ptcin._st_submitted_id);
 	    e = _ptrade_history_man->add_tuple(_pssm, prtradehist);
 	    if (e.is_error()) { goto done; }
 
@@ -152,7 +153,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_cleanup(const int xct_id, trade_cleanup_input_t& 
 	       T_ID = tr_t_id
 	    */
 
-	    TRACE( TRACE_TRX_FLOW, "App: %d TC:t-update (%ld) (%ld) (%s) \n", xct_id, tr_t_id, now_dts, ptcin._st_canceled_id);
+	    TRACE( TRACE_TRX_FLOW, "App: %d TC:t-update (%ld) (%ld) (%s) \n",
+		   xct_id, tr_t_id, now_dts, ptcin._st_canceled_id);
 	    e = _ptrade_man->t_update_dts_stdid_by_index(_pssm, prtrade, tr_t_id, now_dts, ptcin._st_canceled_id);
 	    if (e.is_error()) { goto done; }
 
@@ -172,7 +174,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_cleanup(const int xct_id, trade_cleanup_input_t& 
 	    prtradehist->set_value(1, now_dts);
 	    prtradehist->set_value(2, ptcin._st_canceled_id);
 
-	    TRACE( TRACE_TRX_FLOW, "App: %d TC:th-add-tuple (%ld) (%ld) (%s) \n", xct_id, tr_t_id, now_dts, ptcin._st_canceled_id);
+	    TRACE( TRACE_TRX_FLOW, "App: %d TC:th-add-tuple (%ld) (%ld) (%s) \n",
+		   xct_id, tr_t_id, now_dts, ptcin._st_canceled_id);
 	    e = _ptrade_history_man->add_tuple(_pssm, prtradehist);
 	    if (e.is_error()) { goto done; }
 
@@ -244,7 +247,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_cleanup(const int xct_id, trade_cleanup_input_t& 
 		    T_ID = t_id
 		*/
 
-		TRACE( TRACE_TRX_FLOW, "App: %d TC:t-update (%ld) (%ld) (%s) \n", xct_id, t_id, now_dts, ptcin._st_canceled_id);
+		TRACE( TRACE_TRX_FLOW, "App: %d TC:t-update (%ld) (%ld) (%s) \n",
+		       xct_id, t_id, now_dts, ptcin._st_canceled_id);
 		e = _ptrade_man->t_update_dts_stdid_by_index(_pssm, prtrade, t_id, now_dts, ptcin._st_canceled_id);
 		if (e.is_error()) { goto done; }
 
@@ -264,7 +268,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_cleanup(const int xct_id, trade_cleanup_input_t& 
 		prtradehist->set_value(1, now_dts);
 		prtradehist->set_value(2, ptcin._st_canceled_id);
 
-		TRACE( TRACE_TRX_FLOW, "App: %d TC:th-add-tuple (%ld) (%ld) (%s) \n", xct_id, t_id, now_dts, ptcin._st_canceled_id);
+		TRACE( TRACE_TRX_FLOW, "App: %d TC:th-add-tuple (%ld) (%ld) (%s) \n",
+		       xct_id, t_id, now_dts, ptcin._st_canceled_id);
 		e = _ptrade_history_man->add_tuple(_pssm, prtradehist);
 		if (e.is_error()) { goto done; }
 	    }

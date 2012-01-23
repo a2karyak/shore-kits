@@ -116,11 +116,20 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
 		 *	where
 		 *		C_TAX_ID = tax_id
 		 */
-
-		TRACE( TRACE_TRX_FLOW, "App: %d CP:c-idx4-probe (%s) \n", xct_id,  pcpin._tax_id);
-		e =  _pcustomer_man->c_index4_probe(_pssm, prcust, pcpin._tax_id);
-		if (e.is_error()) { goto done; }			  
 		
+		guard< index_scan_iter_impl<customer_t> > c_iter;
+		{
+		    index_scan_iter_impl<customer_t>* tmp_c_iter;
+		    TRACE( TRACE_TRX_FLOW, "App: %d CP:c-get-iter-by-idx2 (%s) \n", xct_id, pcpin._tax_id);
+		    e = _pcustomer_man->c_get_iter_by_index2(_pssm, tmp_c_iter, prcust,
+							     lowrep, highrep, pcpin._tax_id);
+		    if (e.is_error()) { goto done; }
+		    c_iter = tmp_c_iter;
+		}
+		bool eof;
+		TRACE( TRACE_TRX_FLOW, "App: %d CP:c-iter-next \n", xct_id);
+		e = c_iter->next(_pssm, eof, *prcust);
+		if (e.is_error() || eof) { goto done; }
 		prcust->get_value(0, cust_id);
 	    }
 	    else{
@@ -226,7 +235,8 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
 	    {
 		index_scan_iter_impl<customer_account_t>* tmp_ca_iter;
 		TRACE( TRACE_TRX_FLOW, "App: %d CP:ca-get-iter-by-idx2 (%ld) \n", xct_id,  cust_id);
-		e = _pcustomer_account_man->ca_get_iter_by_index2(_pssm, tmp_ca_iter, prcustacct, lowrep, highrep, cust_id);
+		e = _pcustomer_account_man->ca_get_iter_by_index2(_pssm, tmp_ca_iter, prcustacct,
+								  lowrep, highrep, cust_id);
 		if (e.is_error()) { goto done; }
 		ca_iter = tmp_ca_iter;
 	    }
@@ -247,7 +257,7 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
 	    bool eof;
 	    TRACE( TRACE_TRX_FLOW, "App: %d CP:ca-iter-next \n", xct_id);
 	    e = ca_iter->next(_pssm, eof, *prcustacct);
-	    if (e.is_error()) { goto done; }
+	    if (e.is_error()) {	goto done; }
 	    while(!eof){
 		TIdent temp_id;
 		double temp_balance = 0, temp_assets = 0;
@@ -259,14 +269,15 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
 		{
 		    index_scan_iter_impl<holding_summary_t>* tmp_hs_iter;
 		    TRACE( TRACE_TRX_FLOW, "App: %d CP:hs-get-iter-by-idx (%ld) \n", xct_id,  temp_id);
-		    e = _pholding_summary_man->hs_get_iter_by_index(_pssm, tmp_hs_iter, prholdsum, lowrep, highrep, temp_id, true);
+		    e = _pholding_summary_man->hs_get_iter_by_index(_pssm, tmp_hs_iter, prholdsum,
+								    lowrep, highrep, temp_id);
 		    if (e.is_error()) { goto done; }
 		    hs_iter = tmp_hs_iter;
 		}
 
 		TRACE( TRACE_TRX_FLOW, "App: %d CP:hs-iter-next  \n", xct_id);
 		e = hs_iter->next(_pssm, eof, *prholdsum);
-		if (e.is_error()) {  goto done; }
+		if (e.is_error()) { goto done; }
 		while(!eof){
 		    char symbol[16]; //15
 		    prholdsum->get_value(1, symbol, 16);
@@ -305,7 +316,7 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
 	    asc_sort_iter_impl ca_list_sort_iter(_pssm, &ca_list, &ca_sorter);
 	    TRACE( TRACE_TRX_FLOW, "App: %d CP:ca-sorter-iter-next \n", xct_id);
 	    e = ca_list_sort_iter.next(_pssm, eof, rsb);
-	    if (e.is_error()) { goto done; }
+	    if (e.is_error()) {	goto done; }
 	    for(int j = 0; j < max_acct_len && !eof; j++) {
 		rsb.get_value(2, acct_id[j]);
 		rsb.get_value(1, cash_bal[j]);
@@ -361,7 +372,8 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
 		{
 		    index_scan_iter_impl<trade_t>* tmp_t_iter;
 		    TRACE( TRACE_TRX_FLOW, "App: %d CP:t-iter-by-idx2 %ld \n", xct_id, acctId);
-		    e = _ptrade_man->t_get_iter_by_index2(_pssm, tmp_t_iter, prtrade, lowrep, highrep, acctId, 0, MAX_DTS);
+		    e = _ptrade_man->t_get_iter_by_index2(_pssm, tmp_t_iter, prtrade,
+							  lowrep, highrep, acctId, 0, MAX_DTS, false);
 		    t_iter = tmp_t_iter;
 		    if (e.is_error()) { goto done; }
 		}
@@ -398,7 +410,8 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
 		    e = t_iter->next(_pssm, eof, *prtrade);
 		    if (e.is_error()) { goto done; }
 		}
-		assert (t_sorter.count());
+		//PIN: not needed; there is nothing in TPC-E spec that tells us that we should assert something here
+		//assert (t_sorter.count());
 
 		desc_sort_iter_impl t_list_sort_iter(_pssm, &t_list, &t_sorter);
 		TRACE( TRACE_TRX_FLOW, "App: %d CP:t-sorter-iter-next \n", xct_id);
@@ -436,7 +449,8 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
 		{
 		    index_scan_iter_impl<trade_history_t>* tmp_th_iter;
 		    TRACE( TRACE_TRX_FLOW, "App: %d CP:th-iter-by-idx %ld \n", xct_id, id_list[i]);
-		    e = _ptrade_history_man->th_get_iter_by_index(_pssm, tmp_th_iter, prtradehist, lowrep, highrep, id_list[i]);
+		    e = _ptrade_history_man->th_get_iter_by_index(_pssm, tmp_th_iter, prtradehist,
+								  lowrep, highrep, id_list[i]);
 		    if (e.is_error()) { goto done; }
 		    th_iter = tmp_th_iter;
 		}
@@ -445,16 +459,20 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
 		e = th_iter->next(_pssm, eof, *prtradehist);
 		if (e.is_error()) { goto done; }
 		while(!eof){
-		    char th_st_id[6]; //5
-		    prtradehist->get_value(2, th_st_id, 6);
+		    myTime th_dts;
+		    prtradehist->get_value(1, th_dts);
+		    rsb.set_value(0, th_dts);
+
+		    char th_st_id[5]; //5
+		    prtradehist->get_value(2, th_st_id, 5);
 
 		    TRACE( TRACE_TRX_FLOW, "App: %d CP:st-idx-probe (%s) \n", xct_id,  th_st_id);
 		    e =  _pstatus_type_man->st_index_probe(_pssm, prstatustype, th_st_id);
 		    if (e.is_error()) { goto done; }
 
-		    myTime th_dts;
-		    prtradehist->get_value(1, th_dts);
-		    rsb.set_value(0, th_dts);
+		    char st_name[11];
+		    prstatustype->get_value(1, st_name, 11);
+		    rsb.set_value(4, st_name);
 
 		    rsb.set_value(1, id_list[i]);
 
@@ -466,10 +484,6 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
 		    prtrade->get_value(6, t_qty);
 		    rsb.set_value(3, t_qty);
 
-		    char st_name[11];
-		    prstatustype->get_value(1, st_name, 11);
-		    rsb.set_value(4, st_name);
-
 		    t_sorter.add_tuple(rsb);
 
 		    e = th_iter->next(_pssm, eof, *prtradehist);
@@ -480,7 +494,7 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
 
 	    bool eof;
 	    e = t_list_sort_iter.next(_pssm, eof, rsb);
-	    if (e.is_error()) { goto done; }
+	    if (e.is_error()) {	goto done; }
 	    for(hist_len = 0; hist_len < max_hist_len && !eof; hist_len++){
 		rsb.get_value(0, hist_dts[hist_len]);
 		rsb.get_value(1, trade_id[hist_len]);

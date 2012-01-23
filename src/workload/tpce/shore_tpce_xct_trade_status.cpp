@@ -165,7 +165,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_status(const int xct_id, trade_status_input_t& pt
 	guard< index_scan_iter_impl<trade_t> > t_iter;
 	{
 	    index_scan_iter_impl<trade_t>* tmp_t_iter;
-	    TRACE( TRACE_TRX_FLOW, "App: %d TS:t-iter-by-idx2 (%ld) (%ld) (%ld) \n", xct_id, ptsin._acct_id, 0, MAX_DTS);
+	    TRACE( TRACE_TRX_FLOW, "App: %d TS:t-iter-by-idx2 (%ld) \n", xct_id, ptsin._acct_id);
 	    e = _ptrade_man->t_get_iter_by_index2(_pssm, tmp_t_iter,
 						  prtrade, lowrep, highrep,
 						  ptsin._acct_id, 0, MAX_DTS);
@@ -201,11 +201,10 @@ w_rc_t ShoreTPCEEnv::xct_trade_status(const int xct_id, trade_status_input_t& pt
 	    prtrade->get_value(11, t_chrg);
 	    rsb.set_value(7, t_chrg);
 
-	    char t_st_id[5], t_tt_id[4], t_s_symb[16]; //4, 3, 15
+	    char t_st_id[5], t_tt_id[4]; //4, 3, 15
 
 	    prtrade->get_value(2, t_st_id, 5);
 	    prtrade->get_value(3, t_tt_id, 4);
-	    prtrade->get_value(5, t_s_symb, 16);
 
 
 	    TRACE( TRACE_TRX_FLOW, "App: %d TS:st-idx-probe (%s) \n", xct_id,  t_st_id);
@@ -226,8 +225,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_status(const int xct_id, trade_status_input_t& pt
 	    rsb.set_value(3, tt_name);
 
 
-	    TRACE( TRACE_TRX_FLOW, "App: %d TS:s-idx-probe (%s) \n", xct_id, t_s_symb);
-	    e =  _psecurity_man->s_index_probe(_pssm, prsecurity, t_s_symb);
+	    TRACE( TRACE_TRX_FLOW, "App: %d TS:s-idx-probe (%s) \n", xct_id, t_s_symbol);
+	    e =  _psecurity_man->s_index_probe(_pssm, prsecurity, t_s_symbol);
 	    if(e.is_error()) { goto done; }
 
 	    char s_name[71]; //70
@@ -253,7 +252,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_status(const int xct_id, trade_status_input_t& pt
 	    e = t_iter->next(_pssm, eof, *prtrade);
 	    if (e.is_error()) { goto done; }
 	}
-	assert (t_sorter.count());
+	// PIN: this assert is unnecassrary since the below one has the actual harness control that supersedes this one
+	//assert (t_sorter.count());
 
 	desc_sort_iter_impl t_list_sort_iter(_pssm, &t_list, &t_sorter);
 	TRACE( TRACE_TRX_FLOW, "App: %d TS:t-sort-iter-next \n", xct_id);
@@ -276,7 +276,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_status(const int xct_id, trade_status_input_t& pt
 	    e = t_list_sort_iter.next(_pssm, eof, rsb);
 	    if (e.is_error()) {  goto done; }
 	}
-	assert(i == max_trade_status_len); 		
+	TRACE( TRACE_TRX_FLOW, "App: %d TS:count-after-sort %d\n", xct_id, i);
+	assert(i == max_trade_status_len); // Harness control		
     
 	/**
 	   select
@@ -299,24 +300,33 @@ w_rc_t ShoreTPCEEnv::xct_trade_status(const int xct_id, trade_status_input_t& pt
 
 	TIdent ca_c_id, ca_b_id;
 
-	prcustacct->get_value(2, ca_c_id);
 	prcustacct->get_value(1, ca_b_id);
+	prcustacct->get_value(2, ca_c_id);
 
-	TRACE( TRACE_TRX_FLOW, "App: %d TS:b-idx-probe (%ld) \n", xct_id, ca_b_id);
-	e =  _pbroker_man->b_index_probe(_pssm, prbroker, ca_b_id);
-	if (e.is_error()) { goto done; }
-
+	guard< index_scan_iter_impl<broker_t> > br_iter;
+	{
+	    index_scan_iter_impl<broker_t>* tmp_br_iter;
+	    TRACE( TRACE_TRX_FLOW, "App: %d BV:b-get-iter-by-idx3 (%s) \n", xct_id, ca_b_id);
+	    e =  _pbroker_man->b_get_iter_by_index2(_pssm, tmp_br_iter, prbroker, lowrep, highrep, ca_b_id);
+	    if (e.is_error()) { goto done; }
+	    br_iter = tmp_br_iter;
+	}
+	TRACE( TRACE_TRX_FLOW, "App: %d TO:br-iter-next \n", xct_id);
+	e = br_iter->next(_pssm, eof, *prbroker);
+	if (e.is_error() || eof) { goto done; }
+	
+	char broker_name[50]; //49
+	prbroker->get_value(2, broker_name, 50);
+	
 	TRACE( TRACE_TRX_FLOW, "App: %d TS:c-idx-probe (%ld) \n", xct_id,  ca_c_id);
 	e =  _pcustomer_man->c_index_probe(_pssm, prcustomer, ca_c_id);
 	if (e.is_error()) { goto done; }
 
 	char cust_l_name[26]; //25
 	char cust_f_name[21]; //20
-	char broker_name[50]; //49
 
 	prcustomer->get_value(3, cust_l_name, 26);
 	prcustomer->get_value(4, cust_f_name, 21);
-	prbroker->get_value(2, broker_name, 50);
     }
 
 #ifdef PRINT_TRX_RESULTS

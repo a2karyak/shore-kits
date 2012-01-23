@@ -90,12 +90,6 @@ int random_xct_type(const double idx)
 {
   double sum = 0;
   
-  sum += PROB_TPCE_DATA_MAINTENANCE;
-  if (idx < sum){
-      printf(" idx %lf  sum %lf\n", idx, sum); assert(false);
-      return XCT_TPCE_DATA_MAINTENANCE;
-  }
-  
   sum += PROB_TPCE_MARKET_FEED;
   if (idx < sum)
       return XCT_TPCE_MARKET_FEED;
@@ -103,15 +97,15 @@ int random_xct_type(const double idx)
   sum += PROB_TPCE_TRADE_UPDATE;
   if (idx < sum)
       return XCT_TPCE_TRADE_UPDATE;
-  
+        
   sum += PROB_TPCE_BROKER_VOLUME;
   if (idx < sum)
       return XCT_TPCE_BROKER_VOLUME;
-  
+        
   sum += PROB_TPCE_TRADE_LOOKUP;
   if (idx < sum)
       return XCT_TPCE_TRADE_LOOKUP;
-  
+            
   sum += PROB_TPCE_TRADE_RESULT;
   if (idx < sum)
       return XCT_TPCE_TRADE_RESULT;

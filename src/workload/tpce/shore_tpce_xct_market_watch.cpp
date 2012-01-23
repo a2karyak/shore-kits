@@ -60,11 +60,7 @@ w_rc_t ShoreTPCEEnv::xct_market_watch(const int xct_id, market_watch_input_t& pm
     assert (_initialized);
     assert (_loaded);
 
-    //delete address
-    table_row_t* praddress = _paddress_man->get_tuple(); //296B
-    assert (praddress);
-
-    table_row_t* prcompany = _pcompany_man->get_tuple(); //296B
+    table_row_t* prcompany = _pcompany_man->get_tuple();
     assert (prcompany);
 
     table_row_t* prdailymarket = _pdaily_market_man->get_tuple();
@@ -92,7 +88,6 @@ w_rc_t ShoreTPCEEnv::xct_market_watch(const int xct_id, market_watch_input_t& pm
     rep_row_t areprow(_pcompany_man->ts());
     areprow.set(_pcompany_desc->maxsize());
 
-    praddress->_rep = &areprow;
     prcompany->_rep = &areprow;
     prdailymarket->_rep = &areprow;
     prholdsumm->_rep = &areprow;
@@ -125,15 +120,25 @@ w_rc_t ShoreTPCEEnv::xct_market_watch(const int xct_id, market_watch_input_t& pm
 	       WI_WL_ID = WL_ID and    //there are many watch_items in a watch_list
 	       WL_C_ID = cust_id       //every customer has one watch_list
 	    */
-	      
-	    TRACE( TRACE_TRX_FLOW, "App: %d MW:wl-idx-probe (%ld) \n", xct_id, pmwin._cust_id);
-	    e =  _pwatch_list_man->wl_index_probe(_pssm, prwatchlist, pmwin._cust_id);
-	    if(e.is_error()) { goto done; }
+
+	    bool eof;
+	    guard< index_scan_iter_impl<watch_list_t> > wl_iter;
+	    {
+		index_scan_iter_impl<watch_list_t>* tmp_wl_iter;
+		TRACE( TRACE_TRX_FLOW, "App: %d MW:wl-get-iter-by-idx2 (%ld) \n", xct_id, pmwin._cust_id);
+		e = _pwatch_list_man->wl_get_iter_by_index2(_pssm, tmp_wl_iter, prwatchlist,
+							    lowrep, highrep, pmwin._cust_id);
+		if (e.is_error()) { goto done; }
+		wl_iter = tmp_wl_iter;
+	    }
+
+	    TRACE( TRACE_TRX_FLOW, "App: %d MW:wl-iter-next \n", xct_id);
+	    e = wl_iter->next(_pssm, eof, *prwatchlist);
+	    if (e.is_error() || eof) { goto done; }
 
 	    TIdent wl_id;
 	    prwatchlist->get_value(0, wl_id);
-
-	    bool eof;
+	    
 	    guard< index_scan_iter_impl<watch_item_t> > wi_iter;
 	    {
 		index_scan_iter_impl<watch_item_t>* tmp_wi_iter;
@@ -143,6 +148,7 @@ w_rc_t ShoreTPCEEnv::xct_market_watch(const int xct_id, market_watch_input_t& pm
 		wi_iter = tmp_wi_iter;
 	    }
 
+	    TRACE( TRACE_TRX_FLOW, "App: %d MW:wi-iter-next \n", xct_id);
 	    e = wi_iter->next(_pssm, eof, *prwatchitem);
 	    if (e.is_error()) { goto done; }
 	    while(!eof){
@@ -170,13 +176,23 @@ w_rc_t ShoreTPCEEnv::xct_market_watch(const int xct_id, market_watch_input_t& pm
 	       S_CO_ID = CO_ID
 	    */
 
-	    TRACE( TRACE_TRX_FLOW, "App: %d MW:in-idx2-probe (%s) \n", xct_id,  pmwin._industry_name);
-	    e =  _pindustry_man->in_index2_probe(_pssm, prindustry, pmwin._industry_name);
-	    if(e.is_error()) { goto done; }
+	    guard< index_scan_iter_impl<industry_t> > in_iter;
+	    {
+		index_scan_iter_impl<industry_t>* tmp_in_iter;
+		TRACE( TRACE_TRX_FLOW, "App: %d MW:in-get-iter-by-idx2 (%s) \n", xct_id, pmwin._industry_name);
+		e = _pindustry_man->in_get_iter_by_index2(_pssm, tmp_in_iter, prindustry,
+							  lowrep, highrep,  pmwin._industry_name);
+		if (e.is_error()) { goto done; }
+		in_iter = tmp_in_iter;
+	    }
+	    bool eof;
+	    TRACE( TRACE_TRX_FLOW, "App: %d MW:in-iter-next \n", xct_id);
+	    e = in_iter->next(_pssm, eof, *prindustry);
+	    if (e.is_error() || eof) { goto done; }
 
 	    char in_id[3];
 	    prindustry->get_value(0, in_id, 3);
-
+	    
 	    guard< index_scan_iter_impl<company_t> > co_iter;
 	    {
 		index_scan_iter_impl<company_t>* tmp_co_iter;
@@ -186,7 +202,6 @@ w_rc_t ShoreTPCEEnv::xct_market_watch(const int xct_id, market_watch_input_t& pm
 		if (e.is_error()) { goto done; }
 	    }
 
-	    bool eof;
 	    TRACE( TRACE_TRX_FLOW, "App: %d MW:co-iter-next \n", xct_id);
 	    e = co_iter->next(_pssm, eof, *prcompany);
 	    if (e.is_error()) { goto done; }
@@ -199,8 +214,9 @@ w_rc_t ShoreTPCEEnv::xct_market_watch(const int xct_id, market_watch_input_t& pm
 		    guard< index_scan_iter_impl<security_t> > s_iter;
 		    {
 			index_scan_iter_impl<security_t>* tmp_s_iter;
-			TRACE( TRACE_TRX_FLOW, "App: %d MW:s-get-iter-by-idx4 (%ld) \n", xct_id, " ", co_id);
-			e = _psecurity_man->s_get_iter_by_index4(_pssm, tmp_s_iter, prsecurity, lowrep, highrep, co_id);
+			TRACE( TRACE_TRX_FLOW, "App: %d MW:s-get-iter-by-idx4 (%ld) \n", xct_id, co_id);
+			e = _psecurity_man->s_get_iter_by_index4(_pssm, tmp_s_iter, prsecurity,
+								 lowrep, highrep, co_id);
 			s_iter = tmp_s_iter;
 			if (e.is_error()) { goto done; }
 		    }
@@ -212,7 +228,7 @@ w_rc_t ShoreTPCEEnv::xct_market_watch(const int xct_id, market_watch_input_t& pm
 		    while(!eof){				 
 			char s_symb[16]; //15
 			prsecurity->get_value(0, s_symb, 16);
-
+			
 			string symb(s_symb);
 			stock_list.push_back(symb);
 			
@@ -318,7 +334,7 @@ w_rc_t ShoreTPCEEnv::xct_market_watch(const int xct_id, market_watch_input_t& pm
 	    */
 
 	    TRACE( TRACE_TRX_FLOW, "App: %d MW:dm-idx1-probe (%s) (%d) \n", xct_id, symbol, pmwin._start_date);
-	    e =  _pdaily_market_man->dm_index1_probe(_pssm, prdailymarket, symbol, pmwin._start_date);
+	    e =  _pdaily_market_man->dm_index_probe(_pssm, prdailymarket, symbol, pmwin._start_date);
 	    if(e.is_error()) { goto done; }
 
 	    double old_price;

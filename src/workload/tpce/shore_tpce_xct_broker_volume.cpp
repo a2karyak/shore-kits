@@ -132,23 +132,42 @@ w_rc_t ShoreTPCEEnv::xct_broker_volume(const int xct_id, broker_volume_input_t& 
 	table_row_t rsb(&tr_list);
 	desc_sort_man_impl tr_sorter(&tr_list, &sortrep);
 
-	TRACE( TRACE_TRX_FLOW, "App: %d BV:sc-idx2-probe (%s) \n", xct_id, pbvin._sector_name);
-	e =  _psector_man->sc_index2_probe(_pssm, prsector, pbvin._sector_name);
-	if(e.is_error()) { goto done; }
+	guard< index_scan_iter_impl<sector_t> > sc_iter;
+	{
+	    index_scan_iter_impl<sector_t>* tmp_sc_iter;
+	    TRACE( TRACE_TRX_FLOW, "App: %d BV:sc-get-iter-by-idx2 (%s) \n", xct_id, pbvin._sector_name);
+	    e = _psector_man->sc_get_iter_by_index2(_pssm, tmp_sc_iter, prsector,
+						    lowrep, highrep, pbvin._sector_name);
+	    if (e.is_error()) { goto done; }
+	    sc_iter = tmp_sc_iter;
+	}
+	
+	bool eof;
+	TRACE( TRACE_TRX_FLOW, "App: %d BV:sc-iter-next \n", xct_id);
+	e = sc_iter->next(_pssm, eof, *prsector);
+	if (e.is_error() || eof) { goto done; }
 
 	char sc_id[3];
 	prsector->get_value(0, sc_id, 3);
-
+	
 	for(uint i = 0; i < max_broker_list_len && strcmp(pbvin._broker_list[i], "\0") != 0; i++){
-	    TRACE( TRACE_TRX_FLOW, "App: %d BV:b-idx4-probe (%s) \n", xct_id, pbvin._broker_list[i]);
-	    e =  _pbroker_man->b_index_4_probe(_pssm, prbroker, pbvin._broker_list[i]);
-	    if (e.is_error()) { goto done; }
-
+	    guard< index_scan_iter_impl<broker_t> > br_iter;
+	    {
+		index_scan_iter_impl<broker_t>* tmp_br_iter;
+		TRACE( TRACE_TRX_FLOW, "App: %d BV:b-get-iter-by-idx3 (%s) \n", xct_id, pbvin._broker_list[i]);
+		e =  _pbroker_man->b_get_iter_by_index3(_pssm, tmp_br_iter, prbroker,
+							lowrep, highrep, pbvin._broker_list[i]);
+		if (e.is_error()) { goto done; }
+		br_iter = tmp_br_iter;
+	    }
+	    TRACE( TRACE_TRX_FLOW, "App: %d BV:br-iter-next \n", xct_id);
+	    e = br_iter->next(_pssm, eof, *prbroker);
+	    if (e.is_error() || eof) { goto done; }
 	    TIdent b_id;
 	    prbroker->get_value(0, b_id);
-
+	    
 	    double volume = 0;
-
+	    
 	    guard< index_scan_iter_impl<industry_t> > in_iter;
 	    {
 		index_scan_iter_impl<industry_t>* tmp_in_iter;
@@ -158,14 +177,13 @@ w_rc_t ShoreTPCEEnv::xct_broker_volume(const int xct_id, broker_volume_input_t& 
 		in_iter = tmp_in_iter;
 	    }
 
-	    bool eof;
 	    TRACE( TRACE_TRX_FLOW, "App: %d BV:in-iter-next \n", xct_id);
 	    e = in_iter->next(_pssm, eof, *prindustry);
 	    if (e.is_error()) { goto done; }
 
 	    while(!eof){
-		char in_id[3];
-		prindustry->get_value(0, in_id, 3);
+		char in_id[2];
+		prindustry->get_value(0, in_id, 2);
 
 		guard< index_scan_iter_impl<company_t> > co_iter;
 		{
@@ -188,7 +206,8 @@ w_rc_t ShoreTPCEEnv::xct_broker_volume(const int xct_id, broker_volume_input_t& 
 		    {
 			index_scan_iter_impl<security_t>* tmp_s_iter;
 			TRACE( TRACE_TRX_FLOW, "App: %d BV:s-get-iter-by-idx4 (%ld) \n", xct_id, co_id);
-			e = _psecurity_man->s_get_iter_by_index4(_pssm, tmp_s_iter, prsecurity, lowrep, highrep, co_id);
+			e = _psecurity_man->s_get_iter_by_index4(_pssm, tmp_s_iter, prsecurity,
+								 lowrep, highrep, co_id);
 			s_iter = tmp_s_iter;
 			if (e.is_error()) { goto done; }
 		    }
@@ -204,8 +223,9 @@ w_rc_t ShoreTPCEEnv::xct_broker_volume(const int xct_id, broker_volume_input_t& 
 			guard< index_scan_iter_impl<trade_request_t> > tr_iter;
 			{
 			    index_scan_iter_impl<trade_request_t>* tmp_tr_iter;
-			    TRACE( TRACE_TRX_FLOW, "App: %d BV:tr-get-iter-by-idx2 (%s) (%ld) \n", xct_id,  s_symb, b_id);
-			    e = _ptrade_request_man->tr_get_iter_by_index2(_pssm, tmp_tr_iter, prtradereq,
+			    TRACE( TRACE_TRX_FLOW, "App: %d BV:tr-get-iter-by-idx4 (%s) (%ld) \n",
+				   xct_id,  s_symb, b_id);
+			    e = _ptrade_request_man->tr_get_iter_by_index4(_pssm, tmp_tr_iter, prtradereq,
 									   lowrep, highrep, s_symb, b_id);
 			    if (e.is_error()) { goto done; }
 			    tr_iter = tmp_tr_iter;

@@ -134,7 +134,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 		       num_found = num_found + row_count
 		    */
 
-		    TRACE( TRACE_TRX_FLOW, "App: %d TU:t-idx-probe-for-update (%ld) \n", xct_id,  ptuin._trade_id[i]);
+		    TRACE( TRACE_TRX_FLOW, "App: %d TU:t-idx-probe-for-update (%ld) \n",
+			   xct_id,  ptuin._trade_id[i]);
 		    e =  _ptrade_man->t_index_probe_forupdate(_pssm, prtrade, ptuin._trade_id[i]);
 		    if (e.is_error()) { goto done; }
 
@@ -167,29 +168,37 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 		    if (e.is_error()) { goto done; }
 
 		    num_updated++;
+		} else {
+
+		    /**
+		       select
+		       bid_price[i] = T_BID_PRICE,
+		       exec_name[i] = T_EXEC_NAME,
+		       is_cash[i]   = T_IS_CASH,
+		       is_market[i] = TT_IS_MRKT,
+		       trade_price[i] = T_TRADE_PRICE
+		       from
+		       TRADE,
+		       TRADE_TYPE
+		       where
+		       T_ID = trade_id[i] and
+		       T_TT_ID = TT_ID
+		    */
+
+		    /*
+		     * @note: PIN: this is a little hack
+		     *             if prtrade is already filled due to above update
+		     *             there is no need to do an index probe here
+		     */
+		    
+		    TRACE( TRACE_TRX_FLOW, "TL: %d TU:t-idx-probe (%ld) \n", xct_id,  ptuin._trade_id[i]);
+		    e = _ptrade_man->t_index_probe(_pssm, prtrade, ptuin._trade_id[i]);
+		    if (e.is_error()) {	goto done; }
 		}
-
-		/**
-		   select
-		   bid_price[i] = T_BID_PRICE,
-		   exec_name[i] = T_EXEC_NAME,
-		   is_cash[i]   = T_IS_CASH,
-		   is_market[i] = TT_IS_MRKT,
-		   trade_price[i] = T_TRADE_PRICE
-		   from
-		   TRADE,
-		   TRADE_TYPE
-		   where
-		   T_ID = trade_id[i] and
-		   T_TT_ID = TT_ID
-		*/
-		TRACE( TRACE_TRX_FLOW, "TL: %d TU:t-idx-probe (%ld) \n", xct_id,  ptuin._trade_id[i]);
-		e = _ptrade_man->t_index_probe(_pssm, prtrade, ptuin._trade_id[i]);
-		if (e.is_error()) { goto done; }
-
+		
+		prtrade->get_value(4, is_cash[i]);
 		prtrade->get_value(7, bid_price[i]);
 		prtrade->get_value(9, exec_name[i], 50);
-		prtrade->get_value(4, is_cash[i]);
 		prtrade->get_value(10, trade_price[i]);
 		char tt_id[4]; //3
 		prtrade->get_value(3, tt_id, 4);
@@ -231,12 +240,13 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 		       CT_T_ID = trade_id[i]
 		    */
 
-		    TRACE( TRACE_TRX_FLOW, "App: %d TU:cash-transaction-idx-probe (%ld) \n", xct_id,  ptuin._trade_id[i]);
+		    TRACE( TRACE_TRX_FLOW, "App: %d TU:cash-transaction-idx-probe (%ld) \n",
+			   xct_id,  ptuin._trade_id[i]);
 		    e = _pcash_transaction_man->ct_index_probe(_pssm, prcashtrans, ptuin._trade_id[i]);
-		    if (e.is_error()) { goto done; }
+		    if (e.is_error()) {	goto done; }
 
-		    prcashtrans->get_value(2, cash_transaction_amount[i]);
 		    prcashtrans->get_value(1, cash_transaction_dts[i]);
+		    prcashtrans->get_value(2, cash_transaction_amount[i]);
 		    prcashtrans->get_value(3, cash_transaction_name[i], 101);
 		}
 		/**
@@ -257,52 +267,23 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 		    e = _ptrade_history_man->th_get_iter_by_index(_pssm, tmp_th_iter,
 								  prtradehist, lowrep, highrep,
 								  ptuin._trade_id[i]);
-		    if (e.is_error()) { goto done; }
+		    if (e.is_error()) {	goto done; }
 		    th_iter = tmp_th_iter;
 		}
-		//ascending order
-		rep_row_t sortrep(_psecurity_man->ts());
-		sortrep.set(_psecurity_desc->maxsize());
-		asc_sort_buffer_t th_list(2);
 
-		th_list.setup(0, SQL_LONG);
-		th_list.setup(1, SQL_FIXCHAR, 4);
+		//ascending order due to index
 
-		table_row_t rsb(&th_list);
-		asc_sort_man_impl th_sorter(&th_list, &sortrep);
 		bool eof;
 		TRACE( TRACE_TRX_FLOW, "App: %d TU:th-iter-next \n", xct_id);
 		e = th_iter->next(_pssm, eof, *prtradehist);
 		if (e.is_error()) { goto done; }
-		while (!eof) {
-		    /* put the value into the sorted buffer */
-		    myTime temp_dts;
-		    char temp_stid[5]; //4
-
-		    prtradehist->get_value(1, temp_dts);
-		    prtradehist->get_value(2, temp_stid, 5);
-
-		    rsb.set_value(0, temp_dts);
-		    rsb.set_value(1, temp_stid);
-
-		    th_sorter.add_tuple(rsb);
-
+		int j=0;
+		while (!eof && j<3) {
+		    prtradehist->get_value(1, trade_history_dts[i][j]);
+		    prtradehist->get_value(2, trade_history_status_id[i][j], 5);
+		    j++;
 		    TRACE( TRACE_TRX_FLOW, "App: %d TU:th-iter-next \n", xct_id);
 		    e = th_iter->next(_pssm, eof, *prtradehist);
-		    if (e.is_error()) { goto done; }
-		}
-		assert (th_sorter.count());
-
-		asc_sort_iter_impl th_list_sort_iter(_pssm, &th_list, &th_sorter);
-		TRACE( TRACE_TRX_FLOW, "App: %d TU:th-sort-next \n", xct_id);
-		e = th_list_sort_iter.next(_pssm, eof, rsb);
-		if (e.is_error()) { goto done; }
-		for(int j = 0; j < 3 && !eof; j++) {
-		    rsb.get_value(0, trade_history_dts[i][j]);
-		    rsb.get_value(1, trade_history_status_id[i][j], 5);
-
-		    TRACE( TRACE_TRX_FLOW, "App: %d TU:th-sort-next \n", xct_id);
-		    e = th_list_sort_iter.next(_pssm, eof, rsb);
 		    if (e.is_error()) { goto done; }
 		}
 	    }
@@ -424,27 +405,34 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 		    if (e.is_error()) { goto done; }
 
 		    num_updated++;
+		} else {
+
+		    /**
+		       select
+		       settlement_amount[i]        = SE_AMT,
+		       settlement_cash_due_date[i] = SE_CASH_DUE_DATE,
+		       settlement_cash_type[i]     = SE_CASH_TYPE
+		       from
+		       SETTLEMENT
+		       where
+		       SE_T_ID = trade_list[i]
+		    */
+
+		    /*
+		     * @note: PIN: this is a little hack
+		     *             if prsettlement is already filled due to above update
+		     *             there is no need to do an index probe here
+		     */
+		    
+		    TRACE( TRACE_TRX_FLOW, "App: %d TU:se-idx-probe (%ld) \n", xct_id,  trade_list[i]);
+		    e = _psettlement_man->se_index_probe(_pssm, prsettlement, trade_list[i]);
+		    if (e.is_error()) { goto done; }
 		}
-
-		/**
-		   select
-		   settlement_amount[i]        = SE_AMT,
-		   settlement_cash_due_date[i] = SE_CASH_DUE_DATE,
-		   settlement_cash_type[i]     = SE_CASH_TYPE
-		   from
-		   SETTLEMENT
-		   where
-		   SE_T_ID = trade_list[i]
-		*/
-
-		TRACE( TRACE_TRX_FLOW, "App: %d TU:se-idx-probe (%ld) \n", xct_id,  trade_list[i]);
-		e = _psettlement_man->se_index_probe(_pssm, prsettlement, trade_list[i]);
-		if (e.is_error()) { goto done; }
-
-		prsettlement->get_value(3, settlement_amount[i]);
-		prsettlement->get_value(2, settlement_cash_due_date[i]);
+		
 		prsettlement->get_value(1, settlement_cash_type[i], 41);
-
+		prsettlement->get_value(2, settlement_cash_due_date[i]);
+		prsettlement->get_value(3, settlement_amount[i]);
+		
 		if(is_cash[i]){
 		    /**
 		       select
@@ -458,10 +446,10 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 		    */
 		    TRACE( TRACE_TRX_FLOW, "App: %d TU:cash-transaction-idx-probe (%ld) \n", xct_id,  trade_list[i]);
 		    e = _pcash_transaction_man->ct_index_probe(_pssm, prcashtrans, trade_list[i]);
-		    if (e.is_error()) { goto done; }
+		    if (e.is_error()) {	goto done; }
 
-		    prcashtrans->get_value(2, cash_transaction_amount[i]);
 		    prcashtrans->get_value(1, cash_transaction_dts[i]);
+		    prcashtrans->get_value(2, cash_transaction_amount[i]);
 		    prcashtrans->get_value(3, cash_transaction_name[i], 101);
 		}
 
@@ -487,53 +475,23 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 		    th_iter = tmp_th_iter;
 		}
 
-		//ascending order
-		rep_row_t sortrep(_psecurity_man->ts());
-		sortrep.set(_psecurity_desc->maxsize());
-		asc_sort_buffer_t th_list(2);
-		
-		th_list.setup(0, SQL_LONG);
-		th_list.setup(1, SQL_FIXCHAR, 4);
+		//ascending order due to index
 
-		table_row_t rsb(&th_list);
-		asc_sort_man_impl th_sorter(&th_list, &sortrep);
 		bool eof;
 		TRACE( TRACE_TRX_FLOW, "App: %d TU:th-iter-next \n", xct_id);
 		e = th_iter->next(_pssm, eof, *prtradehist);
 		if (e.is_error()) { goto done; }
-		while (!eof) {
-		    /* put the value into the sorted buffer */
-		    myTime temp_dts;
-		    char temp_stid[5]; //4
-
-		    prtradehist->get_value(1, temp_dts);
-		    prtradehist->get_value(2, temp_stid, 5);
-
-		    rsb.set_value(0, temp_dts);
-		    rsb.set_value(1, temp_stid);
-
-		    th_sorter.add_tuple(rsb);
-
+		int j=0;
+		while (!eof && j<3) {
+		    prtradehist->get_value(1, trade_history_dts[i][j]);
+		    prtradehist->get_value(2, trade_history_status_id[i][j], 5);
+		    j++;		    
 		    TRACE( TRACE_TRX_FLOW, "App: %d TU:th-iter-next \n", xct_id);
 		    e = th_iter->next(_pssm, eof, *prtradehist);
 		    if (e.is_error()) { goto done; }
 		}
-		assert (th_sorter.count());
-
-		asc_sort_iter_impl th_list_sort_iter(_pssm, &th_list, &th_sorter);
-		TRACE( TRACE_TRX_FLOW, "App: %d TL:th-sort-iter \n", xct_id);
-		e = th_list_sort_iter.next(_pssm, eof, rsb);
-		if (e.is_error()) { goto done; }
-		for(int j = 0; j < 3 && !eof; j++) {
-		    rsb.get_value(0, trade_history_dts[i][j]);
-		    rsb.get_value(1, trade_history_status_id[i][j], 5);
-
-		    TRACE( TRACE_TRX_FLOW, "App: %d TL:th-sort-iter \n", xct_id);
-		    e = th_list_sort_iter.next(_pssm, eof, rsb);
-		    if (e.is_error()) { goto done; }
-		}
 	    }
-	    assert(num_updated == num_found && num_updated >= 0 && num_found <= max_trades);
+	    assert(num_updated == num_found && num_updated >= 0 && num_found <= max_trades);  //Harness control
 
 	} else if(ptuin._frame_to_execute == 3){
 	    int i;
@@ -588,7 +546,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 	    guard<index_scan_iter_impl<trade_t> > t_iter;
 	    {
 		index_scan_iter_impl<trade_t>* tmp_t_iter;
-		TRACE( TRACE_TRX_FLOW, "App: %d TL:t-iter-by-idx3 %s %ld %ld \n",
+		TRACE( TRACE_TRX_FLOW, "App: %d TU:t-iter-by-idx3 %s %ld %ld \n",
 		       xct_id,  ptuin._symbol, ptuin._start_trade_dts, ptuin._end_trade_dts);
 		e = _ptrade_man->t_get_iter_by_index3(_pssm, tmp_t_iter,
 						      prtrade, lowrep, highrep,
@@ -598,18 +556,19 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 	    }
 
 	    bool eof;
-	    TRACE( TRACE_TRX_FLOW, "App: %d TL:t-iter-next \n", xct_id);
+	    TRACE( TRACE_TRX_FLOW, "App: %d TU:t-iter-next \n", xct_id);
 	    e = t_iter->next(_pssm, eof, *prtrade);
 	    if (e.is_error()) { goto done; }
 	    for(int j = 0; j < max_trades && !eof; j++){
+		prtrade->get_value(0, trade_list[j]);
+		prtrade->get_value(1, trade_dts[j]);
+		prtrade->get_value(3, trade_type[j], 4);
+		prtrade->get_value(4, is_cash[j]);
+		prtrade->get_value(6, quantity[j]);
 		prtrade->get_value(8, acct_id[j]);
 		prtrade->get_value(9, exec_name[j], 50);
-		prtrade->get_value(4, is_cash[j]);
 		prtrade->get_value(10, price[j]);
-		prtrade->get_value(6, quantity[j]);
-		prtrade->get_value(1, trade_dts[j]);
-		prtrade->get_value(0, trade_list[j]);
-		prtrade->get_value(3, trade_type[j], 4);
+
 		char t_s_symb[16]; //15
 		prtrade->get_value(5, t_s_symb, 16);
 
@@ -627,7 +586,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 
 		num_found++;
 
-		TRACE( TRACE_TRX_FLOW, "App: %d TL:t-iter-next \n", xct_id);
+		TRACE( TRACE_TRX_FLOW, "App: %d TU:t-iter-next \n", xct_id);
 		e = t_iter->next(_pssm, eof, *prtrade);
 		if (e.is_error()) { goto done; }
 	    }
@@ -648,9 +607,9 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 		e = _psettlement_man->se_index_probe(_pssm, prsettlement, trade_list[i]);
 		if (e.is_error()) { goto done; }
 
-		prsettlement->get_value(3, settlement_amount[i]);
-		prsettlement->get_value(2, settlement_cash_due_date[i]);
 		prsettlement->get_value(1, settlement_cash_type[i], 41);
+		prsettlement->get_value(2, settlement_cash_due_date[i]);
+		prsettlement->get_value(3, settlement_amount[i]);
 
 		if(is_cash[i]){
 		    if(num_updated < ptuin._max_updates){
@@ -699,25 +658,33 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 			if (e.is_error()) { goto done; }
 
 			num_updated++;
+		    } else {
+			
+			/**
+			   select
+			   cash_transaction_amount[i] = CT_AMT,
+			   cash_transaction_dts[i]    = CT_DTS
+			   cash_transaction_name[i]   = CT_NAME
+			   from
+			   CASH_TRANSACTION
+			   where
+			   CT_T_ID = trade_list[i]	    
+			*/
+			
+			/*
+			 * @note: PIN: this is a little hack
+			 *             if prsettlement is already filled due to above update
+			 *             there is no need to do an index probe here
+			 */
+
+			TRACE( TRACE_TRX_FLOW, "App: %d TU:cash-transaction-idx-probe (%ld) \n",
+			       xct_id,  trade_list[i]);
+			e = _pcash_transaction_man->ct_index_probe(_pssm, prcashtrans, trade_list[i]);
+			if (e.is_error()) { goto done; }
 		    }
 
-		    /**
-		       select
-		       cash_transaction_amount[i] = CT_AMT,
-		       cash_transaction_dts[i]    = CT_DTS
-		       cash_transaction_name[i]   = CT_NAME
-		       from
-		       CASH_TRANSACTION
-		       where
-		       CT_T_ID = trade_list[i]	    
-		    */
-
-		    TRACE( TRACE_TRX_FLOW, "App: %d TU:cash-transaction-idx-probe (%ld) \n", xct_id,  trade_list[i]);
-		    e = _pcash_transaction_man->ct_index_probe(_pssm, prcashtrans, trade_list[i]);
-		    if (e.is_error()) { goto done; }
-
-		    prcashtrans->get_value(2, cash_transaction_amount[i]);
 		    prcashtrans->get_value(1, cash_transaction_dts[i]);
+		    prcashtrans->get_value(2, cash_transaction_amount[i]);
 		    prcashtrans->get_value(3, cash_transaction_name[i], 101);
 		}
 
@@ -743,49 +710,19 @@ w_rc_t ShoreTPCEEnv::xct_trade_update(const int xct_id, trade_update_input_t& pt
 		    th_iter = tmp_th_iter;
 		}
 
-		//ascending order
-		rep_row_t sortrep(_psecurity_man->ts());
-		sortrep.set(_psecurity_desc->maxsize());
-		asc_sort_buffer_t th_list(2);
+		//ascending order due to index
 
-		th_list.setup(0, SQL_LONG);
-		th_list.setup(1, SQL_FIXCHAR, 4);
-
-		table_row_t rsb(&th_list);
-		asc_sort_man_impl th_sorter(&th_list, &sortrep);
 		bool eof;
 		TRACE( TRACE_TRX_FLOW, "App: %d TU:th-iter-next \n", xct_id);
 		e = th_iter->next(_pssm, eof, *prtradehist);
 		if (e.is_error()) { goto done; }
-		while (!eof) {
-		    /* put the value into the sorted buffer */
-		    myTime temp_dts;
-		    char temp_stid[5]; //4
-
-		    prtradehist->get_value(1, temp_dts);
-		    prtradehist->get_value(2, temp_stid, 5);
-
-		    rsb.set_value(0, temp_dts);
-		    rsb.set_value(1, temp_stid);
-
-		    th_sorter.add_tuple(rsb);
-
+		int j=0;
+		while (!eof && j<3) {
+		    prtradehist->get_value(1, trade_history_dts[i][j]);
+		    prtradehist->get_value(2, trade_history_status_id[i][j], 5);
+		    j++;
 		    TRACE( TRACE_TRX_FLOW, "App: %d TU:th-iter-next \n", xct_id);
 		    e = th_iter->next(_pssm, eof, *prtradehist);
-		    if (e.is_error()) { goto done; }
-		}
-		assert (th_sorter.count());
-
-		asc_sort_iter_impl th_list_sort_iter(_pssm, &th_list, &th_sorter);
-		TRACE( TRACE_TRX_FLOW, "App: %d TU:th-sort-iter-next \n", xct_id);
-		e = th_list_sort_iter.next(_pssm, eof, rsb);
-		if (e.is_error()) { goto done; }
-		for(int j = 0; j < 3 && !eof; j++) {
-		    rsb.get_value(0, trade_history_dts[i][j]);
-		    rsb.get_value(1, trade_history_status_id[i][j], 5);
-
-		    TRACE( TRACE_TRX_FLOW, "App: %d TU:th-sort-iter-next \n", xct_id);
-		    e = th_list_sort_iter.next(_pssm, eof, rsb);
 		    if (e.is_error()) { goto done; }
 		}
 	    }

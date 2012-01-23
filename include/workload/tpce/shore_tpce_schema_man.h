@@ -1,11 +1,11 @@
 /* -*- mode:C++; c-basic-offset:4 -*-
-     Shore-kits -- Benchmark implementations for Shore-MT
+   Shore-kits -- Benchmark implementations for Shore-MT
    
-                       Copyright (c) 2007-2009
-      Data Intensive Applications and Systems Labaratory (DIAS)
-               Ecole Polytechnique Federale de Lausanne
+   Copyright (c) 2007-2009
+   Data Intensive Applications and Systems Labaratory (DIAS)
+   Ecole Polytechnique Federale de Lausanne
    
-                         All Rights Reserved.
+   All Rights Reserved.
    
    Permission to use, copy, modify and distribute this software and
    its documentation is hereby granted, provided that both the
@@ -66,17 +66,17 @@ public:
     ~account_permission_man_impl() { }
 
     w_rc_t ap_index_probe(ss_m* db, account_permission_tuple* ptuple, 
-				const TIdent acct_id,
-				const char* exec_tax_id);
+			  const TIdent acct_id,
+			  const char* exec_tax_id);
 							 
-     w_rc_t ap_get_iter_by_index(ss_m* db,
-			 account_permission_index_iter* &iter,
-			 account_permission_tuple* ptuple,
-			 rep_row_t &replow,
-			 rep_row_t &rephigh,
-			 const TIdent acct_id,
-			 lock_mode_t alm = SH,
-			 bool need_tuple = true);
+    w_rc_t ap_get_iter_by_index(ss_m* db,
+				account_permission_index_iter* &iter,
+				account_permission_tuple* ptuple,
+				rep_row_t &replow,
+				rep_row_t &rephigh,
+				const TIdent acct_id,
+				lock_mode_t alm = SH,
+				bool need_tuple = true);
     
     w_rc_t ap_update_acl(ss_m* db, account_permission_tuple* ptuple, const char* acl, lock_mode_t lm = EX);
 }; 
@@ -85,7 +85,6 @@ public:
 /* ----------------- */
 /* ---- BROKER ----- */
 /* ----------------- */
-
 
 class broker_man_impl : public table_man_impl<broker_t>
 {
@@ -100,26 +99,32 @@ public:
 
     ~broker_man_impl() { }
 
-    w_rc_t b_index_probe(ss_m* db, broker_tuple* ptuple, const TIdent broker_id);
-    w_rc_t b_index_4_probe(ss_m* db, broker_tuple* ptuple, const char* broker_name);
+    w_rc_t broker_update_ca_nt_by_index(ss_m* db, broker_tuple* ptuple, const TIdent broker_id,
+					const double comm_amount, lock_mode_t lm = EX);    
     
-    w_rc_t broker_update_ca_nt_by_index(ss_m* db, broker_tuple* ptuple, const TIdent broker_id, const double comm_amount, lock_mode_t lm = EX);    
-    
-   /* w_rc_t b_get_iter_by_index2(ss_m* db,
+    w_rc_t b_get_iter_by_index2(ss_m* db,
+				broker_index_iter* &iter,
+				broker_tuple* ptuple,
+				rep_row_t &replow,
+				rep_row_t &rephigh,
+				const TIdent b_id,
+				lock_mode_t alm = SH,
+				bool need_tuple = false);
+
+    w_rc_t b_get_iter_by_index3(ss_m* db,
 				broker_index_iter* &iter,
 				broker_tuple* ptuple,
 				rep_row_t &replow,
 				rep_row_t &rephigh,
 				const char* b_name,
 				lock_mode_t alm = SH,
-				bool need_tuple = true);*/
+				bool need_tuple = false);
 }; 
 
 
 /* ----------------------------- */
 /* ---- CASH_TRANSACTION ------- */
 /* ----------------------------- */
-
 
 class cash_transaction_man_impl : public table_man_impl<cash_transaction_t>
 {
@@ -139,6 +144,7 @@ public:
     w_rc_t ct_update_name(ss_m* db, cash_transaction_tuple* ptuple, const char* ct_name, lock_mode_t lm = EX);
 }; 
 
+
 /* ----------------- */
 /* ---- CHARGE ----- */
 /* ----------------- */
@@ -156,16 +162,7 @@ public:
     ~charge_man_impl() { }
 
     w_rc_t ch_index_probe(ss_m* db, charge_tuple* ptuple, const short cust_tier, const char* trade_type_id);
-    /*
-    w_rc_t ch_get_iter_by_index2(ss_m* db,
-					charge_index_iter* &iter,
-					charge_tuple* ptuple,
-					rep_row_t &replow,
-					rep_row_t &rephigh,
-					const char* trade_type_id,
-					lock_mode_t alm = SH,
-					bool need_tuple = true);
-   */
+
 }; 
 
 
@@ -185,23 +182,25 @@ public:
 
     ~commission_rate_man_impl() { }
 
-    w_rc_t cr_get_iter_by_index( ss_m* db,
-				 commission_rate_index_iter* &iter,
-				 commission_rate_tuple* ptuple,
-				 rep_row_t &replow,
-				 rep_row_t &rephigh,
-				 const short c_tier, 
-				 const char* type_id, 
-				 const char* s_ex_id,
-				 const int trade_qty,
-				 lock_mode_t alm = SH,
-                                 bool need_tuple = true);
-    
+    w_rc_t cr_get_iter_by_index(ss_m* db,
+				commission_rate_index_iter* &iter,
+				commission_rate_tuple* ptuple,
+				rep_row_t &replow,
+				rep_row_t &rephigh,
+				const short c_tier, 
+				const char* type_id, 
+				const char* s_ex_id,
+				const int trade_qty,
+				lock_mode_t alm = SH,
+                                bool need_tuple = true);
+
 }; 
+
 
 /* ----------------- */
 /* --- COMPANY ----- */
 /* ----------------- */
+
 class company_man_impl : public table_man_impl<company_t>
 {
     typedef table_row_t company_tuple;
@@ -214,18 +213,20 @@ public:
 
     ~company_man_impl() { }
 
-   w_rc_t co_get_iter_by_index2( ss_m* db, company_index_iter* &iter, company_tuple* ptuple, rep_row_t &replow, rep_row_t &rephigh,const char* co_name, lock_mode_t alm = SH, bool need_tuple = false);
+    w_rc_t co_get_iter_by_index2(ss_m* db, company_index_iter* &iter, company_tuple* ptuple, rep_row_t &replow, rep_row_t &rephigh,
+				 const char* co_name, lock_mode_t alm = SH, bool need_tuple = false);
 				
-   w_rc_t co_index_probe(ss_m* db, company_tuple* ptuple, const TIdent co_id);
+    w_rc_t co_index_probe(ss_m* db, company_tuple* ptuple, const TIdent co_id);
    
-   w_rc_t co_index_probe_forupdate(ss_m* db, company_tuple* ptuple, const TIdent co_id);
+    w_rc_t co_index_probe_forupdate(ss_m* db, company_tuple* ptuple, const TIdent co_id);
    
-   w_rc_t co_update_sprate(ss_m* db, company_tuple* ptuple, const char* sprate, lock_mode_t lm = EX);
+    w_rc_t co_update_sprate(ss_m* db, company_tuple* ptuple, const char* sprate, lock_mode_t lm = EX);
    
-   w_rc_t co_get_iter_by_index3( ss_m* db, company_index_iter* &iter, company_tuple* ptuple, rep_row_t &replow, rep_row_t &rephigh, 
+    w_rc_t co_get_iter_by_index3(ss_m* db, company_index_iter* &iter, company_tuple* ptuple, rep_row_t &replow, rep_row_t &rephigh, 
 				 const char* in_id, lock_mode_t alm = SH, bool need_tuple = false);
 
 }; 
+
 
 /* ----------------- */
 /* --- CUSTOMER ---- */
@@ -244,11 +245,28 @@ public:
 
     w_rc_t c_index_probe(ss_m* db, customer_tuple* ptuple, const TIdent cust_id);
     
-    w_rc_t c_index4_probe(ss_m* db, customer_tuple* ptuple, const char* tax_id);
-    
     w_rc_t c_index_probe_forupdate(ss_m* db, customer_tuple* ptuple, const TIdent cust_id); 
 				
     w_rc_t c_update_email2(ss_m* db, customer_tuple* ptuple, const char* email2, lock_mode_t alm = EX);
+
+    w_rc_t c_get_iter_by_index2(ss_m* db,
+				customer_index_iter* &iter,
+				customer_tuple* ptuple,
+				rep_row_t &replow,
+				rep_row_t &rephigh,
+				const char* tax_id,
+				lock_mode_t alm = SH,
+				bool need_tuple = true);
+
+    w_rc_t c_get_iter_by_index3(ss_m* db,
+				customer_index_iter* &iter,
+				customer_tuple* ptuple,
+				rep_row_t &replow,
+				rep_row_t &rephigh,
+				const TIdent cust_id,
+				lock_mode_t alm = SH,
+				bool need_tuple = false);
+
 }; 
 
 
@@ -270,20 +288,19 @@ public:
 
     w_rc_t ca_index_probe(ss_m* db, customer_account_tuple* ptuple, const TIdent acct_id);
 
-    w_rc_t ca_index_probe_forupdate(ss_m* db, customer_account_tuple* ptuple, const TIdent ca_id);
-
     w_rc_t ca_update_bal(ss_m* db, customer_account_tuple* ptuple,const double se_amount, lock_mode_t alm = EX);
     
     w_rc_t ca_get_iter_by_index2(ss_m* db,
-				customer_account_index_iter* &iter,
-				customer_account_tuple* ptuple,
-				rep_row_t &replow,
-				rep_row_t &rephigh,
-				const TIdent cust_id,
-				lock_mode_t alm = SH,
-				bool need_tuple = true);
+				 customer_account_index_iter* &iter,
+				 customer_account_tuple* ptuple,
+				 rep_row_t &replow,
+				 rep_row_t &rephigh,
+				 const TIdent cust_id,
+				 lock_mode_t alm = SH,
+				 bool need_tuple = true);
     
 }; 
+
 
 /* ------------------------ */
 /* --- CUSTOMER_TAXRATE --- */
@@ -310,8 +327,6 @@ public:
 				lock_mode_t alm = SH,
                                 bool need_tuple = true);
 				
-    //w_rc_t cx_get_table_iter(ss_m* db, table_iter* &iter);
-    
     w_rc_t cx_update_txid(ss_m* db, customer_taxrate_tuple* ptuple, const char* new_tax_rate, lock_mode_t lm = EX);
     
 };
@@ -321,21 +336,19 @@ public:
 /* --- HOLDING ---- */
 /* ---------------- */
 
-
-//how to implement ascending and descending???
 class holding_man_impl : public table_man_impl<holding_t>
 {
     typedef table_row_t holding_tuple; 
     typedef index_scan_iter_impl <holding_t> holding_index_iter;
 public:
-
+    
     holding_man_impl(holding_t* aHoldingDesc)
         : table_man_impl<holding_t>(aHoldingDesc)
     { }
-
+    
     ~holding_man_impl() { }
-
-   w_rc_t h_get_iter_by_index2(ss_m* db,
+    
+    w_rc_t h_get_iter_by_index2(ss_m* db,
 				holding_index_iter* &iter,
 				holding_tuple* ptuple,
 				rep_row_t &replow,
@@ -343,15 +356,21 @@ public:
 				const TIdent acct_id,
 				const char* symbol,
 				lock_mode_t alm = SH,
-                                bool need_tuple = true);
+				bool need_tuple = true);
 
+    /*
+     * @note: PIN: we have two cases here because there are cases where the ptuple has
+     *             the necessary information for the update/delete and there are cases
+     *             where it doesn't. For the cases that it doesn't we don't have to pass
+     *             the hold_id and do an index probe to get the tuple's RID.
+     */
     w_rc_t h_update_qty(ss_m* db, holding_tuple* ptuple, const TIdent hold_id, const int qty, lock_mode_t lm = EX);
-
+    w_rc_t h_update_qty(ss_m* db, holding_tuple* ptuple, const int qty, lock_mode_t lm = EX);
+    
     w_rc_t h_delete_by_index(ss_m* db, holding_tuple* ptuple, const TIdent hold_id);
     
-    //w_rc_t h_get_table_iter(ss_m* db, table_iter* &iter);
-    
 }; 
+
 
 /* ------------------------ */
 /* --- HOLDING_HISTORY ---- */
@@ -369,12 +388,6 @@ public:
     { }
 
     ~holding_history_man_impl() { }
-/*
-    w_rc_t hh_index_probe(ss_m* db,
-			 holding_history_tuple* ptuple,
-			 const TIdent h_t_id,
-			 const TIdent t_id,
-			 const char* symbol);*/
 			 
     w_rc_t hh_get_iter_by_index2(ss_m* db,
 				 holding_history_index_iter* &iter,
@@ -384,12 +397,13 @@ public:
 				 TIdent trade_id,
 				 lock_mode_t alm = SH,
                                  bool need_tuple = true);
+    
 };
+
 
 /* ------------------------ */
 /* --- HOLDING_SUMMARY ---- */
 /* ------------------------ */
-
 
 class holding_summary_man_impl : public table_man_impl<holding_summary_t>
 {
@@ -404,36 +418,24 @@ public:
     ~holding_summary_man_impl() { }
 
     w_rc_t hs_index_probe(ss_m* db,
-			holding_summary_tuple* ptuple,
-			const TIdent acct_id,
-			const char* symbol);
-/*
-    w_rc_t hs_index_probe_forupdate(ss_m* db,
-			 	  holding_summary_tuple* ptuple,
-				  const TIdent acct_id,
-				  const char* symbol);*/
+			  holding_summary_tuple* ptuple,
+			  const TIdent acct_id,
+			  const char* symbol);
+
     w_rc_t hs_update_qty(ss_m* db,
 		         holding_summary_tuple* ptuple,
-			 const TIdent acct_id,
-			 const char* symbol,
 		         const int qty,
 		         lock_mode_t lm = EX);
-
-    w_rc_t hs_delete_by_index(ss_m* db,
-			     holding_summary_tuple* ptuple,
-			     const TIdent acct_id,
-			     const char* symbol);
 			     
     w_rc_t hs_get_iter_by_index(ss_m* db,
-		  	       holding_summary_index_iter* &iter,
-			       holding_summary_tuple* ptuple,
-			       rep_row_t &replow,
-			       rep_row_t &rephigh,
-			       const TIdent acct_id,
-             bool need_tuple = true,
-			       lock_mode_t alm = SH);
+				holding_summary_index_iter* &iter,
+				holding_summary_tuple* ptuple,
+				rep_row_t &replow,
+				rep_row_t &rephigh,
+				const TIdent acct_id,
+				bool need_tuple = true,
+				lock_mode_t alm = SH);
 			       
-     /*w_rc_t hs_get_table_iter(ss_m* db, table_iter* &iter);*/
 }; 
 
 
@@ -452,18 +454,14 @@ public:
 
     ~last_trade_man_impl() { }
     
-  /*  w_rc_t lt_get_table_iter(ss_m* db, table_iter* &iter);
-*/
- /*   w_rc_t print_table(ss_m* db);
-   */ 
     w_rc_t lt_index_probe(ss_m* db, last_trade_tuple* ptuple, const char* symbol);
     
     w_rc_t lt_update_by_index(ss_m* db, last_trade_tuple* ptuple, 
-				const char* symbol,
-				const double price_quote,
-				const int trade_qty,
-				const myTime now_dts,
-				lock_mode_t lm = EX);
+			      const char* symbol,
+			      const double price_quote,
+			      const int trade_qty,
+			      const myTime now_dts,
+			      lock_mode_t lm = EX);
     
 }; 
 
@@ -485,16 +483,19 @@ public:
     ~security_man_impl() { }
 
     w_rc_t s_index_probe(ss_m* db, security_tuple* ptuple, const char* symbol);
+
+    w_rc_t s_index_probe_forupdate(ss_m* db, security_tuple* ptuple, const char* symbol);
+				    
+    w_rc_t s_update_ed(ss_m* db, security_tuple* ptuple, const myTime exch_date, lock_mode_t lm = EX);
     
-    w_rc_t s_get_iter_by_index2(ss_m* db,
-				security_index_iter* &iter,
-				security_tuple* ptuple,
-				rep_row_t &replow,
-				rep_row_t &rephigh,
-				const TIdent co_id,
-        const char* issue,
-				lock_mode_t alm = SH,
-        bool need_tuple = true);
+    w_rc_t s_get_iter_by_index(ss_m* db,
+			       security_index_iter* &iter,
+			       security_tuple* ptuple,
+			       rep_row_t &replow,
+			       rep_row_t &rephigh,
+			       const char* symbol,						
+			       lock_mode_t alm = SH,
+			       bool need_tuple = false);
 
     w_rc_t s_get_iter_by_index4(ss_m* db,
 				security_index_iter* &iter,
@@ -503,22 +504,18 @@ public:
 				rep_row_t &rephigh,
 				const TIdent co_id,
 				lock_mode_t alm = SH,
-        bool need_tuple = false);
-				
-  /*  w_rc_t s_get_table_iter(ss_m* db, table_iter* &iter);
-    */
-    w_rc_t s_index_probe_forupdate(ss_m* db, security_tuple* ptuple, const char* symbol);
-				    
-    w_rc_t s_update_ed(ss_m* db, security_tuple* ptuple, const myTime exch_date, lock_mode_t lm = EX);
-    
-    w_rc_t s_get_iter_by_index(ss_m* db,
+				bool need_tuple = false);
+
+    w_rc_t s_get_iter_by_index4(ss_m* db,
 				security_index_iter* &iter,
 				security_tuple* ptuple,
 				rep_row_t &replow,
 				rep_row_t &rephigh,
-				const char* symbol,						
+				const TIdent co_id,
+				const char* issue,
 				lock_mode_t alm = SH,
 				bool need_tuple = true);
+
 }; 
 
 
@@ -545,6 +542,7 @@ public:
     
 }; 
 
+
 /* -------------------- */
 /* ---- TAXRATE ------- */
 /* -------------------- */
@@ -561,13 +559,10 @@ public:
 
     ~taxrate_man_impl() { }
 
-     w_rc_t tx_index_probe(ss_m* db, taxrate_tuple* ptuple, const char* tx_id);
-     
-  /*   w_rc_t tx_index_probe_forupdate(ss_m* db, taxrate_tuple* ptuple, const char* tx_id);*/
-				  
-/*     w_rc_t tx_update_name(ss_m* db, taxrate_tuple* ptuple, const char* tx_name, lock_mode_t lm = EX);*/
-    
+    w_rc_t tx_index_probe(ss_m* db, taxrate_tuple* ptuple, const char* tx_id);
+
 }; 
+
 
 /* --------------- */
 /* ---- TRADE ---- */
@@ -586,25 +581,26 @@ public:
 
     w_rc_t t_index_probe(ss_m* db, trade_tuple* ptuple, const TIdent trade_id);
 
-    w_rc_t t_update_tax_by_index(ss_m* db, trade_tuple* ptuple, const TIdent t_id, const double tax_amount, lock_mode_t lm = EX);
+    w_rc_t t_update_tax_by_index(ss_m* db, trade_tuple* ptuple, const TIdent t_id,
+				 const double tax_amount, lock_mode_t lm = EX);
     
     w_rc_t t_update_ca_td_sci_tp_by_index(ss_m* db,
-					   trade_tuple* ptuple,
-					   const TIdent trade_id,
-					   const double comm_amount,
-					   const myTime trade_dts,
-					   const char* st_completed_id,
-					   const double trade_price,
-					   lock_mode_t lm = EX);
+					  trade_tuple* ptuple,
+					  const TIdent trade_id,
+					  const double comm_amount,
+					  const myTime trade_dts,
+					  const char* st_completed_id,
+					  const double trade_price,
+					  lock_mode_t lm = EX);
 					 
     w_rc_t t_get_iter_by_index(ss_m* db,
-				trade_index_iter* &iter,
-				trade_tuple* ptuple,
-				rep_row_t &replow,
-				rep_row_t &rephigh,
-				const TIdent t_id,
-				lock_mode_t alm = SH,
-				bool need_tuple = true);
+			       trade_index_iter* &iter,
+			       trade_tuple* ptuple,
+			       rep_row_t &replow,
+			       rep_row_t &rephigh,
+			       const TIdent t_id,
+			       lock_mode_t alm = SH,
+			       bool need_tuple = true);
 				
     w_rc_t t_get_iter_by_index2(ss_m* db,
 				trade_index_iter* &iter,
@@ -629,19 +625,18 @@ public:
                                 bool need_tuple = true);
 				
     w_rc_t t_update_dts_stdid_by_index(ss_m* db,
-					trade_tuple* ptuple,
-				        const TIdent req_trade_id,
-					const myTime now_dts,
-					const char* status_submitted,
-					lock_mode_t lm = EX);				      
+				       trade_tuple* ptuple,
+				       const TIdent req_trade_id,
+				       const myTime now_dts,
+				       const char* status_submitted,
+				       lock_mode_t lm = EX);				      
 				      
-   /* w_rc_t t_get_table_iter(ss_m* db, table_iter* &iter, trade_tuple* ptuple);
-*/
     w_rc_t t_index_probe_forupdate(ss_m* db, trade_tuple* ptuple, const TIdent t_id);
     
     w_rc_t t_update_name(ss_m* db, trade_tuple* ptuple, const char* exec_name, lock_mode_t lm = EX);
 			  
 }; 
+
 
 /* ----------------------- */
 /* ---- TRADE_HISTORY ---- */
@@ -658,9 +653,8 @@ public:
     { }
 
     ~trade_history_man_impl() { }
-
     
-     w_rc_t th_get_iter_by_index(ss_m* db,
+    w_rc_t th_get_iter_by_index(ss_m* db,
 				trade_history_index_iter* &iter,
 				trade_history_tuple* ptuple,
 				rep_row_t &replow,
@@ -668,6 +662,7 @@ public:
 				const TIdent t_id,
 				lock_mode_t alm = SH,
                                 bool need_tuple = true);
+
 }; 
 
 
@@ -688,11 +683,14 @@ public:
     ~trade_type_man_impl() { }
 
     w_rc_t tt_index_probe(ss_m* db, trade_type_tuple* ptuple, const char* trade_type_id);
+
 };
+
 
 /* ------------------- */
 /* --- STATUS_TYPE --- */
 /* ------------------- */
+
 class status_type_man_impl : public table_man_impl<status_type_t>
 {
     typedef table_row_t status_type_tuple;
@@ -709,6 +707,7 @@ public:
     
 }; 
 
+
 /* ------------------- */
 /* --- SECTOR -------- */
 /* ------------------- */
@@ -716,6 +715,7 @@ public:
 class sector_man_impl : public table_man_impl<sector_t>
 {
     typedef table_row_t sector_tuple;
+    typedef index_scan_iter_impl <sector_t> sector_index_iter;
 
 public:
 
@@ -725,11 +725,17 @@ public:
 
     ~sector_man_impl() { }
 
-    // ********** TODO - Index accesses ***********
-//    w_rc_t sc_index_probe(ss_m* db, sector_tuple* ptuple, const char* sc_id);
-    w_rc_t sc_index2_probe(ss_m* db, sector_tuple* ptuple, const char* sc_name);
+    w_rc_t sc_get_iter_by_index2(ss_m* db,
+				 sector_index_iter* &iter,
+				 sector_tuple* ptuple,
+				 rep_row_t &replow,
+				 rep_row_t &rephigh,
+				 const char* sc_name,
+				 lock_mode_t alm = SH,
+				 bool need_tuple = false);
     
-}; // EOF: sector_man_impl
+};
+
 
 /* ------------------- */
 /* --- EXCHANGE ------ */
@@ -748,22 +754,12 @@ public:
 
     ~exchange_man_impl() { }
 
-    // ********** TODO - Index accesses ***********
-//    w_rc_t ex_get_table_iter(ss_m* db, table_iter* &iter);
-    
     w_rc_t ex_update_desc(ss_m* db, exchange_tuple* ptuple, const char* new_desc, lock_mode_t alm = EX);
 			    
     w_rc_t ex_index_probe(ss_m* db, exchange_tuple* ptuple, const char* id);
     
-    w_rc_t ex_get_iter_by_index(ss_m* db,
-				    exchange_index_iter* &iter,
-				    exchange_tuple* ptuple,
-				    rep_row_t &replow,
-				    rep_row_t &rephigh,
-				    lock_mode_t alm = SH,
-				    bool need_tuple = true);
-    
-}; // EOF: exchange_man_impl
+};
+
 
 /* ------------------- */
 /* --- INDUSTRY ------ */
@@ -782,37 +778,32 @@ public:
 
     ~industry_man_impl() { }
 
-    // ********** TODO - Index accesses ***********
-//     w_rc_t in_get_table_iter(ss_m* db, table_iter* &iter);
-     
-     w_rc_t in_index_probe(ss_m* db, industry_tuple* ptuple, const char* id);
+    w_rc_t in_index_probe(ss_m* db, industry_tuple* ptuple, const char* id);
 
-     w_rc_t in_index2_probe(ss_m* db, industry_tuple* ptuple, const char* in_name);
-     
-     w_rc_t in_get_iter_by_index2(ss_m* db,
-				    industry_index_iter* &iter,
-				    industry_tuple* ptuple,
-				    rep_row_t &replow,
-				    rep_row_t &rephigh,
-				    const char* in_name,
-				    lock_mode_t alm = SH,
-				    bool need_tuple = true);
+    w_rc_t in_get_iter_by_index2(ss_m* db,
+				 industry_index_iter* &iter,
+				 industry_tuple* ptuple,
+				 rep_row_t &replow,
+				 rep_row_t &rephigh,
+				 const char* in_name,
+				 lock_mode_t alm = SH,
+				 bool need_tuple = false);
     
-     w_rc_t in_get_iter_by_index3(ss_m* db,
-				    industry_index_iter* &iter,
-				    industry_tuple* ptuple,
-				    rep_row_t &replow,
-				    rep_row_t &rephigh,
-				    const char* sc_id,
-				    lock_mode_t alm = SH,
-				    bool need_tuple = false);
-}; // EOF: industry_man_impl
+    w_rc_t in_get_iter_by_index3(ss_m* db,
+				 industry_index_iter* &iter,
+				 industry_tuple* ptuple,
+				 rep_row_t &replow,
+				 rep_row_t &rephigh,
+				 const char* sc_id,
+				 lock_mode_t alm = SH,
+				 bool need_tuple = false);
+
+};
 
 
 /* ------------------- */
 /* --- ZIP CODE ------ */
 /* ------------------- */
-
 
 class zip_code_man_impl : public table_man_impl<zip_code_t>
 {
@@ -825,23 +816,13 @@ public:
 
     ~zip_code_man_impl() { }
 
-    // ********** TODO - Index accesses ***********
-    
     w_rc_t zc_index_probe(ss_m* db, zip_code_tuple* ptuple, const char* zc_code);
-/*
-    w_rc_t zc_get_iter_by_index(ss_m* db,
-    		zip_code_index_iter* &iter,
-    		zip_code_tuple* ptuple,
-    						    rep_row_t &replow,
-    						    rep_row_t &rephigh,
-    						    lock_mode_t alm = SH,
-    						    bool need_tuple = true);
 
-   w_rc_t zc_delete_by_index(ss_m* db, zip_code_tuple* ptuple, const char* cod);*/
 }; 
 
+
 /* ------------------- */
-/* --- TRADE_REQUEST-- */
+/* -- TRADE_REQUEST -- */
 /* ------------------- */
 
 class trade_request_man_impl : public table_man_impl<trade_request_t>
@@ -856,37 +837,34 @@ public:
 
     ~trade_request_man_impl() { }
 
-    // ********** TODO - Index accesses ***********
-    w_rc_t tr_get_table_iter(ss_m* db, table_iter* &iter, trade_request_tuple* ptuple);
-			     
-    w_rc_t tr_get_iter_by_index2(ss_m* db,
+    w_rc_t tr_get_iter_by_index4(ss_m* db,
+				 trade_request_index_iter* &iter,
+				 trade_request_tuple* ptuple,
+				 rep_row_t &replow,
+				 rep_row_t &rephigh,
+				 const char* tr_s_symb,
+				 const TIdent tr_b_id,
+				 lock_mode_t alm = SH,
+				 bool need_tuple = true);
+
+    w_rc_t tr_get_iter_by_index4(ss_m* db,
+				 trade_request_index_iter* &iter,
+				 trade_request_tuple* ptuple,
+				 rep_row_t &replow,
+				 rep_row_t &rephigh,
+				 const char* tr_s_symb,
+				 lock_mode_t alm = SH,
+				 bool need_tuple = true);
+				
+    w_rc_t tr_get_iter_by_index(ss_m* db,
 				trade_request_index_iter* &iter,
 				trade_request_tuple* ptuple,
 				rep_row_t &replow,
 				rep_row_t &rephigh,
-        const char* tr_s_symb,
-				const TIdent tr_b_id,
 				lock_mode_t alm = SH,
 				bool need_tuple = true);
 				
-    w_rc_t tr_get_iter_by_index(ss_m* db,
-				  trade_request_index_iter* &iter,
-				  trade_request_tuple* ptuple,
-				  rep_row_t &replow,
-				  rep_row_t &rephigh,
-				  lock_mode_t alm = SH,
-				  bool need_tuple = true);
-
-    /*w_rc_t tr_get_iter_by_index5(ss_m* db,
-				  trade_request_index_iter* &iter,
-				  trade_request_tuple* ptuple,
-				  rep_row_t &replow,
-				  rep_row_t &rephigh,
-				  const char* symbol,
-				  lock_mode_t alm = SH,
-				  bool need_tuple = true);*/
-				
-}; // EOF: trade_request_man_impl
+};
 
 
 /* ------------------------- */
@@ -906,31 +884,22 @@ public:
 
     ~company_competitor_man_impl() { }
 
-    // ********** TODO - Index accesses ***********
-    
     w_rc_t cc_get_iter_by_index(ss_m* db,
-				  company_competitor_index_iter* &iter,
-				  company_competitor_tuple* ptuple,
-				  rep_row_t &replow,
-				  rep_row_t &rephigh,
-				  const TIdent co_id,
-          bool need_tuple = false,
-          lock_mode_t alm = SH);
+				company_competitor_index_iter* &iter,
+				company_competitor_tuple* ptuple,
+				rep_row_t &replow,
+				rep_row_t &rephigh,
+				const TIdent co_id,
+				bool need_tuple = false,
+				lock_mode_t alm = SH);
 
-    /*w_rc_t cc_get_iter_by_index2(ss_m* db,
-				  company_competitor_index_iter* &iter,
-				  company_competitor_tuple* ptuple,
-				  rep_row_t &replow,
-				  rep_row_t &rephigh,
-				  const TIdent co_id,
-				  lock_mode_t alm = SH,
-				  bool need_tuple = true);*/
-    
-}; // EOF: company_competitor_man_impl
+};
+
 
 /* ------------------------- */
-/* --- DAILY_MARKET--------- */
+/* --- DAILY_MARKET -------- */
 /* --------------------------*/
+
 class daily_market_man_impl : public table_man_impl<daily_market_t>
 {
     typedef table_row_t daily_market_tuple;
@@ -943,12 +912,9 @@ public:
 
     ~daily_market_man_impl() { }
 
-    // ********** TODO - Index accesses ***********
-    w_rc_t dm_index1_probe(ss_m* db, daily_market_tuple* ptuple, const char* symbol, const myTime start_date);
+    w_rc_t dm_index_probe(ss_m* db, daily_market_tuple* ptuple, const char* symbol, const myTime start_date);
 				
-    //w_rc_t dm_get_table_iter(ss_m* db, table_iter* &iter);
-    
-    w_rc_t dm_update_vol(ss_m* db, daily_market_tuple* ptuple, const int vol_incr, lock_mode_t lm = SH);
+    w_rc_t dm_update_vol(ss_m* db, daily_market_tuple* ptuple, const int vol_incr, lock_mode_t lm = EX);
 			  
     w_rc_t dm_get_iter_by_index(ss_m* db,
 				daily_market_index_iter* &iter,
@@ -956,26 +922,15 @@ public:
 				rep_row_t &replow,
 				rep_row_t &rephigh,
 				const char* symbol,
-				const myTime start_day,
+				const myTime start_day = 0,
 				lock_mode_t alm = SH,
 				bool need_tuple = true);
 				
-    w_rc_t dm_get_iter_by_index4(ss_m* db,
-				    daily_market_index_iter* &iter,
-				    daily_market_tuple* ptuple,
-				    rep_row_t &replow,
-				    rep_row_t &rephigh,
-				    const char* symbol,
-				    lock_mode_t alm = SH,
-				    bool need_tuple = true);
-    
-}; // EOF: daily_market_man_impl
-
-
+};
 
 
 /* ---------------------- */
-/* --- FINANCIAL--------- */
+/* --- FINANCIAL -------- */
 /* -----------------------*/
 
 class financial_man_impl : public table_man_impl<financial_t>
@@ -990,24 +945,22 @@ public:
 
     ~financial_man_impl() { }
 
-    // ********** TODO - Index accesses ***********
-    //w_rc_t fi_get_table_iter(ss_m* db, table_iter* &iter);
-    
     w_rc_t fi_update_desc(ss_m* db, financial_tuple* ptuple, const myTime new_qtr_start_date, lock_mode_t alm = EX);
 			    
     w_rc_t fi_get_iter_by_index(ss_m* db,
-				  financial_index_iter* &iter,
-				  financial_tuple* ptuple,
-				  rep_row_t &replow,
-				  rep_row_t &rephigh,
-				  const TIdent co_id,
-				  lock_mode_t alm = SH,
-				  bool need_tuple = true);
+				financial_index_iter* &iter,
+				financial_tuple* ptuple,
+				rep_row_t &replow,
+				rep_row_t &rephigh,
+				const TIdent co_id,
+				lock_mode_t alm = SH,
+				bool need_tuple = true);
     
-}; // EOF: financial_man_impl
+};
+
 
 /* ---------------------- */
-/* --- ADDRESS----------- */
+/* --- ADDRESS ---------- */
 /* -----------------------*/
 
 class address_man_impl : public table_man_impl<address_t>
@@ -1022,7 +975,6 @@ public:
 
     ~address_man_impl() { }
 
-    // ********** TODO - Index accesses ***********
     w_rc_t ad_get_table_iter(ss_m* db, table_iter* &iter);						  
 
     w_rc_t ad_index_probe(ss_m* db, address_tuple* ptuple, const TIdent ad_id);
@@ -1031,8 +983,12 @@ public:
     
     w_rc_t ad_update_line2(ss_m* db, address_tuple* ptuple, const char* line2, lock_mode_t = EX);   
     
-}; // EOF: address_man_impl
+};
 
+
+/* ---------------------- */
+/* --- WATCH_ITEM ------- */
+/* -----------------------*/
 
 class watch_item_man_impl : public table_man_impl<watch_item_t>
 {
@@ -1046,49 +1002,24 @@ public:
 
     ~watch_item_man_impl() { }
 
-    // ********** TODO - Index accesses ***********
-    
-    w_rc_t wi_index_probe(ss_m* db,
-				watch_item_tuple* ptuple,
-				const TIdent wl_id,
-				const char* symbol); 
-					    
-     w_rc_t wi_get_table_iter(ss_m* db, table_iter* &iter);
-    
-     w_rc_t wi_update_symb(ss_m* db, watch_item_tuple* ptuple, const TIdent wl_id, const char* old_symbol, const char* new_symbol, lock_mode_t lm = SH);
+    w_rc_t wi_update_symb(ss_m* db, watch_item_tuple* ptuple, const TIdent wl_id,
+			  const char* old_symbol, const char* new_symbol, lock_mode_t lm = EX);
      
-     w_rc_t wi_get_iter_by_index(ss_m* db,
-				  watch_item_index_iter* &iter,
-				  watch_item_tuple* ptuple,
-				  rep_row_t &replow,
-				  rep_row_t &rephigh,
-				  const TIdent wl_id,
-				  lock_mode_t alm = SH,
-				  bool need_tuple = true);
-}; // EOF: watch_item_man_impl
+    w_rc_t wi_get_iter_by_index(ss_m* db,
+				watch_item_index_iter* &iter,
+				watch_item_tuple* ptuple,
+				rep_row_t &replow,
+				rep_row_t &rephigh,
+				const TIdent wl_id,
+				lock_mode_t alm = SH,
+				bool need_tuple = false);
+
+};
 
 
-class news_item_man_impl : public table_man_impl<news_item_t>
-{
-    typedef table_row_t news_item_tuple;
-
-public:
-
-    news_item_man_impl(news_item_t* aNews_ItemDesc)
-        : table_man_impl<news_item_t>(aNews_ItemDesc)
-    { }
-
-    ~news_item_man_impl() { }
-
-    // ********** TODO - Index accesses ***********
-    w_rc_t ni_index_probe(ss_m* db, news_item_tuple* ptuple, const TIdent ni_id);
-    
-    w_rc_t ni_index_probe_forupdate(ss_m* db, news_item_tuple* ptuple, const TIdent ni_id);
-			      
-    w_rc_t ni_update_dts_by_index(ss_m* db, news_item_tuple* ptuple, const myTime ni_dts, lock_mode_t alm = EX);
-    
-}; // EOF: news_item_man_impl
-
+/* ---------------------- */
+/* --- WATCH_LIST ------- */
+/* -----------------------*/
 
 class watch_list_man_impl : public table_man_impl<watch_list_t>
 {
@@ -1103,22 +1034,46 @@ public:
 
     ~watch_list_man_impl() { }
 
-    // ********** TODO - Index accesses ***********
-    w_rc_t wl_index_probe(ss_m* db, watch_list_tuple* ptuple, const TIdent c_id);
-
-   // w_rc_t wl_get_table_iter(ss_m* db, table_iter* &iter);
-    
     w_rc_t wl_get_iter_by_index2(ss_m* db,
-				    watch_list_index_iter* &iter,
-				    watch_list_tuple* ptuple,
-				    rep_row_t &replow,
-				    rep_row_t &rephigh,
-				    const TIdent c_id,
-				    lock_mode_t alm = SH,
-				    bool need_tuple = true);
+				 watch_list_index_iter* &iter,
+				 watch_list_tuple* ptuple,
+				 rep_row_t &replow,
+				 rep_row_t &rephigh,
+				 const TIdent c_id,
+				 lock_mode_t alm = SH,
+				 bool need_tuple = false);
     
-}; // EOF: watch_list_man_impl
+};
 
+
+/* ---------------------- */
+/* --- NEWS_ITEM -------- */
+/* -----------------------*/
+
+class news_item_man_impl : public table_man_impl<news_item_t>
+{
+    typedef table_row_t news_item_tuple;
+
+public:
+
+    news_item_man_impl(news_item_t* aNews_ItemDesc)
+        : table_man_impl<news_item_t>(aNews_ItemDesc)
+    { }
+
+    ~news_item_man_impl() { }
+
+    w_rc_t ni_index_probe(ss_m* db, news_item_tuple* ptuple, const TIdent ni_id);
+    
+    w_rc_t ni_index_probe_forupdate(ss_m* db, news_item_tuple* ptuple, const TIdent ni_id);
+			      
+    w_rc_t ni_update_dts_by_index(ss_m* db, news_item_tuple* ptuple, const myTime ni_dts, lock_mode_t alm = EX);
+    
+};
+
+
+/* ---------------------- */
+/* --- NEWS_XREF -------- */
+/* -----------------------*/
 
 class news_xref_man_impl : public table_man_impl<news_xref_t>
 {
@@ -1132,37 +1087,18 @@ public:
 
     ~news_xref_man_impl() {}
 
-    // ********** TODO - Index accesses ***********
     w_rc_t nx_get_table_iter(ss_m* db, table_iter* &iter);
     
     w_rc_t nx_get_iter_by_index(ss_m* db,
-				  news_xref_index_iter* &iter,
-				  news_xref_tuple* ptuple,
-				  rep_row_t &replow,
-				  rep_row_t &rephigh,
-				  const TIdent co_id,
-				  bool need_tuple = true,
-          lock_mode_t alm = SH);
+				news_xref_index_iter* &iter,
+				news_xref_tuple* ptuple,
+				rep_row_t &replow,
+				rep_row_t &rephigh,
+				const TIdent co_id,
+				lock_mode_t alm = SH,
+				bool need_tuple = false);
     
-}; // EOF: news_xref_man_impl
-
-
-class dimension_man_impl : public table_man_impl<dimension_t>
-{
-    typedef table_row_t dimension_tuple;
-
-public:
-
-    dimension_man_impl(dimension_t* aDimensionDesc)
-        : table_man_impl<dimension_t>(aDimensionDesc)
-    { }
-
-    ~dimension_man_impl() { }
-
-    // ********** TODO - Index accesses ***********
-    
-}; // EOF: dimension_man_impl
-
+};
 
 
 EXIT_NAMESPACE(tpce);

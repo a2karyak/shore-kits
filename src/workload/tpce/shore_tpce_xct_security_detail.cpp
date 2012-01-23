@@ -63,7 +63,7 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
     table_row_t* praddress = _paddress_man->get_tuple();
     assert (praddress);
 
-    table_row_t* prcompany = _pcompany_man->get_tuple(); //296
+    table_row_t* prcompany = _pcompany_man->get_tuple();
     assert (prcompany);
 
     table_row_t* prcompanycomp = _pcompany_competitor_man->get_tuple();
@@ -218,9 +218,9 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 	e =  _psecurity_man->s_index_probe(_pssm, prsecurity, psdin._symbol);
 	if(e.is_error()) { goto done; }
 
-	prsecurity->get_value(5, s_co_id);
-	prsecurity->get_value(4, s_ex_id, 7);
 	prsecurity->get_value(3, s_name, 71);
+	prsecurity->get_value(4, s_ex_id, 7);
+	prsecurity->get_value(5, s_co_id);
 	prsecurity->get_value(6, num_out);
 	prsecurity->get_value(7, start_date);
 	prsecurity->get_value(8, exch_date);
@@ -237,6 +237,14 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 	e =  _pcompany_man->co_index_probe(_pssm, prcompany, s_co_id);
 	if(e.is_error()) { goto done; }
 
+	prcompany->get_value(0, co_id);
+	prcompany->get_value(1, co_st_id, 5);
+	prcompany->get_value(2, co_name, 61);
+	prcompany->get_value(4, sp_rate, 5);
+	prcompany->get_value(5, ceo_name, 47);
+	prcompany->get_value(7, co_desc, 151);
+	prcompany->get_value(8, open_date);
+	
 	//get company address and zip code
 	TIdent co_ad_id;
 	prcompany->get_value(6, co_ad_id);
@@ -245,6 +253,9 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 	e =  _paddress_man->ad_index_probe(_pssm, praddress, co_ad_id);
 	if (e.is_error()) { goto done; }
 
+	praddress->get_value(1, co_ad_line1, 81);
+	praddress->get_value(2, co_ad_line2, 81);
+
 	char ca_ad_zc_code[13]; //12
 	praddress->get_value(3, ca_ad_zc_code, 13);
 
@@ -252,23 +263,19 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 	e =  _pzip_code_man->zc_index_probe(_pssm, przipcode, ca_ad_zc_code);
 	if (e.is_error()) { goto done; }
 
-	prcompany->get_value(0, co_id);
-	prcompany->get_value(2, co_name, 61);
-	prcompany->get_value(4, sp_rate, 5);
-	prcompany->get_value(5, ceo_name, 47);
-	prcompany->get_value(7, co_desc, 151);
-	prcompany->get_value(8, open_date);
-	prcompany->get_value(1, co_st_id, 5);
-
-	praddress->get_value(1, co_ad_line1, 81);
-	praddress->get_value(2, co_ad_line2, 81);
-
 	przipcode->get_value(1, co_ad_town, 81);
 	przipcode->get_value(2, co_ad_div, 81);
+
 
 	TRACE( TRACE_TRX_FLOW, "App: %d SD:ex-idx-probe (%s) \n", xct_id, s_ex_id);
 	e =  _pexchange_man->ex_index_probe(_pssm, prexchange, s_ex_id);
 	if(e.is_error()) { goto done; }
+	
+	prexchange->get_value(1, ex_name, 101);
+	prexchange->get_value(2, ex_num_symb);
+	prexchange->get_value(3, ex_open);
+	prexchange->get_value(4, ex_close);
+	prexchange->get_value(5, ex_desc, 151);
 
 	TIdent ex_ad_id;
 	prexchange->get_value(6, ex_ad_id);
@@ -278,26 +285,17 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 	e =  _paddress_man->ad_index_probe(_pssm, praddress, ex_ad_id);
 	if (e.is_error()) { goto done; }
 
-	char ea_ad_zc_code[13]; //12
-	praddress->get_value(3, ea_ad_zc_code, 13);
-
-	TRACE( TRACE_TRX_FLOW, "App: %d SD:zc-idx-probe (%s) \n", xct_id,  ea_ad_zc_code);
-	e =  _pzip_code_man->zc_index_probe(_pssm, przipcode, ea_ad_zc_code);
-	if (e.is_error()) { goto done; }
-
-	przipcode->get_value(2, ex_ad_div, 81);
-	przipcode->get_value(1, ex_ad_town, 81);
-
-	praddress->get_value(4, ex_ad_ctry, 81);
 	praddress->get_value(1, ex_ad_line1, 81);
 	praddress->get_value(2, ex_ad_line2, 81);
 	praddress->get_value(3, ex_ad_zip, 13);
+	praddress->get_value(4, ex_ad_ctry, 81);
+ 
+	TRACE( TRACE_TRX_FLOW, "App: %d SD:zc-idx-probe (%s) \n", xct_id, ex_ad_zip);
+	e =  _pzip_code_man->zc_index_probe(_pssm, przipcode, ex_ad_zip);
+	if (e.is_error()) { goto done; }
 
-	prexchange->get_value(4, ex_close);
-	prexchange->get_value(5, ex_desc, 151);
-	prexchange->get_value(1, ex_name, 101);
-	prexchange->get_value(2, ex_num_symb);
-	prexchange->get_value(3, ex_open);
+	przipcode->get_value(1, ex_ad_town, 81);
+	przipcode->get_value(2, ex_ad_div, 81);
 	
 	/**
 	   select first max_comp_len rows
@@ -317,7 +315,8 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 	{
 	    index_scan_iter_impl<company_competitor_t>* tmp_cc_iter;
 	    TRACE( TRACE_TRX_FLOW, "App: %d SD:cc-get-iter-by-index (%ld) \n", xct_id,  co_id);
-	    e = _pcompany_competitor_man->cc_get_iter_by_index(_pssm, tmp_cc_iter, prcompanycomp, lowrep, highrep, co_id);
+	    e = _pcompany_competitor_man->cc_get_iter_by_index(_pssm, tmp_cc_iter, prcompanycomp,
+							       lowrep, highrep, co_id);
 	    if (e.is_error()) { goto done; }
 	    cc_iter = tmp_cc_iter;
 	}
@@ -330,8 +329,8 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 	    TIdent cp_comp_co_id;
 	    char cp_in_id[3]; //2
 
-	    prcompanycomp->get_value(2, cp_in_id, 3);
 	    prcompanycomp->get_value(1, cp_comp_co_id);
+	    prcompanycomp->get_value(2, cp_in_id, 3);
 
 	    TRACE( TRACE_TRX_FLOW, "App: %d SD:in-idx-probe (%s) \n", xct_id,  cp_in_id);
 	    e =  _pindustry_man->in_index_probe(_pssm, prindustry, cp_in_id);
@@ -487,7 +486,8 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 	guard< index_scan_iter_impl<daily_market_t> > dm_iter;
 	{
 	    index_scan_iter_impl<daily_market_t>* tmp_dm_iter;
-	    TRACE( TRACE_TRX_FLOW, "App: %d SD:dm-get-iter-by-idx (%s) (%ld) \n", xct_id, psdin._symbol, psdin._start_day);
+	    TRACE( TRACE_TRX_FLOW, "App: %d SD:dm-get-iter-by-idx (%s) (%ld) \n",
+		   xct_id, psdin._symbol, psdin._start_day);
 	    e = _pdaily_market_man->dm_get_iter_by_index(_pssm, tmp_dm_iter, prdailymarket,
 							 lowrep, highrep, psdin._symbol, psdin._start_day);
 	    if (e.is_error()) { goto done; }
@@ -561,7 +561,8 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 	    {
 		index_scan_iter_impl<news_xref_t>* tmp_nx_iter;
 		TRACE( TRACE_TRX_FLOW, "App: %d SD:nx-get-iter-by-idx (%ld) \n", xct_id, co_id);
-		e = _pnews_xref_man->nx_get_iter_by_index(_pssm, tmp_nx_iter, prnewsxref, lowrep, highrep, co_id, false);
+		e = _pnews_xref_man->nx_get_iter_by_index(_pssm, tmp_nx_iter, prnewsxref,
+							  lowrep, highrep, co_id);
 		if (e.is_error()) { goto done; }
 		nx_iter = tmp_nx_iter;
 	    }
@@ -610,7 +611,8 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 	    {
 		index_scan_iter_impl<news_xref_t>* tmp_nx_iter;
 		TRACE( TRACE_TRX_FLOW, "App: %d SD:nx-get-iter-by-idx (%ld) \n", xct_id, co_id);
-		e = _pnews_xref_man->nx_get_iter_by_index(_pssm, tmp_nx_iter, prnewsxref, lowrep, highrep, co_id, false);
+		e = _pnews_xref_man->nx_get_iter_by_index(_pssm, tmp_nx_iter, prnewsxref,
+							  lowrep, highrep, co_id);
 		if (e.is_error()) { goto done; }
 		nx_iter = tmp_nx_iter;
 	    }
@@ -627,11 +629,11 @@ w_rc_t ShoreTPCEEnv::xct_security_detail(const int xct_id, security_detail_input
 		if (e.is_error()) { goto done; }
 
 		strcpy(news_item[news_len], "");
+		prnewsitem->get_value(1, news_headline[news_len], 81);
+		prnewsitem->get_value(2, news_summary[news_len], 256);
 		prnewsitem->get_value(4, news_dts[news_len]);
 		prnewsitem->get_value(5, news_src[news_len], 31);
 		prnewsitem->get_value(6, news_auth[news_len], 31);
-		prnewsitem->get_value(1, news_headline[news_len], 81);
-		prnewsitem->get_value(2, news_summary[news_len], 256);
 
 		TRACE( TRACE_TRX_FLOW, "App: %d SD:nx-iter-next %ld \n", xct_id, nx_ni_id);
 		e = nx_iter->next(_pssm, eof, *prnewsxref);

@@ -245,7 +245,7 @@ void testInputs()
 
 /** Construction  */
 ShoreTPCEEnv::ShoreTPCEEnv():
-    ShoreEnv()
+    ShoreEnv(), _num_invalid_input(0)
 {
     // read the scaling factor from the configuration file
     
@@ -314,7 +314,7 @@ ShoreTPCEEnv::~ShoreTPCEEnv()
 w_rc_t ShoreTPCEEnv::load_schema()
 {
     // create the schema
-    _paccount_permission_desc   = new account_permission_t(get_pd());CDM*	m_CDM;
+    _paccount_permission_desc   = new account_permission_t(get_pd());
     _pcustomer_desc   = new customer_t(get_pd());
     _pcustomer_account_desc  = new customer_account_t(get_pd());
     _pcustomer_taxrate_desc  = new customer_taxrate_t(get_pd());
@@ -421,14 +421,69 @@ int ShoreTPCEEnv::statistics()
     for (statmap_t::iterator it=_statmap.begin(); it != _statmap.end(); ++it) 
 	rval += *it->second;
 
-//     TRACE( TRACE_STATISTICS, "AcctUpd. Att (%d). Abt (%d). Dld (%d)\n",
-//            rval.attempted.acct_update,
-//            rval.failed.acct_update,
-//            rval.deadlocked.acct_update);
+    TRACE( TRACE_STATISTICS, "BrokerVolume. Att (%d). Abt (%d). Dld (%d)\n",
+	   rval.attempted.broker_volume,
+	   rval.failed.broker_volume,
+	   rval.deadlocked.broker_volume);
+     
+    TRACE( TRACE_STATISTICS, "CustomerPosition. Att (%d). Abt (%d). Dld (%d)\n",
+	   rval.attempted.customer_position,
+	   rval.failed.customer_position,
+	   rval.deadlocked.customer_position);
+    
+    TRACE( TRACE_STATISTICS, "MarketFeed. Att (%d). Abt (%d). Dld (%d)\n",
+	   rval.attempted.market_feed,
+	   rval.failed.market_feed,
+	   rval.deadlocked.market_feed);
+    
+    TRACE( TRACE_STATISTICS, "MarketWatch. Att (%d). Abt (%d). Dld (%d)\n",
+	   rval.attempted.market_watch,
+	   rval.failed.market_watch,
+	   rval.deadlocked.market_watch);
+    
+   TRACE( TRACE_STATISTICS, "SecurityDetail. Att (%d). Abt (%d). Dld (%d)\n",
+	  rval.attempted.security_detail,
+	  rval.failed.security_detail,
+	  rval.deadlocked.security_detail);
+   
+   TRACE( TRACE_STATISTICS, "TradeLookup. Att (%d). Abt (%d). Dld (%d)\n",
+	  rval.attempted.trade_lookup,
+	  rval.failed.trade_lookup,
+	  rval.deadlocked.trade_lookup);
+   
+   TRACE( TRACE_STATISTICS, "TradeOrder. Att (%d). Abt (%d). Dld (%d)\n",
+	  rval.attempted.trade_order,
+	  rval.failed.trade_order,
+	  rval.deadlocked.trade_order);
+   
+   TRACE( TRACE_STATISTICS, "TradeResult. Att (%d). Abt (%d). Dld (%d)\n",
+	  rval.attempted.trade_result,
+	  rval.failed.trade_result,
+	  rval.deadlocked.trade_result);
+   
+   TRACE( TRACE_STATISTICS, "TradeStatus. Att (%d). Abt (%d). Dld (%d)\n",
+	  rval.attempted.trade_status,
+	  rval.failed.trade_status,
+	  rval.deadlocked.trade_status);
 
-    ShoreEnv::statistics();
+   TRACE( TRACE_STATISTICS, "TradeUpdate. Att (%d). Abt (%d). Dld (%d)\n",
+	  rval.attempted.trade_update,
+	  rval.failed.trade_update,
+	  rval.deadlocked.trade_update);
+   
+   TRACE( TRACE_STATISTICS, "DataMaintenance. Att (%d). Abt (%d). Dld (%d)\n",
+	  rval.attempted.data_maintenance,
+	  rval.failed.data_maintenance,
+	  rval.deadlocked.data_maintenance);
 
-    return (0);
+   TRACE( TRACE_STATISTICS, "TradeCleanup. Att (%d). Abt (%d). Dld (%d)\n",
+	  rval.attempted.trade_cleanup,
+	  rval.failed.trade_cleanup,
+	  rval.deadlocked.trade_cleanup);
+   
+   ShoreEnv::statistics();
+   
+   return (0);
 }
 
 

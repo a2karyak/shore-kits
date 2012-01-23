@@ -56,6 +56,12 @@ ENTER_NAMESPACE(tpce);
 
 w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& ptrin)
 {
+    // check whether the input is null or not
+    if(ptrin._trade_price == -1) {
+	atomic_inc_uint_nv(&_num_invalid_input);
+	return (RC(se_INVALID_INPUT));
+    }	
+    
     // ensure a valid environment
     assert (_pssm);
     assert (_initialized);
@@ -134,12 +140,6 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
     lowrep.set(_pcustomer_desc->maxsize());
     highrep.set(_pcustomer_desc->maxsize());
     { // make gotos safe
-	
-	if(ptrin._trade_price == -1) {
-	    e = RC(se_INVALID_INPUT);
-	    goto done;
-	}	
-
 	int trade_qty;
 	TIdent acct_id = -1;
 	bool type_is_sell;
@@ -230,7 +230,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 	     */
 
 	    TRACE( TRACE_TRX_FLOW, "App: %d TR:ca-idx-probe (%ld) \n", xct_id,  acct_id);
-	    e =  _pcustomer_account_man->ca_index_probe_forupdate(_pssm, prcustaccount, acct_id);
+	    e =  _pcustomer_account_man->ca_index_probe(_pssm, prcustaccount, acct_id);
 	    if (e.is_error()) {  goto done; }
 
 	    prcustaccount->get_value(1, broker_id);
@@ -269,9 +269,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 
 			TRACE( TRACE_TRX_FLOW, "App: %d TR:hs-update (%ld) (%s) (%d) \n",
 			       xct_id, acct_id, symbol, (hs_qty - trade_qty));
-			e = _pholding_summary_man->hs_update_qty(_pssm, prholdingsummary,
-								 acct_id, symbol,
-								 (hs_qty - trade_qty));
+			e = _pholding_summary_man->hs_update_qty(_pssm, prholdingsummary, (hs_qty - trade_qty));
 			if (e.is_error()) {  goto done; }
 		    }
 		}
@@ -331,7 +329,9 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 			    e = h_iter->next(_pssm, eof, *prholding);
 			    if (e.is_error()) {  goto done; }
 			}
-			assert (h_sorter.count());
+			/* PIN: not needed; this is OK, we don't check for this in the !is_lifo branch of this
+			   and there is nothing in TPC-E spec that tells us that we should assert something here */
+			//assert (h_sorter.count());
 
 			desc_sort_iter_impl h_list_sort_iter(_pssm, &h_list, &h_sorter);
 			e = h_list_sort_iter.next(_pssm, eof, rsb);
@@ -459,10 +459,10 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 			    TIdent hold_id;
 			    int hold_qty;
 			    double hold_price;
-			    
-			    prholding->get_value(5, hold_qty);
-			    prholding->get_value(4, hold_price);
+
 			    prholding->get_value(0, hold_id);
+			    prholding->get_value(4, hold_price);
+			    prholding->get_value(5, hold_qty);
 
 			    if(hold_qty > needed_qty){
 				//Selling some of the holdings
@@ -501,7 +501,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 
 				TRACE( TRACE_TRX_FLOW, "App: %d TR:hold-update (%ld) (%s) (%d) \n",
 				       xct_id, acct_id, symbol, (hs_qty - trade_qty));
-				e = _pholding_man->h_update_qty(_pssm, prholding, hold_id, (hold_qty - needed_qty));
+				e = _pholding_man->h_update_qty(_pssm, prholding, (hold_qty - needed_qty));
 				if (e.is_error()) {  goto done; }
 				
 				buy_value += needed_qty * hold_price;
@@ -540,8 +540,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 				 *	WHERE	current of hold_list
 				 */
 				
-				TRACE( TRACE_TRX_FLOW, "App: %d TR:h-delete-by-index (%ld) \n", xct_id, hold_id);
-				e = _pholding_man->h_delete_by_index(_pssm, prholding, hold_id);
+				TRACE( TRACE_TRX_FLOW, "App: %d TR:h-delete (%ld) \n", xct_id, hold_id);
+				e = _pholding_man->delete_tuple(_pssm, prholding);
 				if (e.is_error()) {  goto done; }
 				
 				buy_value += hold_qty * hold_price;
@@ -609,7 +609,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 		    prholding->set_value(5, (-1) * needed_qty);
 
 		    TRACE( TRACE_TRX_FLOW, "App: %d TR:h-add-tuple (%ld) (%ld) (%s) (%ld) (%d) (%d) \n",
-			   xct_id, ptrin._trade_id, acct_id, symbol, trade_dts, ptrin._trade_price, (-1) * needed_qty);
+			   xct_id, ptrin._trade_id, acct_id, symbol, trade_dts,
+			   ptrin._trade_price, (-1) * needed_qty);
 		    e = _pholding_man->add_tuple(_pssm, prholding);
 		    if (e.is_error()) {  goto done; }
 		}
@@ -620,8 +621,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 			 * WHERE HS_CA_ID = acct_id and HS_S_SYMB = symbol
 			 */
 
-			TRACE( TRACE_TRX_FLOW, "App: %d TR:hs-delete-by-index (%ld) (%s) \n", xct_id, acct_id, symbol);
-			e = _pholding_summary_man->hs_delete_by_index(_pssm, prholdingsummary, acct_id, symbol);
+			TRACE( TRACE_TRX_FLOW, "App: %d TR:hs-delete-tuple (%ld) (%s) \n", xct_id, acct_id, symbol);
+			e = _pholding_summary_man->delete_tuple(_pssm, prholdingsummary);
 			if (e.is_error()) {  goto done; }
 		    }
 		}
@@ -659,9 +660,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 
 			TRACE( TRACE_TRX_FLOW, "App: %d TR:holdsumm-update (%ld) (%s) (%d) \n",
 			       xct_id, acct_id, symbol, (hs_qty + trade_qty));
-			e = _pholding_summary_man->hs_update_qty(_pssm, prholdingsummary,
-								 acct_id, symbol,
-								 (hs_qty + trade_qty));
+			e = _pholding_summary_man->hs_update_qty(_pssm, prholdingsummary, (hs_qty + trade_qty));
 			if (e.is_error()) {  goto done; }
 		    }
 
@@ -678,7 +677,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 
 			    index_scan_iter_impl<holding_t>* tmp_h_iter;
 			    TRACE( TRACE_TRX_FLOW, "App: %d TR:h-get-iter-by-idx2 \n", xct_id);
-			    e = _pholding_man->h_get_iter_by_index2(_pssm, tmp_h_iter, prholding, lowrep, highrep, acct_id, symbol);
+			    e = _pholding_man->h_get_iter_by_index2(_pssm, tmp_h_iter, prholding,
+								    lowrep, highrep, acct_id, symbol);
 			    if (e.is_error()) {  goto done; }
 			    h_iter = tmp_h_iter;
 
@@ -720,7 +720,9 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 				e = h_iter->next(_pssm, eof, *prholding);
 				if (e.is_error()) {  goto done; }
 			    }
-			    assert (h_sorter.count());
+			    /* PIN: not needed; this is OK, we don't check for this in the !is_lifo branch of this
+			       and there is nothing in TPCE spec that tells us that we should assert something here*/
+			    //assert (h_sorter.count());
 			    
 			    desc_sort_iter_impl h_list_sort_iter(_pssm, &h_list, &h_sorter);
 			    e = h_list_sort_iter.next(_pssm, eof, rsb);
@@ -814,7 +816,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 				     */
 
 				    TRACE( TRACE_TRX_FLOW, "App: %d TR:h-delete-by-index (%ld) \n", ttt);
-				    e = _pholding_man->h_delete_by_index(_pssm, prholding,ttt);
+				    e = _pholding_man->h_delete_by_index(_pssm, prholding, ttt);
 				    if (e.is_error()) {  goto done; }
 
 				    hold_qty = -hold_qty;
@@ -838,7 +840,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 
 			    index_scan_iter_impl<holding_t>* tmp_h_iter;
 			    TRACE( TRACE_TRX_FLOW, "App: %d TR:h-get-iter-by-idx2\n", xct_id);
-			    e = _pholding_man->h_get_iter_by_index2(_pssm, tmp_h_iter, prholding, lowrep, highrep, acct_id, symbol);
+			    e = _pholding_man->h_get_iter_by_index2(_pssm, tmp_h_iter, prholding,
+								    lowrep, highrep, acct_id, symbol);
 			    if (e.is_error()) {  goto done; }
 			    h_iter = tmp_h_iter;
 			    //already sorted in ascending order because of index
@@ -855,10 +858,10 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 				    int hold_qty;
 				    double hold_price;
 
-				    prholding->get_value(5, hold_qty);
-				    prholding->get_value(4, hold_price);
 				    prholding->get_value(0, hold_id);
-
+				    prholding->get_value(4, hold_price);
+				    prholding->get_value(5, hold_qty);
+				    
 				    if(hold_qty + needed_qty < 0){
 					/**
 					 * 	INSERT INTO
@@ -882,7 +885,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 					prholdinghistory->set_value(3, (hold_qty + needed_qty));
 
 					TRACE( TRACE_TRX_FLOW, "App: %d TR:hh-add-tuple (%ld) (%ld) (%d) (%d)\n",
-					       xct_id, hold_id, ptrin._trade_id, hold_price, (hold_qty + needed_qty));
+					       xct_id, hold_id, ptrin._trade_id, hold_price,
+					       (hold_qty + needed_qty));
 					e = _pholding_history_man->add_tuple(_pssm, prholdinghistory);
 					if (e.is_error()) {  goto done; }
 
@@ -894,8 +898,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 
 					TRACE( TRACE_TRX_FLOW, "App: %d TR:h-update (%ld) (%s) (%d) \n",
 					       xct_id, acct_id, symbol, (hs_qty + trade_qty));
-					e = _pholding_man->h_update_qty(_pssm, prholding,
-									hold_id, (hold_qty + needed_qty));
+					e = _pholding_man->h_update_qty(_pssm, prholding, (hold_qty + needed_qty));
 					if (e.is_error()) {  goto done; }
 
 					sell_value += needed_qty * hold_price;
@@ -934,9 +937,9 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 					 * WHERE current of hold_list
 					 */
 
-					TRACE( TRACE_TRX_FLOW, "App: %d TR:h-delete-by-index (%ld) (%s) \n",
+					TRACE( TRACE_TRX_FLOW, "App: %d TR:h-delete (%ld) (%s) \n",
 					       xct_id, acct_id, symbol);
-					e = _pholding_man->h_delete_by_index(_pssm, prholding, hold_id);
+					e = _pholding_man->delete_tuple(_pssm, prholding);
 					if (e.is_error()) {  goto done; }
 
 					hold_qty = -hold_qty;
@@ -1017,8 +1020,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 			 * WHERE HS_CA_ID = acct_id and HS_S_SYMB = symbol
 			 */
 
-			TRACE( TRACE_TRX_FLOW, "App: %d TR:hs-delete-by-index (%ld) (%s) \n", xct_id, acct_id, symbol);
-			e = _pholding_summary_man->hs_delete_by_index(_pssm, prholdingsummary, acct_id, symbol);
+			TRACE( TRACE_TRX_FLOW, "App: %d TR:hs-delete-tuple (%ld) (%s) \n", xct_id, acct_id, symbol);
+			e = _pholding_summary_man->delete_tuple(_pssm, prholdingsummary);
 			if (e.is_error()) {  goto done; }
 		    }
 		}
@@ -1099,8 +1102,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 	    if (e.is_error()) {  goto done; }
 
 	    char s_ex_id[7]; //6
-	    prsecurity->get_value(4, s_ex_id, 7); //7
 	    prsecurity->get_value(3, s_name, 51); //50
+	    prsecurity->get_value(4, s_ex_id, 7); //7
 
 	    /**
 	     *	SELECT	c_tier = C_TIER
@@ -1108,10 +1111,18 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 	     *	WHERE	C_ID = cust_id
 	     */
 
-	    TRACE( TRACE_TRX_FLOW, "App: %d TR:c-idx-probe (%ld) \n", xct_id,  cust_id);
-	    e = _pcustomer_man->c_index_probe(_pssm, prcustomer, cust_id);
-	    if (e.is_error()) {  goto done; }
-
+	    guard< index_scan_iter_impl<customer_t> > c_iter;
+	    {
+		index_scan_iter_impl<customer_t>* tmp_c_iter;
+		TRACE( TRACE_TRX_FLOW, "App: %d TR:c-get-iter-by-idx3 (%ld) \n", xct_id,  cust_id);
+		e = _pcustomer_man->c_get_iter_by_index3(_pssm, tmp_c_iter, prcustomer, lowrep, highrep, cust_id);
+		if (e.is_error()) { goto done; }
+		c_iter = tmp_c_iter;
+	    }
+	    bool eof;
+	    TRACE( TRACE_TRX_FLOW, "App: %d TR:c-iter-next \n", xct_id);
+	    e = c_iter->next(_pssm, eof, *prcustomer);
+	    if (e.is_error() || eof) { goto done; }
 	    short c_tier;
 	    prcustomer->get_value(7, c_tier);
 
@@ -1134,7 +1145,6 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 		cr_iter = tmp_cr_iter;
 	    }
 
-	    bool eof;
 	    TRACE( TRACE_TRX_FLOW, "App: %d TR:cr-iter-next \n", xct_id);
 	    e = cr_iter->next(_pssm, eof, *prcommissionrate);
 	    if (e.is_error()) {  goto done; }
@@ -1165,13 +1175,12 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 	     *	WHERE	T_ID = trade_id
 	     */
 
-	    prtrade->set_value(0, ptrin._trade_id);
 	    TRACE( TRACE_TRX_FLOW, "App: %d TR:t-upd-ca_td_sci_tp-by-ind (%ld) (%lf) (%ld) (%s) (%lf) \n",
 		   xct_id, ptrin._trade_id, comm_amount, trade_dts, st_completed_id, ptrin._trade_price);
 	    e = _ptrade_man->t_update_ca_td_sci_tp_by_index(_pssm, prtrade,
 							    ptrin._trade_id, comm_amount, trade_dts,
 							    st_completed_id, ptrin._trade_price);
-	    if (e.is_error()) {  goto done; }
+	    if (e.is_error()) { goto done; }
 
 	    /**
 	     *	INSERT INTO TRADE_HISTORY(
@@ -1200,7 +1209,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 	     *	WHERE	B_ID = broker_id
 	     */
 
-	    TRACE( TRACE_TRX_FLOW, "App: %d TR:broker-upd-ca_td_sci_tp-by-ind (%ld) (%d) \n", xct_id, broker_id, comm_amount);
+	    TRACE( TRACE_TRX_FLOW, "App: %d TR:broker-upd-ca_td_sci_tp-by-ind (%ld) (%d) \n",
+		   xct_id, broker_id, comm_amount);
 	    e = _pbroker_man->broker_update_ca_nt_by_index(_pssm, prbroker, broker_id, comm_amount);
 	    if (e.is_error()) {  goto done; }
 	}
@@ -1260,12 +1270,9 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 		 */
 
 		TRACE( TRACE_TRX_FLOW, "App: %d TR:ca-upd-tuple \n", xct_id);
-		prcustaccount->set_value(0, acct_id);
-		e =  _pcustomer_account_man->ca_index_probe_forupdate(_pssm, prcustaccount, acct_id);
-		if (e.is_error()) { return e; }	
 		e = _pcustomer_account_man->ca_update_bal(_pssm, prcustaccount, se_amount);
 		if (e.is_error()) {  goto done; }
-
+				
 		/**
 		 *	insert into	CASH_TRANSACTION 	(
 		 *							CT_DTS,

@@ -347,7 +347,10 @@ public:
     void set_sfe(const int asf);
     inline int get_sfe() { return (_scaling_factor_tpce); }
 
-
+    
+    // PIN: to count the aborts due to invalid input in TRADE_RESULT and MARKET_FEED
+    //      will be reported in the output
+    uint _num_invalid_input; 
     virtual void print_throughput(const double iQueriedSF, 
                                   const int iSpread, 
                                   const int iNumOfThreads,
@@ -455,11 +458,6 @@ public:
     DECLARE_TABLE(news_item_t,news_item_man_impl,news_item);
     DECLARE_TABLE(news_xref_t,news_xref_man_impl,news_xref);
 
-    /*
-    // Unknown
-    DECLARE_TABLE(dimension_t,dimension_man_impl,dimension);
-
-    */
 
     // --- kit baseline trxs --- //
 
@@ -487,8 +485,8 @@ public:
     DECLARE_TRX(populate_ca_and_ap);
     DECLARE_TRX(populate_wl_and_wi);
     DECLARE_TRX(populate_company);
-    DECLARE_TRX( populate_company_competitor);
-    DECLARE_TRX( populate_daily_market);
+    DECLARE_TRX(populate_company_competitor);
+    DECLARE_TRX(populate_daily_market);
     DECLARE_TRX(populate_financial);
     DECLARE_TRX(populate_last_trade);
     DECLARE_TRX(populate_ni_and_nx);
