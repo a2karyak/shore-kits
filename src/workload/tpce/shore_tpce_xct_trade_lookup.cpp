@@ -545,7 +545,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_lookup(const int xct_id, trade_lookup_input_t& pt
 		TRACE( TRACE_TRX_FLOW, "App: %d TL:t-get-iter-by-idx2 (%ld) (%ld) (%ld) \n",
 		       xct_id, ptlin._acct_id, ptlin._start_trade_dts, MAX_DTS);
 		e = _ptrade_man->t_get_iter_by_index2(_pssm, tmp_t_iter, prtrade, lowrep, highrep,
-						      ptlin._acct_id, ptlin._start_trade_dts, MAX_DTS, false);
+						      ptlin._acct_id, ptlin._start_trade_dts, MAX_DTS,
+						      false, false);
 		if (e.is_error()) { goto done; }
 		t_iter = tmp_t_iter;
 	    }

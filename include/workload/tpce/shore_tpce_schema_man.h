@@ -355,6 +355,7 @@ public:
 				rep_row_t &rephigh,
 				const TIdent acct_id,
 				const char* symbol,
+				bool is_backward = false,
 				lock_mode_t alm = SH,
 				bool need_tuple = true);
 
@@ -614,6 +615,7 @@ public:
 				const TIdent acct_id,
 				const myTime start_dts,
 				const myTime end_dts,
+				bool is_backward = false,
                                 bool need_tuple = true,
 				lock_mode_t alm = SH);
 				

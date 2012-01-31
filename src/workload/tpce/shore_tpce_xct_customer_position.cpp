@@ -373,11 +373,12 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
 		    index_scan_iter_impl<trade_t>* tmp_t_iter;
 		    TRACE( TRACE_TRX_FLOW, "App: %d CP:t-iter-by-idx2 %ld \n", xct_id, acctId);
 		    e = _ptrade_man->t_get_iter_by_index2(_pssm, tmp_t_iter, prtrade,
-							  lowrep, highrep, acctId, 0, MAX_DTS, false);
+							  lowrep, highrep, acctId, 0, MAX_DTS, true, false);
 		    t_iter = tmp_t_iter;
 		    if (e.is_error()) { goto done; }
 		}
 
+		/*
 		//descending order
 		rep_row_t sortrep(_pcustomer_man->ts());
 		sortrep.set(_pcustomer_desc->maxsize());
@@ -388,13 +389,17 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
 
 		desc_sort_man_impl t_sorter(&t_list, &sortrep);
 		table_row_t rsb(&t_list);
-
+		*/
 		bool eof;
 		TRACE( TRACE_TRX_FLOW, "App: %d CP:t-iter-next \n", xct_id);
 		e = t_iter->next(_pssm, eof, *prtrade);
 		if (e.is_error()) { goto done; }
-		while(!eof){
+		int i = 0;
+		while(i < 10 && !eof){
+		    prtrade->get_value(0, id_list[i]);
+
 		    /* put the value into the sorted buffer */
+		    /*
 		    TIdent temp_id;
 		    myTime temp_dts;
 
@@ -405,14 +410,16 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
 		    rsb.set_value(1, temp_id);
 
 		    t_sorter.add_tuple(rsb);
-
+		    */
+		    
 		    TRACE( TRACE_TRX_FLOW, "App: %d CP:t-iter-next \n", xct_id);
 		    e = t_iter->next(_pssm, eof, *prtrade);
 		    if (e.is_error()) { goto done; }
+		    i++;
 		}
 		//PIN: not needed; there is nothing in TPC-E spec that tells us that we should assert something here
 		//assert (t_sorter.count());
-
+		/*
 		desc_sort_iter_impl t_list_sort_iter(_pssm, &t_list, &t_sorter);
 		TRACE( TRACE_TRX_FLOW, "App: %d CP:t-sorter-iter-next \n", xct_id);
 		e = t_list_sort_iter.next(_pssm, eof, rsb);
@@ -425,8 +432,9 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
 		    e = t_list_sort_iter.next(_pssm, eof, rsb);
 		    if (e.is_error()) { goto done; }
 		}
+		*/
 	    }
-
+		
 	    rep_row_t sortrep(_pcustomer_man->ts());
 	    sortrep.set(_pcustomer_desc->maxsize());
 
@@ -439,7 +447,7 @@ w_rc_t ShoreTPCEEnv::xct_customer_position(const int xct_id, customer_position_i
 
 	    desc_sort_man_impl t_sorter(&t_list, &sortrep);
 	    table_row_t rsb(&t_list);
-
+	    
 	    for (int i = 0; i < 10; i++) {
 		TRACE( TRACE_TRX_FLOW, "App: %d CP:t-idx-probe (%ld) \n", xct_id,  id_list[i]);
 		e =  _ptrade_man->t_index_probe(_pssm, prtrade, id_list[i]);

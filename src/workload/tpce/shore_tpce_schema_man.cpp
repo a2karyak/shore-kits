@@ -844,6 +844,7 @@ w_rc_t holding_man_impl::h_get_iter_by_index2(ss_m* db,
                                               rep_row_t &rephigh,
                                               const TIdent acct_id,
                                               const char* symbol,
+					      bool is_backward,
                                               lock_mode_t alm,
                                               bool need_tuple)
 {
@@ -871,9 +872,16 @@ w_rc_t holding_man_impl::h_get_iter_by_index2(ss_m* db,
     int highsz = format_key(pindex, ptuple, rephigh);
     assert (rephigh._dest);
 
-    W_DO(get_iter_for_index_scan(db, pindex, iter, alm, need_tuple,
-                                 scan_index_i::ge, vec_t(replow._dest, lowsz),
-                                 scan_index_i::le, vec_t(rephigh._dest, highsz)));
+    if(is_backward) {
+	W_DO(get_iter_for_index_scan(db, pindex, iter, alm, need_tuple,
+				     scan_index_i::le, vec_t(rephigh._dest, highsz),
+				     scan_index_i::ge, vec_t(replow._dest, lowsz)));
+    } else {
+	W_DO(get_iter_for_index_scan(db, pindex, iter, alm, need_tuple,
+				     scan_index_i::ge, vec_t(replow._dest, lowsz),
+				     scan_index_i::le, vec_t(rephigh._dest, highsz)));
+    }
+    
     return (RCOK);
 }
 
@@ -1600,6 +1608,7 @@ w_rc_t trade_man_impl::t_get_iter_by_index2(ss_m* db,
                                             const TIdent acct_id,
                                             const myTime start_dts,
                                             const myTime end_dts,
+					    bool is_backward,
                                             bool need_tuple,
                                             lock_mode_t alm)
 {
@@ -1621,16 +1630,24 @@ w_rc_t trade_man_impl::t_get_iter_by_index2(ss_m* db,
     assert (replow._dest);
 
     // get the highest key value
-    ptuple->set_value(1, end_dts);
+    //ptuple->set_value(8, acct_id+1);
+    ptuple->set_value(1, MAX_DTS);
     ptuple->set_value(0, MAX_ID);
-
+    
     int highsz = format_key(pindex, ptuple, rephigh);
     assert (rephigh._dest);
     
     /* get the tuple iterator (not index only scan) */
-    W_DO(get_iter_for_index_scan(db, pindex, iter, alm, need_tuple,
-				 scan_index_i::ge, vec_t(replow._dest, lowsz),
-				 scan_index_i::le, vec_t(rephigh._dest, highsz)));
+    if(is_backward) {
+	W_DO(get_iter_for_index_scan(db, pindex, iter, alm, need_tuple,
+				     scan_index_i::le, vec_t(rephigh._dest, highsz),
+				     scan_index_i::ge, vec_t(replow._dest, lowsz)));
+    } else {
+	W_DO(get_iter_for_index_scan(db, pindex, iter, alm, need_tuple,
+				     scan_index_i::ge, vec_t(replow._dest, lowsz),
+				     scan_index_i::le, vec_t(rephigh._dest, highsz)));
+    }
+    
     return (RCOK);
 }
 

@@ -288,10 +288,10 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 			TRACE( TRACE_TRX_FLOW, "App: %d TR:h-get-iter-by-idx2 \n", xct_id);
 			e = _pholding_man->h_get_iter_by_index2(_pssm, tmp_h_iter,
 								prholding, lowrep, highrep,
-								acct_id, symbol);
+								acct_id, symbol, true);
 			h_iter = tmp_h_iter;
 			if (e.is_error()) {  goto done; }
-
+			/*
 			//descending order
 			rep_row_t sortrep(_pholding_man->ts());
 			sortrep.set(_pholding_desc->maxsize());
@@ -304,11 +304,13 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 
 			table_row_t rsb(&h_list);
 			desc_sort_man_impl h_sorter(&h_list, &sortrep);
+			*/
 			bool eof;
 			e = h_iter->next(_pssm, eof, *prholding);
 			if (e.is_error()) {  goto done; }
-			while (!eof) {
+			while (needed_qty!=0 && !eof) {
 			    /* put the value into the sorted buffer */
+			    /*
 			    int temp_qty;
 			    myTime temp_dts;
 			    TIdent temp_tid;
@@ -325,25 +327,16 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 			    rsb.set_value(3, temp_price);
 
 			    h_sorter.add_tuple(rsb);
-			    TRACE( TRACE_TRX_FLOW, "App: %d TR:hold-list (%ld)  \n", xct_id, temp_tid);
-			    e = h_iter->next(_pssm, eof, *prholding);
-			    if (e.is_error()) {  goto done; }
-			}
-			/* PIN: not needed; this is OK, we don't check for this in the !is_lifo branch of this
-			   and there is nothing in TPC-E spec that tells us that we should assert something here */
-			//assert (h_sorter.count());
+			    */
 
-			desc_sort_iter_impl h_list_sort_iter(_pssm, &h_list, &h_sorter);
-			e = h_list_sort_iter.next(_pssm, eof, rsb);
-			if (e.is_error()) {  goto done; }
-			while(needed_qty != 0 && !eof){
 			    TIdent hold_id;
 			    int hold_qty;
 			    double hold_price;
 
-			    rsb.get_value(1, hold_id);
-			    rsb.get_value(2, hold_qty);
-			    rsb.get_value(3, hold_price);
+			    prholding->get_value(0, hold_id);
+			    prholding->get_value(4, hold_price);
+			    prholding->get_value(5, hold_qty);
+
 
 			    if(hold_qty > needed_qty){
 				/**
@@ -428,10 +421,114 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 				needed_qty = needed_qty - hold_qty;
 			    }
 
+			    
+			    TRACE( TRACE_TRX_FLOW, "App: %d TR:hold-list (%ld)  \n", xct_id, hold_id);
+			    e = h_iter->next(_pssm, eof, *prholding);
+			    if (e.is_error()) {  goto done; }
+			}
+			/* PIN: not needed; this is OK, we don't check for this in the !is_lifo branch of this
+			   and there is nothing in TPC-E spec that tells us that we should assert something here */
+			//assert (h_sorter.count());
+			/*
+			desc_sort_iter_impl h_list_sort_iter(_pssm, &h_list, &h_sorter);
+			e = h_list_sort_iter.next(_pssm, eof, rsb);
+			if (e.is_error()) {  goto done; }
+			while(needed_qty != 0 && !eof){
+			    TIdent hold_id;
+			    int hold_qty;
+			    double hold_price;
+
+			    rsb.get_value(1, hold_id);
+			    rsb.get_value(2, hold_qty);
+			    rsb.get_value(3, hold_price);
+			
+			    if(hold_qty > needed_qty){
+			*//**
+				 * 	INSERT INTO
+				 *		HOLDING_HISTORY (
+				 *		HH_H_T_ID,
+				 *		HH_T_ID,
+				 *		HH_BEFORE_QTY,
+				 *		HH_AFTER_QTY
+				 *	)
+				 *	VALUES(
+				 *		hold_id, // H_T_ID of original trade
+				 *		trade_id, // T_ID current trade
+				 *		hold_qty, // H_QTY now
+				 *		hold_qty - needed_qty // H_QTY after update
+				 *	)
+				 */
+			/*
+				prholdinghistory->set_value(0, hold_id);
+				prholdinghistory->set_value(1, ptrin._trade_id);
+				prholdinghistory->set_value(2, hold_qty);
+				prholdinghistory->set_value(3, (hold_qty - needed_qty));
+
+				TRACE( TRACE_TRX_FLOW, "App: %d TR:hh-add-tuple (%ld) (%ld) (%d) (%d)\n",
+				       xct_id, hold_id, ptrin._trade_id, hold_price, (hold_qty - needed_qty));
+				e = _pholding_history_man->add_tuple(_pssm, prholdinghistory);
+				if (e.is_error()) {  goto done; }
+			*/
+				/**
+				 * 	UPDATE 	HOLDING
+				 *	SET	H_QTY = hold_qty - needed_qty
+				 *	WHERE	current of hold_list
+				 */
+			/*
+				TRACE( TRACE_TRX_FLOW, "App: %d TR:hold-update (%ld) (%s) (%d) \n",
+				       xct_id, acct_id, symbol, (hs_qty - trade_qty));
+				e = _pholding_man->h_update_qty(_pssm, prholding, hold_id, (hold_qty - needed_qty));
+				if (e.is_error()) {  goto done; }
+
+				buy_value += needed_qty * hold_price;
+				sell_value += needed_qty * ptrin._trade_price;
+				needed_qty = 0;
+			    }
+			    else{ */
+				/**
+				 * 	INSERT INTO
+				 *		HOLDING_HISTORY (
+				 *		HH_H_T_ID,
+				 *		HH_T_ID,
+				 *		HH_BEFORE_QTY,
+				 *		HH_AFTER_QTY
+				 *	)
+				 *	VALUES(
+				 *		hold_id, // H_T_ID of original trade
+				 *		trade_id, // T_ID current trade
+				 *		hold_qty, // H_QTY now
+				 *		0 // H_QTY after update
+				 *	)
+				 */
+			/*
+				prholdinghistory->set_value(0, hold_id);
+				prholdinghistory->set_value(1, ptrin._trade_id);
+				prholdinghistory->set_value(2, hold_qty);
+				prholdinghistory->set_value(3, 0);
+
+				TRACE( TRACE_TRX_FLOW, "App: %d TR:hh-add-tuple (%ld) (%ld) (%d) (%d)\n",
+				       xct_id, hold_id, ptrin._trade_id, hold_price, 0);
+				e = _pholding_history_man->add_tuple(_pssm, prholdinghistory);
+				if (e.is_error()) {  goto done; }
+			*/
+				/**
+				 * 	DELETE 	FROM	HOLDING
+				 *	WHERE	current of hold_list
+				 */
+			/*
+				TRACE( TRACE_TRX_FLOW, "App: %d TR:h-delete-by-index (%ld) \n", xct_id, hold_id);
+				e = _pholding_man->h_delete_by_index(_pssm, prholding, hold_id);
+				if (e.is_error()) {  goto done; }
+
+				buy_value += hold_qty * hold_price;
+				sell_value += hold_qty * ptrin._trade_price;
+				needed_qty = needed_qty - hold_qty;
+			    }
+
 			    TRACE( TRACE_TRX_FLOW, "App: %d TR:h-iter-next \n", xct_id);
 			    e = h_list_sort_iter.next(_pssm, eof, rsb);
 			    if (e.is_error()) {  goto done; }
-			}
+			    }*/
 		    }
 		    else{
 			/**
@@ -681,7 +778,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 								    lowrep, highrep, acct_id, symbol);
 			    if (e.is_error()) {  goto done; }
 			    h_iter = tmp_h_iter;
-
+			    /*
 			    //descending order
 			    rep_row_t sortrep(_pholding_man->ts());
 			    sortrep.set(_pholding_desc->maxsize());
@@ -694,12 +791,13 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 
 			    table_row_t rsb(&h_list);
 			    desc_sort_man_impl h_sorter(&h_list, &sortrep);
-
+			    */
 			    bool eof;
 			    e = h_iter->next(_pssm, eof, *prholding);
 			    if (e.is_error()) {  goto done; }
 			    while (!eof) {
 				/* put the value into the sorted buffer */
+				/*
 				int temp_qty;
 				myTime temp_dts;
 				TIdent temp_tid;
@@ -716,25 +814,15 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 				rsb.set_value(3, temp_price);
 
 				h_sorter.add_tuple(rsb);
+				*/
 
-				e = h_iter->next(_pssm, eof, *prholding);
-				if (e.is_error()) {  goto done; }
-			    }
-			    /* PIN: not needed; this is OK, we don't check for this in the !is_lifo branch of this
-			       and there is nothing in TPCE spec that tells us that we should assert something here*/
-			    //assert (h_sorter.count());
-			    
-			    desc_sort_iter_impl h_list_sort_iter(_pssm, &h_list, &h_sorter);
-			    e = h_list_sort_iter.next(_pssm, eof, rsb);
-			    if (e.is_error()) {  goto done; }
-			    while(needed_qty != 0 && !eof){
 				TIdent hold_id;
 				int hold_qty;
 				double hold_price;
 
-				rsb.get_value(1, hold_id);
-				rsb.get_value(2, hold_qty);
-				rsb.get_value(3, hold_price);
+				prholding->get_value(0, hold_id);
+				prholding->get_value(4, hold_price);
+				prholding->get_value(5, hold_qty);
 
 				if(hold_qty + needed_qty < 0){
 				    /**
@@ -754,29 +842,29 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 				     *	)
 				     *
 				     */
-
+				    
 				    prholdinghistory->set_value(0, hold_id);
 				    prholdinghistory->set_value(1, ptrin._trade_id);
 				    prholdinghistory->set_value(2, hold_qty);
 				    prholdinghistory->set_value(3, (hold_qty + needed_qty));
-
+				    
 				    TRACE( TRACE_TRX_FLOW, "App: %d TR:hh-add-tuple (%ld) (%ld) (%d) (%d)\n",
 					   xct_id, hold_id, ptrin._trade_id, hold_price, (hold_qty + needed_qty));
 				    e = _pholding_history_man->add_tuple(_pssm, prholdinghistory);
 				    if (e.is_error()) {  goto done; }
-
+				    
 				    /**
 				     * 	UPDATE 	HOLDING
 				     *	SET	H_QTY = hold_qty + needed_qty
 				     *	WHERE	current of hold_list
 				     */
-
+				    
 				    TRACE( TRACE_TRX_FLOW, "App: %d TR:h-update (%ld) (%s) (%d) \n",
 					   xct_id, acct_id, symbol, (hs_qty + trade_qty));
 				    e = _pholding_man->h_update_qty(_pssm, prholding,
 								    hold_id, (hold_qty + needed_qty));
 				    if (e.is_error()) {  goto done; }
-
+				    
 				    sell_value += needed_qty * hold_price;
 				    buy_value += needed_qty * ptrin._trade_price;
 				    needed_qty = 0;
@@ -825,10 +913,118 @@ w_rc_t ShoreTPCEEnv::xct_trade_result(const int xct_id, trade_result_input_t& pt
 				    needed_qty = needed_qty - hold_qty;
 				}
 
+				e = h_iter->next(_pssm, eof, *prholding);
+				if (e.is_error()) {  goto done; }
+			    }
+			    /* PIN: not needed; this is OK, we don't check for this in the !is_lifo branch of this
+			       and there is nothing in TPCE spec that tells us that we should assert something here*/
+			    //assert (h_sorter.count());
+			    /*
+			    desc_sort_iter_impl h_list_sort_iter(_pssm, &h_list, &h_sorter);
+			    e = h_list_sort_iter.next(_pssm, eof, rsb);
+			    if (e.is_error()) {  goto done; }
+			    while(needed_qty != 0 && !eof){
+				TIdent hold_id;
+				int hold_qty;
+				double hold_price;
+
+				rsb.get_value(1, hold_id);
+				rsb.get_value(2, hold_qty);
+				rsb.get_value(3, hold_price);
+
+				if(hold_qty + needed_qty < 0){
+			    */	    /**
+				     *
+				     * 	INSERT INTO
+				     *		HOLDING_HISTORY (
+				     *		HH_H_T_ID,
+				     *		HH_T_ID,
+				     *		HH_BEFORE_QTY,
+				     *		HH_AFTER_QTY
+				     *	)
+				     *	VALUES(
+				     *		hold_id, // H_T_ID of original trade
+				     *		trade_id, // T_ID current trade
+				     *		hold_qty, // H_QTY now
+				     *		hold_qty + needed_qty // H_QTY after update
+				     *	)
+				     *
+				     */
+			    /*
+				    prholdinghistory->set_value(0, hold_id);
+				    prholdinghistory->set_value(1, ptrin._trade_id);
+				    prholdinghistory->set_value(2, hold_qty);
+				    prholdinghistory->set_value(3, (hold_qty + needed_qty));
+
+				    TRACE( TRACE_TRX_FLOW, "App: %d TR:hh-add-tuple (%ld) (%ld) (%d) (%d)\n",
+					   xct_id, hold_id, ptrin._trade_id, hold_price, (hold_qty + needed_qty));
+				    e = _pholding_history_man->add_tuple(_pssm, prholdinghistory);
+				    if (e.is_error()) {  goto done; }
+			    */
+				    /**
+				     * 	UPDATE 	HOLDING
+				     *	SET	H_QTY = hold_qty + needed_qty
+				     *	WHERE	current of hold_list
+				     */
+			    /*
+				    TRACE( TRACE_TRX_FLOW, "App: %d TR:h-update (%ld) (%s) (%d) \n",
+					   xct_id, acct_id, symbol, (hs_qty + trade_qty));
+				    e = _pholding_man->h_update_qty(_pssm, prholding,
+								    hold_id, (hold_qty + needed_qty));
+				    if (e.is_error()) {  goto done; }
+
+				    sell_value += needed_qty * hold_price;
+				    buy_value += needed_qty * ptrin._trade_price;
+				    needed_qty = 0;
+				}
+				else{ */
+				    /**
+				     *
+				     * 	INSERT INTO
+				     *		HOLDING_HISTORY (
+				     *		HH_H_T_ID,
+				     *		HH_T_ID,
+				     *		HH_BEFORE_QTY,
+				     *		HH_AFTER_QTY
+				     *	)
+				     *	VALUES(
+				     *		hold_id, // H_T_ID of original trade
+				     *		trade_id, // T_ID current trade
+				     *		hold_qty, // H_QTY now
+				     *		0 // H_QTY after update
+				     *	)
+				     */
+			    /*
+				    TIdent ttt = hold_id;
+				    prholdinghistory->set_value(0, hold_id);
+				    prholdinghistory->set_value(1, ptrin._trade_id);
+				    prholdinghistory->set_value(2, hold_qty);
+				    prholdinghistory->set_value(3, 0);
+
+				    TRACE( TRACE_TRX_FLOW, "App: %d TR:hh-add-tuple (%ld) (%ld) (%d) (%d) \n",
+					   xct_id, hold_id, ptrin._trade_id, hold_price, 0);
+				    e = _pholding_history_man->add_tuple(_pssm, prholdinghistory);
+				    if (e.is_error()) {  goto done; }
+			    */
+				    /**
+				     * DELETE FROM	HOLDING
+				     * WHERE current of hold_list
+				     */
+
+			    /*	    TRACE( TRACE_TRX_FLOW, "App: %d TR:h-delete-by-index (%ld) \n", ttt);
+				    e = _pholding_man->h_delete_by_index(_pssm, prholding, ttt);
+				    if (e.is_error()) {  goto done; }
+
+				    hold_qty = -hold_qty;
+				    sell_value += hold_qty * hold_price;
+				    buy_value += hold_qty * ptrin._trade_price;
+				    needed_qty = needed_qty - hold_qty;
+				}
+
 				TRACE( TRACE_TRX_FLOW, "App: %d TR:h-iter-next \n", xct_id);
 				e = h_list_sort_iter.next(_pssm, eof, rsb);
 				if (e.is_error()) {  goto done; }
-			    }
+				}*/
 			}
 			else{
 			    /**

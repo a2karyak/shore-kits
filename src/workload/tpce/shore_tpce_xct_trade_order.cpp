@@ -455,7 +455,9 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 
 	    if(type_is_sell){
 		if(hs_qty > 0){
+		    /*
 		    desc_sort_buffer_t h_list(3); //change
+		    */
 		    guard<index_scan_iter_impl<holding_t> > h_iter;
 		    if(ptoin._is_lifo){
 			/**
@@ -467,11 +469,13 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 			{  
 			    index_scan_iter_impl<holding_t>* tmp_h_iter;
 			    TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-by-idx2 \n", xct_id);
-			    e = _pholding_man->h_get_iter_by_index2(_pssm, tmp_h_iter, prholding,
-								    lowrep, highrep, ptoin._acct_id, symbol);
+			    e = _pholding_man->h_get_iter_by_index2(_pssm, tmp_h_iter,
+								    prholding, lowrep, highrep,
+								    ptoin._acct_id, symbol, true);
 			    if (e.is_error()) { goto done; }
 			    h_iter = tmp_h_iter;
 			}
+			/*
 			//descending order
 			h_list.setup(0, SQL_LONG);
 			h_list.setup(1, SQL_INT);
@@ -481,13 +485,15 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 			rep_row_t sortrep(_pcompany_man->ts());
 			sortrep.set(_pcompany_desc->maxsize());
 			desc_sort_man_impl h_sorter(&h_list, &sortrep);
-
+			*/
+			
 			bool eof;
 			TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-next \n", xct_id);
 			e = h_iter->next(_pssm, eof, *prholding);
 			if (e.is_error()) { goto done; }
 			while (!eof) {
 			    /* put the value into the sorted buffer */
+			    /*
 			    int temp_qty;
 			    myTime temp_dts;
 			    double temp_price;
@@ -501,7 +507,25 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 			    rsb.set_value(2, temp_price);
 
 			    h_sorter.add_tuple(rsb);
-		      
+			    */
+
+			    int hold_qty;
+			    double hold_price;
+
+			    prholding->get_value(4, hold_price);
+			    prholding->get_value(5, hold_qty);
+
+			    if(hold_qty > needed_qty){
+				buy_value += needed_qty * hold_price;
+				sell_value += needed_qty * requested_price;
+				needed_qty = 0;
+			    }
+			    else{
+				buy_value += hold_qty * hold_price;
+				sell_value += hold_qty * requested_price;
+				needed_qty = needed_qty - hold_qty;
+			    }
+						    
 			    TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-next \n", xct_id);
 			    e = h_iter->next(_pssm, eof, *prholding);
 			    if (e.is_error()) { goto done; }
@@ -509,7 +533,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 			/* PIN: not needed; this is OK, we don't check for this in the !is_lifo branch of this
 			   and there is nothing in TPC-E spec that tells us that we should assert something here */
 			//assert (h_sorter.count());
-
+			/*
 			desc_sort_iter_impl h_list_sort_iter(_pssm, &h_list, &h_sorter);
 			TRACE( TRACE_TRX_FLOW, "App: %d TO:h-sort-iter-next \n", xct_id);
 			e = h_list_sort_iter.next(_pssm, eof, rsb);
@@ -536,6 +560,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 			    e = h_list_sort_iter.next(_pssm, eof, rsb);
 			    if (e.is_error()) { goto done; }
 			}
+			*/
 		    }
 		    else{
 			/**
@@ -585,9 +610,10 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 		}
 	    }
 	    else{
+		/*
 		desc_sort_buffer_t h_list(3);
+		*/
 		guard<index_scan_iter_impl<holding_t> > h_iter;
-		asc_sort_scan_t* h_list_sort_iter;
 		if(hs_qty < 0){
 		    if(ptoin._is_lifo){
 			/**
@@ -600,12 +626,13 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 			    index_scan_iter_impl<holding_t>* tmp_h_iter;
 			    TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-by-idx2 (%ld) (%s) \n",
 				   xct_id, ptoin._acct_id, symbol);
-			    e = _pholding_man->h_get_iter_by_index2(_pssm, tmp_h_iter, prholding,
-								    lowrep, highrep, ptoin._acct_id, symbol);
+			    e = _pholding_man->h_get_iter_by_index2(_pssm, tmp_h_iter,
+								    prholding, lowrep, highrep,
+								    ptoin._acct_id, symbol, true);
 			    if (e.is_error()) { goto done; }
 			    h_iter = tmp_h_iter;
 			}
-
+			/*
 			//descending order
 			rep_row_t sortrep(_pcompany_man->ts());
 			sortrep.set(_pcompany_desc->maxsize());
@@ -616,14 +643,14 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 
 			table_row_t rsb(&h_list);
 			desc_sort_man_impl h_sorter(&h_list, &sortrep);
-
+			*/
 			bool eof;
 			TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-next \n", xct_id);
 			e = h_iter->next(_pssm, eof, *prholding);
 			if (e.is_error()) { goto done; }
 			while (!eof) {
 			    /* put the value into the sorted buffer */
-
+			    /*
 			    int temp_qty;
 			    myTime temp_dts;
 			    double temp_price;
@@ -637,7 +664,27 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 			    rsb.set_value(2, temp_price);
 
 			    h_sorter.add_tuple(rsb);
+			    */
 
+			    int hold_qty;
+			    double hold_price;
+
+			    prholding->get_value(4, hold_price);
+			    prholding->get_value(5, hold_qty);
+
+			    if(hold_qty + needed_qty < 0){
+				sell_value += needed_qty * hold_price;
+				buy_value += needed_qty * requested_price;
+				needed_qty = 0;
+			    }
+			    else{
+				hold_qty = -hold_qty;
+				sell_value += hold_qty * hold_price;
+				buy_value += hold_qty * requested_price;
+				needed_qty = needed_qty - hold_qty;
+			    }
+
+			    
 			    TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-next \n", xct_id);
 			    e = h_iter->next(_pssm, eof, *prholding);
 			    if (e.is_error()) { goto done; }
@@ -645,7 +692,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 			/* PIN: not needed; this is OK, we don't check for this in the !is_lifo branch of this
 			   and there is nothing in TPC-E spec that tells us that we should assert something here */
 			//assert (h_sorter.count());
-						
+			/*
 			desc_sort_iter_impl h_list_sort_iter(_pssm, &h_list, &h_sorter);
 
 			TRACE( TRACE_TRX_FLOW, "App: %d TO:h-sort-iter-next \n", xct_id);
@@ -674,6 +721,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 			    e = h_list_sort_iter.next(_pssm, eof, rsb);
 			    if (e.is_error()) { goto done; }
 			}
+			*/
 		    }
 		    else{
 			/**
