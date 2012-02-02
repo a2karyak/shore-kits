@@ -78,7 +78,6 @@ DEFINE_QPIPE_TRX(ShoreSSBEnv,qdate);
 DEFINE_QPIPE_TRX(ShoreSSBEnv,qsupplier);
 DEFINE_QPIPE_TRX(ShoreSSBEnv,qcustomer);
 DEFINE_QPIPE_TRX(ShoreSSBEnv,qlineorder);
-DEFINE_QPIPE_TRX(ShoreSSBEnv,qtest);
 DEFINE_QPIPE_TRX(ShoreSSBEnv,q1_1);
 DEFINE_QPIPE_TRX(ShoreSSBEnv,q1_2);
 DEFINE_QPIPE_TRX(ShoreSSBEnv,q1_3);
@@ -133,9 +132,6 @@ w_rc_t ShoreSSBEnv::run_one_qpipe_xct(Request* prequest)
 
     case XCT_SSB_QLINEORDER:
         return (run_qpipe_qlineorder(prequest));
-        
-    case XCT_SSB_QTEST:
-        return (run_qpipe_qtest(prequest));
 
     case XCT_SSB_Q1_1:
         return (run_qpipe_q1_1(prequest));
@@ -185,194 +181,7 @@ w_rc_t ShoreSSBEnv::run_one_qpipe_xct(Request* prequest)
 
 
 // // --- with input specified --- //
-
-
-// Unimplemented!
-// Move them to a corresponding (separate) qpipe/qpipe_qX.cpp file 
-
-/******************************************************************** 
- *
- * QPIPE Q1_1
- *
- ********************************************************************/
-
-//w_rc_t ShoreSSBEnv::xct_qpipe_q1_1(const int /* xct_id */, 
-//                                  q1_1_input_t& /* in */)
-//{
-//    TRACE( TRACE_ALWAYS, "********** Q1_1 *********\n");
-//    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-//}
-
-
-/******************************************************************** 
- *
- * QPIPE Q1_2
- *
- ********************************************************************/
-
-w_rc_t ShoreSSBEnv::xct_qpipe_q1_2(const int /* xct_id */, 
-                                  q1_2_input_t& /* in */)
-{
-    TRACE( TRACE_ALWAYS, "********** Q1_2 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-
-/******************************************************************** 
- *
- * QPIPE Q1_3
- *
- ********************************************************************/
-
-w_rc_t ShoreSSBEnv::xct_qpipe_q1_3(const int /* xct_id */, 
-                                  q1_3_input_t& /* in */)
-{
-    TRACE( TRACE_ALWAYS, "********** Q1_3 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-
-
-/******************************************************************** 
- *
- * QPIPE Q2_1
- *
- ********************************************************************/
-
-//w_rc_t ShoreSSBEnv::xct_qpipe_q2_1(const int /* xct_id */, 
-//                                  q2_1_input_t& /* in */)
-//{
-//    TRACE( TRACE_ALWAYS, "********** Q2_1 *********\n");
-//    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-//}
-
-
-/******************************************************************** 
- *
- * QPIPE Q2_2
- *
- ********************************************************************/
-
-w_rc_t ShoreSSBEnv::xct_qpipe_q2_2(const int /* xct_id */, 
-                                  q2_2_input_t& /* in */)
-{
-    TRACE( TRACE_ALWAYS, "********** Q2_2 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-
-/******************************************************************** 
- *
- * QPIPE Q2_3
- *
- ********************************************************************/
-
-w_rc_t ShoreSSBEnv::xct_qpipe_q2_3(const int /* xct_id */, 
-                                  q2_3_input_t& /* in */)
-{
-    TRACE( TRACE_ALWAYS, "********** Q2_3 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-
-/******************************************************************** 
- *
- * QPIPE Q3_1
- *
- ********************************************************************/
-
-w_rc_t ShoreSSBEnv::xct_qpipe_q3_1(const int /* xct_id */, 
-                                  q3_1_input_t& /* in */)
-{
-    TRACE( TRACE_ALWAYS, "********** Q3_1 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-/******************************************************************** 
- *
- * QPIPE Q3_2
- *
- ********************************************************************/
-
-//w_rc_t ShoreSSBEnv::xct_qpipe_q3_2(const int /* xct_id */, 
-//                                  q3_2_input_t& /* in */)
-//{
-//    TRACE( TRACE_ALWAYS, "********** Q3_2 *********\n");
-//    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-//}
-
-/******************************************************************** 
- *
- * QPIPE Q3_3
- *
- ********************************************************************/
-
-w_rc_t ShoreSSBEnv::xct_qpipe_q3_3(const int /* xct_id */, 
-                                  q3_3_input_t& /* in */)
-{
-    TRACE( TRACE_ALWAYS, "********** Q3_3 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-
-
-/******************************************************************** 
- *
- * QPIPE Q3_4
- *
- ********************************************************************/
-
-w_rc_t ShoreSSBEnv::xct_qpipe_q3_4(const int /* xct_id */, 
-                                  q3_4_input_t& /* in */)
-{
-    TRACE( TRACE_ALWAYS, "********** Q3_4 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-
-
-/******************************************************************** 
- *
- * QPIPE Q4_1
- *
- ********************************************************************/
-
-w_rc_t ShoreSSBEnv::xct_qpipe_q4_1(const int /* xct_id */, 
-                                  q4_1_input_t& /* in */)
-{
-    TRACE( TRACE_ALWAYS, "********** Q4_1 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-
-/******************************************************************** 
- *
- * QPIPE Q4_2
- *
- ********************************************************************/
-
-w_rc_t ShoreSSBEnv::xct_qpipe_q4_2(const int /* xct_id */, 
-                                  q4_2_input_t& /* in */)
-{
-    TRACE( TRACE_ALWAYS, "********** Q4_2 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-
-/******************************************************************** 
- *
- * QPIPE Q4_3
- *
- ********************************************************************/
-
-w_rc_t ShoreSSBEnv::xct_qpipe_q4_3(const int /* xct_id */, 
-                                  q4_3_input_t& /* in */)
-{
-    TRACE( TRACE_ALWAYS, "********** Q4_3 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-
+// Moved to a corresponding (separate) qpipe/qpipe_qX.cpp file 
 
 
 EXIT_NAMESPACE(qpipe);
