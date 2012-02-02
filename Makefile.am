@@ -225,13 +225,27 @@ WL_TPCH_QPIPE = \
    $(SW)/tpch/qpipe/qpipe_tpch_qsupplier.cpp \
    $(SW)/tpch/qpipe/qpipe_tpch_qorders.cpp \
    $(SW)/tpch/qpipe/qpipe_q1.cpp \
+   $(SW)/tpch/qpipe/qpipe_q2.cpp \
+   $(SW)/tpch/qpipe/qpipe_q3.cpp \
    $(SW)/tpch/qpipe/qpipe_q4.cpp \
+   $(SW)/tpch/qpipe/qpipe_q5.cpp \
    $(SW)/tpch/qpipe/qpipe_q6.cpp \
+   $(SW)/tpch/qpipe/qpipe_q7.cpp \
+   $(SW)/tpch/qpipe/qpipe_q8.cpp \
+   $(SW)/tpch/qpipe/qpipe_q9.cpp \
+   $(SW)/tpch/qpipe/qpipe_q10.cpp \
+   $(SW)/tpch/qpipe/qpipe_q11.cpp \
    $(SW)/tpch/qpipe/qpipe_q12.cpp \
    $(SW)/tpch/qpipe/qpipe_q13.cpp \
    $(SW)/tpch/qpipe/qpipe_q14.cpp \
+   $(SW)/tpch/qpipe/qpipe_q15.cpp \
    $(SW)/tpch/qpipe/qpipe_q16.cpp \
-   $(SW)/tpch/qpipe/qpipe_q19.cpp 
+   $(SW)/tpch/qpipe/qpipe_q17.cpp \
+   $(SW)/tpch/qpipe/qpipe_q18.cpp \
+   $(SW)/tpch/qpipe/qpipe_q19.cpp \
+   $(SW)/tpch/qpipe/qpipe_q20.cpp \
+   $(SW)/tpch/qpipe/qpipe_q21.cpp \
+   $(SW)/tpch/qpipe/qpipe_q22.cpp
 
 WL_SSB_SHORE = \
    $(SW)/ssb/ssb_random.cpp \
