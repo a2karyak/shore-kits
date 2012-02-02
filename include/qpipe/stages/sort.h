@@ -201,12 +201,14 @@ public:
     ~sort_stage_t() {
 
         // make sure the monitor thread exits before we do...
-        if(_monitor_thread) {
-            //thread_join<void>(_monitor_thread);
-	    //MA: Have to make sure it is not breaking anything
-	    pthread_kill(_monitor_thread,SIGKILL);
-	}
-        
+        {
+            critical_section_t cs(_monitor._lock);
+            if(_monitor_thread) {
+                thread_join<void>(_monitor_thread);
+                //MA: Have to make sure it is not breaking anything <-- Indeed it was breaking. But we need the changes in the sort.cpp
+                //pthread_kill(_monitor_thread,SIGKILL);
+            }
+        }
         // also, remove any remaining temp files
         merge_map_t::iterator level_it=_merge_map.begin();
         while(level_it != _merge_map.end()) {

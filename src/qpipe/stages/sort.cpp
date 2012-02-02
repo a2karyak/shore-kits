@@ -498,8 +498,11 @@ void sort_stage_t::process_packet() {
     
     // wait for the output buffer from the final merge to arrive
     tuple_fifo* merge_output = thread_join<tuple_fifo>(_monitor_thread);
-    _monitor_thread = 0;
 
+    {
+        critical_section_t cs(_monitor._lock);
+        _monitor_thread = 0;
+    }
     if(merge_output == NULL)
         THROW1(QPipeException, "Merge failed. Terminating Sort");
     
@@ -508,6 +511,7 @@ void sort_stage_t::process_packet() {
     tuple_t out;
     while (merge_output->get_tuple(out))
         _adaptor->output(out);
+    
 }
 
 
