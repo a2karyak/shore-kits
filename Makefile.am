@@ -258,8 +258,18 @@ WL_SSB_DBGEN_SHORE = \
 WL_SSB_QPIPE = \
    $(SW)/ssb/qpipe_ssb_xct.cpp \
    $(SW)/ssb/qpipe/qpipe_q1_1.cpp \
+   $(SW)/ssb/qpipe/qpipe_q1_2.cpp \
+   $(SW)/ssb/qpipe/qpipe_q1_3.cpp \
    $(SW)/ssb/qpipe/qpipe_q2_1.cpp \
+   $(SW)/ssb/qpipe/qpipe_q2_2.cpp \
+   $(SW)/ssb/qpipe/qpipe_q2_3.cpp \
+   $(SW)/ssb/qpipe/qpipe_q3_1.cpp \
    $(SW)/ssb/qpipe/qpipe_q3_2.cpp \
+   $(SW)/ssb/qpipe/qpipe_q3_3.cpp \
+   $(SW)/ssb/qpipe/qpipe_q3_4.cpp \
+   $(SW)/ssb/qpipe/qpipe_q4_1.cpp \
+   $(SW)/ssb/qpipe/qpipe_q4_2.cpp \
+   $(SW)/ssb/qpipe/qpipe_q4_3.cpp \
    $(SW)/ssb/qpipe/qpipe_qdate.cpp \
    $(SW)/ssb/qpipe/qpipe_qpart.cpp \
    $(SW)/ssb/qpipe/qpipe_qsupplier.cpp \
