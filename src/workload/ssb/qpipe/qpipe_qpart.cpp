@@ -124,9 +124,10 @@ public:
             _prpart->get_value(7, _part.P_SIZE);
             _prpart->get_value(8, _part.P_CONTAINER, STRSIZE(10));
 
-            TRACE(TRACE_RECORD_FLOW, "%d|%s --d\n",
+            TRACE(TRACE_RECORD_FLOW, "%d|%s|%s| --d\n",
                     _part.P_PARTKEY,
-                    _part.P_NAME);
+                    _part.P_NAME,
+                    _part.P_CATEGORY);
 
 //            dest->P_PARTKEY = _part.P_PARTKEY;
 //            strcpy(dest->P_NAME, _part.P_NAME);
