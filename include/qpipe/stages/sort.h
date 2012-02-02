@@ -202,6 +202,7 @@ public:
 
         // make sure the monitor thread exits before we do...
         {
+	    //This critical section makes sure that the monitor thread will be joined only once.
             critical_section_t cs(_monitor._lock);
             if(_monitor_thread) {
                 thread_join<void>(_monitor_thread);
