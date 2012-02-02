@@ -1,19 +1,19 @@
 /* -*- mode:C++; c-basic-offset:4 -*-
      Shore-kits -- Benchmark implementations for Shore-MT
-   
+
                        Copyright (c) 2007-2009
       Data Intensive Applications and Systems Labaratory (DIAS)
                Ecole Polytechnique Federale de Lausanne
-   
+
                          All Rights Reserved.
-   
+
    Permission to use, copy, modify and distribute this software and
    its documentation is hereby granted, provided that both the
    copyright notice and this permission notice appear in all copies of
    the software, derivative works or modified versions, and any
    portions thereof, and that both notices appear in supporting
    documentation.
-   
+
    This code is distributed in the hope that it will be useful, but
    WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. THE AUTHORS
@@ -25,7 +25,7 @@
  *
  *  @brief:  Declaration of the QPIPE TPCH transactions
  *
- *  @author: Ippokratis Pandis
+ *  @author: Ippokratis Pandis, Manos Athanassoulis
  *  @date:   Apr 2010
  */
 
@@ -47,7 +47,7 @@ ENTER_NAMESPACE(tpch);
  ********/
 
 
-/******************************************************************** 
+/********************************************************************
  *
  * TPCH QPIPE TRXS
  *
@@ -57,7 +57,7 @@ ENTER_NAMESPACE(tpch);
  ********************************************************************/
 
 
-/******************************************************************** 
+/********************************************************************
  *
  * TPCH QPIPE TRXs Wrappers
  *
@@ -105,7 +105,8 @@ DEFINE_QPIPE_TRX(ShoreTPCHEnv,qregion);
 DEFINE_QPIPE_TRX(ShoreTPCHEnv,qcustomer);
 
 
-/********************************************************************* 
+
+/*********************************************************************
  *
  *  @fn:    run_one_qpipe_xct
  *
@@ -133,28 +134,28 @@ w_rc_t ShoreTPCHEnv::run_one_qpipe_xct(Request* prequest)
     case XCT_TPCH_Q1:
         return (run_qpipe_q1(prequest));
 
-    case XCT_TPCH_Q2: 
+    case XCT_TPCH_Q2:
         return (run_qpipe_q2(prequest));
 
-    case XCT_TPCH_Q3: 
+    case XCT_TPCH_Q3:
         return (run_qpipe_q3(prequest));
 
     case XCT_TPCH_Q4:
         return (run_qpipe_q4(prequest));
 
-    case XCT_TPCH_Q5: 
+    case XCT_TPCH_Q5:
         return (run_qpipe_q5(prequest));
 
     case XCT_TPCH_Q6:
         return (run_qpipe_q6(prequest));
 
-    case XCT_TPCH_Q7: 
+    case XCT_TPCH_Q7:
         return (run_qpipe_q7(prequest));
 
-    case XCT_TPCH_Q8: 
+    case XCT_TPCH_Q8:
         return (run_qpipe_q8(prequest));
 
-    case XCT_TPCH_Q9: 
+    case XCT_TPCH_Q9:
         return (run_qpipe_q9(prequest));
 
     case XCT_TPCH_Q10:
@@ -220,7 +221,6 @@ w_rc_t ShoreTPCHEnv::run_one_qpipe_xct(Request* prequest)
     case XCT_TPCH_QPARTSUPP:
 	return (run_qpipe_qpartsupp(prequest));
 
-	
     default:
         //assert (0); // UNKNOWN TRX-ID
         TRACE( TRACE_ALWAYS, "Unknown transaction\n");
@@ -228,220 +228,8 @@ w_rc_t ShoreTPCHEnv::run_one_qpipe_xct(Request* prequest)
     return (RCOK);
 }
 
-// // --- with input specified --- //
 
-
-// Unimplemented!
-// Move them to a corresponding (separate) qpipe/qpipe_qX.cpp file 
-
-/******************************************************************** 
- *
- * QPIPE Q2
- *
- ********************************************************************/
-
-w_rc_t ShoreTPCHEnv::xct_qpipe_q2(const int /* xct_id */, 
-                                  q2_input_t& /* in */)
-{
-    TRACE( TRACE_ALWAYS, "********** Q2 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-/******************************************************************** 
- *
- * QPIPE Q3
- *
- ********************************************************************/
-
-w_rc_t ShoreTPCHEnv::xct_qpipe_q3(const int xct_id, 
-                                  q3_input_t& in)
-{
-    TRACE( TRACE_ALWAYS, "********** Q3 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-/******************************************************************** 
- *
- * QPIPE Q5
- *
- ********************************************************************/
-
-w_rc_t ShoreTPCHEnv::xct_qpipe_q5(const int xct_id, 
-                                  q5_input_t& in)
-{
-    TRACE( TRACE_ALWAYS, "********** Q5 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-/******************************************************************** 
- *
- * QPIPE Q7
- *
- ********************************************************************/
-
-w_rc_t ShoreTPCHEnv::xct_qpipe_q7(const int xct_id, 
-                                  q7_input_t& in)
-{
-    TRACE( TRACE_ALWAYS, "********** Q7 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-/******************************************************************** 
- *
- * QPIPE Q8
- *
- ********************************************************************/
-
-w_rc_t ShoreTPCHEnv::xct_qpipe_q8(const int xct_id, 
-                                  q8_input_t& in)
-{
-    TRACE( TRACE_ALWAYS, "********** Q8 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-/******************************************************************** 
- *
- * QPIPE Q9
- *
- ********************************************************************/
-
-w_rc_t ShoreTPCHEnv::xct_qpipe_q9(const int xct_id, 
-                                  q9_input_t& in)
-{
-    TRACE( TRACE_ALWAYS, "********** Q9 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-/******************************************************************** 
- *
- * QPIPE Q10
- *
- ********************************************************************/
-
-w_rc_t ShoreTPCHEnv::xct_qpipe_q10(const int xct_id, 
-                                   q10_input_t& in)
-{
-    TRACE( TRACE_ALWAYS, "********** Q10 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-/******************************************************************** 
- *
- * QPIPE Q11
- *
- ********************************************************************/
-
-w_rc_t ShoreTPCHEnv::xct_qpipe_q11(const int xct_id, 
-                                   q11_input_t& in)
-{
-    TRACE( TRACE_ALWAYS, "********** Q11 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-/******************************************************************** 
- *
- * QPIPE Q15
- *
- ********************************************************************/
-
-w_rc_t ShoreTPCHEnv::xct_qpipe_q15(const int xct_id, 
-                                   q15_input_t& in)
-{
-    TRACE( TRACE_ALWAYS, "********** Q15 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-/******************************************************************** 
- *
- * QPIPE Q16
- *
- ********************************************************************/
-
-w_rc_t ShoreTPCHEnv::xct_qpipe_q16(const int xct_id, 
-                                  q16_input_t& in)
-{
-    TRACE( TRACE_ALWAYS, "********** Q16 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-/******************************************************************** 
- *
- * QPIPE Q17
- *
- ********************************************************************/
-
-w_rc_t ShoreTPCHEnv::xct_qpipe_q17(const int xct_id, 
-                                   q17_input_t& in)
-{
-    TRACE( TRACE_ALWAYS, "********** Q17 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-/******************************************************************** 
- *
- * QPIPE Q18
- *
- ********************************************************************/
-
-w_rc_t ShoreTPCHEnv::xct_qpipe_q18(const int xct_id, 
-                                   q18_input_t& in)
-{
-    TRACE( TRACE_ALWAYS, "********** Q18 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-/******************************************************************** 
- *
- * QPIPE Q19
- *
- ********************************************************************/
-
-w_rc_t ShoreTPCHEnv::xct_qpipe_q19(const int xct_id, 
-                                  q19_input_t& in)
-{
-    TRACE( TRACE_ALWAYS, "********** Q19 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-/******************************************************************** 
- *
- * QPIPE Q20
- *
- ********************************************************************/
-
-w_rc_t ShoreTPCHEnv::xct_qpipe_q20(const int xct_id, 
-                                   q20_input_t& in)
-{
-    TRACE( TRACE_ALWAYS, "********** Q20 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-/******************************************************************** 
- *
- * QPIPE Q21
- *
- ********************************************************************/
-
-w_rc_t ShoreTPCHEnv::xct_qpipe_q21(const int xct_id, 
-                                   q21_input_t& in)
-{
-    TRACE( TRACE_ALWAYS, "********** Q21 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-/******************************************************************** 
- *
- * QPIPE Q22
- *
- ********************************************************************/
-
-w_rc_t ShoreTPCHEnv::xct_qpipe_q22(const int xct_id, 
-                                   q22_input_t& in)
-{
-    TRACE( TRACE_ALWAYS, "********** Q22 *********\n");
-    return (RC(smlevel_0::eNOTIMPLEMENTED)); 
-}
-
-
+// --- with input specified --- //
+// Moved to a corresponding (separate) qpipe/qpipe_qX.cpp file
 
 EXIT_NAMESPACE(qpipe);

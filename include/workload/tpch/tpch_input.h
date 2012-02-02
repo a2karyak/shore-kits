@@ -114,12 +114,11 @@ struct qcustomer_input_t
 qcustomer_input_t    create_qcustomer_input(const double sf,
                               const int specificWH = 0);
 
-/******************************************************************** 
+/********************************************************************
  *
  *  Q1
  *
  ********************************************************************/
-
 
 struct q1_input_t 
 {
@@ -351,7 +350,7 @@ struct q16_input_t {
     int p_brand;
     int p_type;
 
-    int p_size[9];
+    int p_size[8];
     q16_input_t& operator=(const q16_input_t& rhs);
 };
 q16_input_t create_q16_input(const double sf, const int specificWH);
@@ -424,7 +423,7 @@ q21_input_t create_q21_input(const double sf, const int specificWH);
  *
  ********************************************************************/
 struct q22_input_t {
-    int cntrycode[8];
+    int cntrycode[7];
 
     q22_input_t& operator=(const q22_input_t& rhs);
 };

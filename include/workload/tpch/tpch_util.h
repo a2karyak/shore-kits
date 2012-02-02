@@ -61,6 +61,8 @@ void containers1_to_str( tpch_p_container_s1 s1, char* str);
 tpch_p_container_s2 str_to_containers2(char* s2);
 void containers2_to_str( tpch_p_container_s2 s2, char* str);
 
+void container_to_str(int p_container, char* str);
+
 void pname_to_str(int p, char* srt);
 
 tpch_o_priority str_to_priority(char * str );

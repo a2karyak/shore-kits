@@ -216,10 +216,19 @@ tpch_p_type_s3 str_to_types3(char* s3){
 }
 
 void type_to_str(tpch_p_type t, char* str){
+  char types1[STRSIZE(25)];
+  char types2[STRSIZE(25)];
+  char types3[STRSIZE(25)];
+  types1_to_str( types1, t.s1);
+  types2_to_str( types2, t.s2);
+  types3_to_str( types3, t.s3);
 
-  types1_to_str( str, t.s1);
-  types2_to_str( &str[strlen(str)-1], t.s2);
-  types3_to_str( &str[strlen(str)-1], t.s3);
+  str[0] = '\0';
+  strcat(str, types1);
+  strcat(str, " ");
+  strcat(str, types2);
+  strcat(str, " ");
+  strcat(str, types3);
 
   return;
 }
@@ -290,6 +299,59 @@ void containers2_to_str( tpch_p_container_s2 s2, char* str){
   else if(s2 == DRUM)
     strcpy(str, "DRUM");
 
+}
+
+void container_to_str(int p_container, char* str) {
+	char s1[STRSIZE(6)];
+	char s2[STRSIZE(4)];
+
+	switch(p_container / 10) {
+	case SM:
+		strcpy(s1, "SM ");
+		break;
+	case LG:
+		strcpy(s1, "LG ");
+		break;
+	case MED:
+		strcpy(s1, "MED ");
+		break;
+	case JUMBO:
+		strcpy(s1, "JUMBO ");
+		break;
+	case WRAP:
+		strcpy(s1, "WRAP ");
+		break;
+	}
+
+	switch(p_container % 10) {
+	case CASE:
+		strcpy(s2, "CASE");
+		break;
+	case BOX:
+		strcpy(s2, "BOX");
+		break;
+	case BAG:
+		strcpy(s2, "BAG");
+		break;
+	case JAR:
+		strcpy(s2, "JAR");
+		break;
+	case PKG:
+		strcpy(s2, "PKG");
+		break;
+	case PACK:
+		strcpy(s2, "PACK");
+		break;
+	case CAN:
+		strcpy(s2, "CAN");
+		break;
+	case DRUM:
+		strcpy(s2, "DRUM");
+		break;
+	}
+	str[0] = '\0';
+	strcat(str, s1);
+	strcat(str, s2);
 }
 
 void pname_to_str(int p, char* srt){
@@ -674,7 +736,7 @@ tpch_n_name str_to_nation(char* str ){
     return CHINA;
   else if(strcmp( "ROMANIA", str) == 0 )
     return ROMANIA;
-  else if(strcmp( "SAUDI_ARABIA", str) == 0 )
+  else if(strcmp( "SAUDI ARABIA", str) == 0 )
     return SAUDI_ARABIA;
   else if(strcmp( "VIETNAM", str) == 0 )
     return VIETNAM;
@@ -771,7 +833,7 @@ void nation_to_str( int n_nation , char* str ){
     break;
 
   case SAUDI_ARABIA:
-    strcpy(str,"SAUDI_ARABIA");
+    strcpy(str,"SAUDI ARABIA");
     break;
 
   case VIETNAM:

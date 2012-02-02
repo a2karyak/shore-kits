@@ -37,11 +37,11 @@
 
 #include "workload/tpch/dbgen/dss.h"
 #include "workload/tpch/dbgen/dsstypes.h"
+#include "workload/tpch/tpch_util.h"
 
 using namespace dbgentpch; // for random MODES etc..
 
 ENTER_NAMESPACE(tpch);
-
 
 //Dummy input for scans
 qlineitem_input_t& qlineitem_input_t::operator=(const qlineitem_input_t& rhs){dummy=rhs.dummy; return (*this);}
@@ -75,7 +75,6 @@ qpartsupp_input_t    create_qpartsupp_input(const double sf,
 qcustomer_input_t& qcustomer_input_t::operator=(const qcustomer_input_t& rhs){dummy=rhs.dummy; return (*this);}
 qcustomer_input_t    create_qcustomer_input(const double sf,
                               const int specificWH){qcustomer_input_t r;r.dummy=0;return r;}
-
 
 
 /******************************************************************** 
@@ -176,12 +175,12 @@ q3_input_t create_q3_input(const double sf, const int specificWH){
     q3in.current_date =  mktime(&date);
 
     
-    /*    q3in.c_segment = BUILDING;
+   /*     q3in.c_segment = HOUSEHOLD;
 
     struct tm date;
     date.tm_year = 95;
     date.tm_mon = 2;
-    date.tm_mday = 15;
+    date.tm_mday = 4;
 
     date.tm_sec = 0;
     date.tm_min = 0;
@@ -235,11 +234,11 @@ q4_input_t  create_q4_input(const double /* sf */,
     orderdate.tm_mday = 1;
     orderdate.tm_hour = 4; //problem with mktime and gmtime
     orderdate.tm_min = 0;
-    orderdate.tm_sec = 0;
+    orderdate.tm_sec = 0;*/
 
     // The format: YYYY-MM-DD
   
-    q4_input.o_orderdate = mktime(&orderdate);*/
+    q4_input.o_orderdate = mktime(&orderdate);
 
     return (q4_input);
 };
@@ -276,9 +275,9 @@ q5_input_t create_q5_input(const double /* sf */, const int /* specificWH */) {
     
     q5in.o_orderdate = mktime(&orderdate);
 
-    q5in.r_name = 2;
+    /*q5in.r_name = 2;
 
-    /* struct tm orderdate;
+     struct tm orderdate;
 
     orderdate.tm_year = 94;//year starts from 1900
     orderdate.tm_mon = 0;//month starts from 0
@@ -384,13 +383,34 @@ q8_input_t create_q8_input(const double /* sf */, const int /* specificWH */) {
 
     q8_input_t q8in;
 
-    q8in.n_name = URand(0, END_N_NAME);
 
-    //q8in.r_name = URand(0, END_R_NAME); 
 
-    q8in.p_type.s1 = URand(0, END_TYPE_S1);
-    q8in.p_type.s2 = URand(0, END_TYPE_S2);
-    q8in.p_type.s3 = URand(0, END_TYPE_S3);
+    q8in.r_name = URand(0, END_R_NAME-1);
+    bool nation_ok = false;
+    while(!nation_ok) {
+    	q8in.n_name = URand(0, END_N_NAME-1);
+    	switch(q8in.r_name) {
+    	case AFRICA:
+    		nation_ok = (q8in.n_name == ALGERIA || q8in.n_name == ETHIOPIA || q8in.n_name == KENYA || q8in.n_name == MOROCCO || q8in.n_name == MOZAMBIQUE);
+    		break;
+    	case AMERICA:
+    		nation_ok = (q8in.n_name == ARGENTINA || q8in.n_name == BRAZIL || q8in.n_name == CANADA || q8in.n_name == PERU || q8in.n_name == UNITED_STATES);
+    		break;
+    	case ASIA:
+    		nation_ok = (q8in.n_name == INDIA || q8in.n_name == INDONESIA || q8in.n_name == JAPAN || q8in.n_name == CHINA || q8in.n_name == VIETNAM);
+    		break;
+    	case EUROPE:
+    		nation_ok = (q8in.n_name == FRANCE || q8in.n_name == GERMANY || q8in.n_name == ROMANIA || q8in.n_name == RUSSIA || q8in.n_name == UNITED_KINGDOM);
+    		break;
+    	case MIDDLE_EAST:
+    		nation_ok = (q8in.n_name == EGYPT || q8in.n_name == IRAN || q8in.n_name == IRAQ || q8in.n_name == JORDAN || q8in.n_name == SAUDI_ARABIA);
+    		break;
+    	}
+    }
+
+    q8in.p_type.s1 = URand(0, END_TYPE_S1-1);
+    q8in.p_type.s2 = URand(0, END_TYPE_S2-1);
+    q8in.p_type.s3 = URand(0, END_TYPE_S3-1);
 
     /*q8in.n_name = 2;
 
@@ -479,7 +499,7 @@ q11_input_t& q11_input_t::operator=(const q11_input_t& rhs){
 q11_input_t create_q11_input(const double /* sf */, const int /* specificWH */) {
     q11_input_t q11in;
 
-      q11in.n_name = URand(0, END_N_NAME);
+      q11in.n_name = URand(0, END_N_NAME-1);
       q11in.fraction = 0.0001; // how to retrive SF???
 
     /*q11in.n_name = 7;
@@ -686,8 +706,18 @@ q16_input_t create_q16_input(const double /* sf */, const int /* specificWH */) 
     q16_input.p_brand = URand(1,5)*10 + URand(1,5);
     q16_input.p_type = URand(0,5)*10 + URand(0,4);
 
-    for(int i=0; i<8; i++)
+	bool contains;
+	int j;
+
+    for(int i=0; i<8; i++) {
+	do {
 	q16_input.p_size[i] = URand(1,50);
+	contains = false;
+	for(j = 0; j < i; j++) {
+		if(q16_input.p_size[i] == q16_input.p_size[j]) contains = true;
+	}
+	} while(contains);
+	}
 
     return q16_input;
 
@@ -808,7 +838,7 @@ q20_input_t create_q20_input(const double /* sf */, const int /* specificWH */) 
     t.tm_hour = 0;  
     t.tm_mday = 1;  
     t.tm_mon = 0;   
-    t.tm_year = URand(1993,1997);  
+    t.tm_year = URand(93,97);  
     t.tm_wday = 0;  
     t.tm_yday = 0;  
 
@@ -836,7 +866,7 @@ q21_input_t create_q21_input(const double sf, const int specificWH){
 
     q21_input_t q21in;
 
-    q21in.n_name = URand(0, END_N_NAME);
+    q21in.n_name = URand(0, END_N_NAME-1);
     
     return q21in;
 
@@ -854,8 +884,19 @@ q22_input_t create_q22_input(const double /* sf */, const int /* specificWH */) 
 
     q22_input_t q22in;
 
-    for( int i = 0; i < 7; i ++)
-	q22in.cntrycode[i] = URand( 10, 34 );
+	bool contains;
+	int j;
+
+    for(int i=0; i<7; i++) {
+	do {
+	q22in.cntrycode[i] = URand(10, 34);
+	contains = false;
+	for(j = 0; j < i; j++) {
+		if(q22in.cntrycode[i] == q22in.cntrycode[j]) contains = true;
+	}
+	} while(contains);
+	}
+
 
     return q22in;
 }
