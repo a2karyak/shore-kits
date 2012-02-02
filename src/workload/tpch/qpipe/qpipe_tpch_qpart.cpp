@@ -209,6 +209,22 @@ public:
     }
 };
 
+    static const c_str* dump_tuple(tuple_t* tup) {
+        tpch_part_tuple *dest;
+        dest = aligned_cast<tpch_part_tuple> (tup->data);
+        return new c_str("%d|%s|%s|%s|%s|%d|%s|%lf|%s|\n",
+			 dest->P_PARTKEY,
+			 dest->P_NAME,
+			 dest->P_MFGR,
+			 dest->P_BRAND,
+			 dest->P_TYPE,
+			 dest->P_SIZE,
+			 dest->P_CONTAINER,
+			 dest->P_RETAILPRICE.to_double(),
+			 dest->P_COMMENT);
+    }
+
+
 };
 
 /********************************************************************
@@ -238,6 +254,16 @@ w_rc_t ShoreTPCHEnv::xct_qpipe_qpart(const int xct_id, qpart_input_t& in)
                            /*, SH */
                            );
 
+    tuple_fifo* fdump_output = new tuple_fifo(sizeof(tpch_part_tuple));
+    fdump_packet_t* fdump_packet =
+            new fdump_packet_t(c_str("FDUMP"),
+            fdump_output,
+            new trivial_filter_t(fdump_output->tuple_size()),
+            NULL,
+            c_str("%s/part.tbl", getenv("HOME")),
+            NULL,
+            tscan_packet,
+	    tpch_qpart::dump_tuple);
 
     // AGG PACKET CREATION
     tuple_fifo* count_output_buffer =
@@ -246,13 +272,14 @@ w_rc_t ShoreTPCHEnv::xct_qpipe_qpart(const int xct_id, qpart_input_t& in)
         new partial_aggregate_packet_t("COUNT",
                                        count_output_buffer,
                                        new trivial_filter_t(count_output_buffer->tuple_size()),
-                                       tscan_packet,
+                                       fdump_packet,
                                        new tpch_qpart::count_aggregate_t(),
                                        new tpch_qpart::count_aggregate_t::count_key_extractor_t(),
                                        new int_key_compare_t());
 
     qpipe::query_state_t* qs = dp->query_state_create();
     count_packet->assign_query_state(qs);
+    fdump_packet->assign_query_state(qs);
     tscan_packet->assign_query_state(qs);
 
     // Dispatch packet

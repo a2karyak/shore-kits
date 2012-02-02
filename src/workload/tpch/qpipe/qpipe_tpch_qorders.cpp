@@ -116,10 +116,27 @@ public:
         _prord->get_value(6,  _orders.O_CLERK,15);
         _prord->get_value(7,  _orders.O_SHIPPRIORITY);
         _prord->get_value(8,  _orders.O_COMMENT,79);
+	
+	memcpy(dest,&_orders,sizeof(tpch_orders_tuple));
 
-        memcpy(dest,&_orders,sizeof(tpch_orders_tuple));
-        if (dest->O_ORDERKEY%100000==0)
-            TRACE(TRACE_RECORD_FLOW, "%d %d\n", dest->O_ORDERKEY, dest->O_CUSTKEY);
+	if (dest->O_ORDERKEY<100000)
+	{
+
+          TRACE(TRACE_ALWAYS, "%d|\n",
+		dest->O_ORDERKEY);
+
+		/*TRACE(TRACE_RECORD_FLOW, "%d|%d|%c|%lf|%s|%s|%s|%d|%s|\n",
+ 	  dest->O_ORDERKEY,
+ 	  dest->O_CUSTKEY,
+	  dest->O_ORDERSTATUS,
+	  dest->O_TOTALPRICE,
+	  dest->O_ORDERDATE,
+	  dest->O_ORDERPRIORITY,
+  	  dest->O_CLERK,
+	  dest->O_SHIPPRIORITY,
+ 	  dest->O_COMMENT);*/
+
+	  }
         //dest->C_CUSTKEY = _orders.C_CUSTKEY;
     }
 
@@ -209,6 +226,23 @@ public:
     }
 };
 
+
+static const c_str* dump_o_tuple(tuple_t* tup) {
+    tpch_orders_tuple *dest;
+    dest = aligned_cast<tpch_orders_tuple> (tup->data);
+    return new c_str("%d|%d|%c|%lf|%s|%s|%s|%d|%s|\n",
+		     dest->O_ORDERKEY,
+		     dest->O_CUSTKEY,
+		     dest->O_ORDERSTATUS,
+		     dest->O_TOTALPRICE.to_double(),
+		     dest->O_ORDERDATE,
+		     dest->O_ORDERPRIORITY,
+		     dest->O_CLERK,
+		     dest->O_SHIPPRIORITY,
+		     dest->O_COMMENT);
+}
+
+
 };
 
 /********************************************************************
@@ -239,6 +273,19 @@ w_rc_t ShoreTPCHEnv::xct_qpipe_qorders(const int xct_id, qorders_input_t& in)
                            );
 
 
+        tuple_fifo* fdump_output = new tuple_fifo(sizeof(tpch_orders_tuple));
+    fdump_packet_t* fdump_packet =
+            new fdump_packet_t(c_str("FDUMP"),
+            fdump_output,
+            new trivial_filter_t(fdump_output->tuple_size()),
+            NULL,
+            c_str("%s/orders.tbl", getenv("HOME")),
+            NULL,
+            tscan_packet,
+	    tpch_qorders::dump_o_tuple);
+   
+
+
     // AGG PACKET CREATION
     tuple_fifo* count_output_buffer =
         new tuple_fifo(sizeof(tpch_qorders::count_tuple));
@@ -246,14 +293,16 @@ w_rc_t ShoreTPCHEnv::xct_qpipe_qorders(const int xct_id, qorders_input_t& in)
         new partial_aggregate_packet_t("COUNT",
                                        count_output_buffer,
                                        new trivial_filter_t(count_output_buffer->tuple_size()),
-                                       tscan_packet,
+                                       fdump_packet,
+				       //tscan_packet,
                                        new tpch_qorders::count_aggregate_t(),
                                        new tpch_qorders::count_aggregate_t::count_key_extractor_t(),
                                        new int_key_compare_t());
 
     qpipe::query_state_t* qs = dp->query_state_create();
-    count_packet->assign_query_state(qs);
     tscan_packet->assign_query_state(qs);
+    fdump_packet->assign_query_state(qs);
+    count_packet->assign_query_state(qs);
 
     // Dispatch packet
     tpch_qorders::tpch_orders_process_tuple_t pt;

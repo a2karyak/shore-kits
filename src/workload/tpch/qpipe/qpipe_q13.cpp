@@ -152,8 +152,8 @@ public:
         _prcustomer->get_value(0, _customer.C_CUSTKEY);
 
 
-        TRACE( TRACE_RECORD_FLOW, "%d\n",
-	       _customer.C_CUSTKEY);
+        //TRACE( TRACE_RECORD_FLOW, "%d\n",
+	    //   _customer.C_CUSTKEY);
 
         dest->C_CUSTKEY = _customer.C_CUSTKEY;
 
@@ -197,6 +197,8 @@ public:
 
         // Generate the random predicates
 	q13_input=&in;
+
+	TRACE(TRACE_ALWAYS, "Random predicates:\nORDERS.O_COMMENT not like '%%%s%%%s%%'\n", q13_input->WORD1, q13_input->WORD2);
     }
 
     ~q13_orders_tscan_filter_t()
@@ -238,8 +240,8 @@ public:
 
         _prorder->get_value(1, _orders.O_CUSTKEY);
 
-        TRACE( TRACE_RECORD_FLOW, "%d\n",
-	       _orders.O_CUSTKEY);
+        //TRACE( TRACE_RECORD_FLOW, "%d\n",
+	    //   _orders.O_CUSTKEY);
 
         dest->O_CUSTKEY = _orders.O_CUSTKEY;
     }

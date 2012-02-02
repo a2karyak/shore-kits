@@ -216,6 +216,28 @@ public:
     }
 };
 
+    static const c_str* dump_tuple(tuple_t* tup) {
+        tpch_lineitem_tuple *dest;
+        dest = aligned_cast<tpch_lineitem_tuple> (tup->data);
+        return new c_str("%d|%d|%d|%d|%lf|%lf|%lf|%lf|%c|%c|%s|%s|%s|%s|%s|%s|\n",
+	  dest->L_ORDERKEY,
+	  dest->L_PARTKEY,
+	  dest->L_SUPPKEY,
+	  dest->L_LINENUMBER,
+	  dest->L_QUANTITY,
+	  dest->L_EXTENDEDPRICE,
+	  dest->L_DISCOUNT,
+	  dest->L_TAX,
+	  dest->L_RETURNFLAG,
+	  dest->L_LINESTATUS,
+	  dest->L_SHIPDATE,
+	  dest->L_COMMITDATE,
+	  dest->L_RECEIPTDATE,
+	  dest->L_SHIPINSTRUCT,
+	  dest->L_SHIPMODE,
+	  dest->L_COMMENT);
+    }
+
 };
 
 /********************************************************************
@@ -245,6 +267,16 @@ w_rc_t ShoreTPCHEnv::xct_qpipe_qlineitem(const int xct_id, qlineitem_input_t& in
                            /*, SH */
                            );
 
+    tuple_fifo* fdump_output = new tuple_fifo(sizeof(tpch_lineitem_tuple));
+    fdump_packet_t* fdump_packet =
+            new fdump_packet_t(c_str("FDUMP"),
+            fdump_output,
+            new trivial_filter_t(fdump_output->tuple_size()),
+            NULL,
+            c_str("%s/lineitem.tbl", getenv("HOME")),
+            NULL,
+            tscan_packet,
+	    tpch_qlineitem::dump_tuple);
 
     // AGG PACKET CREATION
     tuple_fifo* count_output_buffer =
@@ -253,7 +285,7 @@ w_rc_t ShoreTPCHEnv::xct_qpipe_qlineitem(const int xct_id, qlineitem_input_t& in
         new partial_aggregate_packet_t("COUNT",
                                        count_output_buffer,
                                        new trivial_filter_t(count_output_buffer->tuple_size()),
-                                       tscan_packet,
+                                       fdump_packet,
                                        new tpch_qlineitem::count_aggregate_t(),
                                        new tpch_qlineitem::count_aggregate_t::count_key_extractor_t(),
                                        new int_key_compare_t());

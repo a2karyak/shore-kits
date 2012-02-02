@@ -172,8 +172,8 @@ public:
 
         _prline->get_value(0, _lineitem.L_ORDERKEY);
 
-        TRACE( TRACE_RECORD_FLOW, "%d\n",
-        		_lineitem.L_ORDERKEY);
+        //TRACE( TRACE_RECORD_FLOW, "%d\n",
+        //		_lineitem.L_ORDERKEY);
 
         dest->L_ORDERKEY = _lineitem.L_ORDERKEY;
     }
@@ -289,14 +289,14 @@ public:
 	q4_input=&in;
 	struct tm date;
 	gmtime_r(&(q4_input->o_orderdate), &date);
-	date.tm_year ++;
+	date.tm_mon += 3;
 	_last_o_orderdate=mktime(&date);
 
-	//char date1[15];
-	//char date2[15];
-	//timet_to_str(date1,q4_input->o_orderdate);
-	//timet_to_str(date2,_last_o_orderdate);
-	//TRACE ( TRACE_ALWAYS, "Dates: %s - %s\n",date1, date2);
+	char date1[15];
+	char date2[15];
+	timet_to_str(date1,q4_input->o_orderdate);
+	timet_to_str(date2,_last_o_orderdate);
+	TRACE ( TRACE_ALWAYS, "Dates: %s - %s\n",date1,date2);
     }
 
     ~q4_tscan_orders_filter_t()
@@ -320,11 +320,11 @@ public:
 
         // Return true if it passes the filter
 		if  ( _orderdate >= q4_input->o_orderdate && _orderdate < _last_o_orderdate ) {
-			TRACE(TRACE_RECORD_FLOW, "+ %s (between %s and %s)\n", _orders.O_ORDERDATE, q4_input->o_orderdate, _last_o_orderdate);
+			//TRACE(TRACE_RECORD_FLOW, "+ %s (between %s and %s)\n", _orders.O_ORDERDATE, q4_input->o_orderdate, _last_o_orderdate);
 			return (true);
 		}
 		else {
-			TRACE(TRACE_RECORD_FLOW, ". %s (not between %s and %s)\n", _orders.O_ORDERDATE, q4_input->o_orderdate, _last_o_orderdate );
+			//TRACE(TRACE_RECORD_FLOW, ". %s (not between %s and %s)\n", _orders.O_ORDERDATE, q4_input->o_orderdate, _last_o_orderdate );
 			return (false);
 		}
     }
@@ -341,10 +341,11 @@ public:
 
         char number[2];
         strncpy(number,_orders.O_ORDERPRIORITY,1);
+        number[1] = '\0';
 
-        TRACE( TRACE_RECORD_FLOW, "%d, %s\n",
+        /*TRACE( TRACE_RECORD_FLOW, "%d, %s\n",
         		_orders.O_ORDERKEY,
-        		_orders.O_ORDERPRIORITY);
+        		_orders.O_ORDERPRIORITY);*/
         dest->O_ORDERKEY = _orders.O_ORDERKEY;
         dest->O_ORDERPRIORITY = atoi(number);
     }
@@ -408,10 +409,10 @@ struct q4_join_t : public tuple_join_t {
     q4_join_t ()
         : tuple_join_t(sizeof(q4_projected_orders_tuple),
                        offsetof(q4_projected_orders_tuple, O_ORDERKEY),
+                       sizeof(q4_projected_lineitem_tuple),
+                       offsetof(q4_projected_lineitem_tuple, L_ORDERKEY),
                        sizeof(int),
-                       0,
-                       sizeof(int),
-                       sizeof(int))
+                       sizeof(q4_join_tuple))
     {
     }
 
@@ -422,7 +423,8 @@ struct q4_join_t : public tuple_join_t {
     {
         // KLUDGE: this projection should go in a separate filter class
     	q4_projected_orders_tuple* tuple = aligned_cast<q4_projected_orders_tuple>(left.data);
-        *aligned_cast<int>(dest.data) = tuple->O_ORDERPRIORITY;
+        q4_join_tuple *d = aligned_cast<q4_join_tuple>(dest.data);
+        d->O_ORDERPRIORITY = tuple->O_ORDERPRIORITY;
 
         //TRACE ( TRACE_ALWAYS, "JOIN %d %d\n",tuple->O_ORDERPRIORITY,tuple->O_ORDERKEY);
 
@@ -548,13 +550,14 @@ w_rc_t ShoreTPCHEnv::xct_qpipe_q4(const int xct_id,
 
     // DISTINCT (IMPLEMENT WITH HASH AGGREGATE)
     tuple_fifo* q4_distinct_output = new tuple_fifo(sizeof(q4_projected_lineitem_tuple));
-    aggregate_packet_t* q4_distinct_packet =
-        new aggregate_packet_t(c_str("Q4DISTINCT_PACKET"),
+    partial_aggregate_packet_t* q4_distinct_packet =
+        new partial_aggregate_packet_t(c_str("Q4DISTINCT_PACKET"),
 							q4_distinct_output,
                                new trivial_filter_t(q4_distinct_output->tuple_size()),
+                               q4_sort_packet,
                                new q4_distinct_t(),
                                new q4_distinct_t::q4_distinct_key_extractor_t(),
-                               q4_sort_packet);
+                               new int_key_compare_t());
 
     // TSCAN PACKET ON ORDERS
     tuple_fifo* tscan_orders_out =

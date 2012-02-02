@@ -126,6 +126,14 @@ public:
 	// L_SHIPDATE < [date] + 1 month
         date2 = time_add_month(date1, 1);
 
+        char shdate1[15];
+        char shdate2[15];
+
+        timet_to_str(shdate1, date1);
+        timet_to_str(shdate2, date2);
+
+        TRACE(TRACE_ALWAYS, "Random predicates:\n%s <= L_SHIPDATE < %s\n", shdate1, shdate2);
+
         //p = new scalar_predicate_t<time_t, greater_equal>(date1, offset);
         //_filter.add(p);
 
@@ -149,14 +157,14 @@ public:
         _prline->get_value(5, _lineitem.L_EXTENDEDPRICE);
         _prline->get_value(6, _lineitem.L_DISCOUNT);
 
-        TRACE( TRACE_RECORD_FLOW, "%d %.2f|%.2f\n",
+        /*TRACE( TRACE_RECORD_FLOW, "%d %.2f|%.2f\n",
                _lineitem.L_PARTKEY,
-               _lineitem.L_EXTENDEDPRICE,
-               _lineitem.L_DISCOUNT);
+               _lineitem.L_EXTENDEDPRICE / 100.0,
+               _lineitem.L_DISCOUNT / 100.0);*/
 
         dest->L_PARTKEY=_lineitem.L_PARTKEY;
-        dest->L_EXTENDEDPRICE = _lineitem.L_EXTENDEDPRICE;
-        dest->L_DISCOUNT = _lineitem.L_DISCOUNT/100;
+        dest->L_EXTENDEDPRICE = _lineitem.L_EXTENDEDPRICE/100.0;
+        dest->L_DISCOUNT = _lineitem.L_DISCOUNT/100.0;
 #warning MA: Discount from TPCH dbgen is created between 0 and 100 instead between 0 and 1.
     }
 
@@ -233,9 +241,9 @@ public:
         _prpart->get_value(0, _part.P_PARTKEY);
         _prpart->get_value(4, _part.P_TYPE, 25);
 
-        TRACE( TRACE_RECORD_FLOW, "%d %s\n",
+        /*TRACE( TRACE_RECORD_FLOW, "%d %s\n",
                _part.P_PARTKEY,
-               _part.P_TYPE);
+               _part.P_TYPE);*/
 
         dest->P_PARTKEY=_part.P_PARTKEY;
 	memcpy(dest->P_TYPE, _part.P_TYPE, sizeof(dest->P_TYPE));
@@ -285,10 +293,10 @@ struct q14_join : tuple_join_t {
         dest->L_DISCOUNT = right->L_DISCOUNT;
         memcpy(dest->P_TYPE, left->P_TYPE, sizeof(dest->P_TYPE));
 
-        TRACE( TRACE_RECORD_FLOW, "%lf %.2lf %s\n",
+        /*TRACE( TRACE_RECORD_FLOW, "%lf %.2lf %s\n",
                dest->L_EXTENDEDPRICE,
                dest->L_DISCOUNT,
-               dest->P_TYPE);
+               dest->P_TYPE);*/
 
     }
 

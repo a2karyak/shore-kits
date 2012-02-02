@@ -122,11 +122,11 @@ public:
 	date.tm_year ++;
 	_last_l_shipdate=mktime(&date);
 
-	//char date1[15];
-	//char date2[15];
-	//timet_to_str(date1,q6_input->l_shipdate);
-	//timet_to_str(date2,_last_l_shipdate);
-	//TRACE(TRACE_ALWAYS, "Random predicates: Date: %s-%s, Discount: %lf, Quantity: %lf\n", date1, date2, q6_input->l_discount, q6_input->l_quantity);
+	char date1[15];
+	char date2[15];
+	timet_to_str(date1,q6_input->l_shipdate);
+	timet_to_str(date2,_last_l_shipdate);
+	TRACE(TRACE_ALWAYS, "Random predicates: Date: %s-%s, Discount: %lf, Quantity: %lf\n", date1, date2, q6_input->l_discount, q6_input->l_quantity);
     }
 
     ~q6_tscan_filter_t()
@@ -147,7 +147,7 @@ public:
         _prline->get_value(10, _lineitem.L_SHIPDATE, 15); //get column 10 (15 characters)
         _shipdate = str_to_timet(_lineitem.L_SHIPDATE);        
         _prline->get_value(6, _lineitem.L_DISCOUNT); //get column 6 (float)
-        _discount=_lineitem.L_DISCOUNT/100;
+        _discount=_lineitem.L_DISCOUNT/100.0;
 #warning MA: Discount from TPCH dbgen is created between 0 and 100 instead between 0 and 1.
         _prline->get_value(4, _lineitem.L_QUANTITY); //get column 4 (float)
         _quantity=_lineitem.L_QUANTITY;
@@ -158,11 +158,11 @@ public:
 		if  ( _shipdate >= q6_input->l_shipdate && _shipdate < _last_l_shipdate && _discount>=(q6_input->l_discount-0.01) &&
 				_discount<=(q6_input->l_discount+0.01) && _quantity<q6_input->l_quantity) {
 
-			TRACE(TRACE_RECORD_FLOW, "+ %s, %lf, %lf\n", _lineitem.L_SHIPDATE, _lineitem.L_DISCOUNT, _lineitem.L_QUANTITY);
+			//TRACE(TRACE_RECORD_FLOW, "+ %s, %lf, %lf\n", _lineitem.L_SHIPDATE, _lineitem.L_DISCOUNT, _lineitem.L_QUANTITY);
 			return (true);
 		}
 		else {
-				TRACE(TRACE_RECORD_FLOW, ". %s, %lf, %lf\n", _lineitem.L_SHIPDATE, _lineitem.L_DISCOUNT, _lineitem.L_QUANTITY);
+				//TRACE(TRACE_RECORD_FLOW, ". %s, %lf, %lf\n", _lineitem.L_SHIPDATE, _lineitem.L_DISCOUNT, _lineitem.L_QUANTITY);
 			return (false);
 		}
     }
@@ -177,12 +177,12 @@ public:
         _prline->get_value(5, _lineitem.L_EXTENDEDPRICE);
         _prline->get_value(6, _lineitem.L_DISCOUNT);
 
-        TRACE( TRACE_RECORD_FLOW, "%.2f|%.2f\n",
-               _lineitem.L_EXTENDEDPRICE,
-               _lineitem.L_DISCOUNT);
+        /*TRACE( TRACE_RECORD_FLOW, "%.2f|%.2f\n",
+               _lineitem.L_EXTENDEDPRICE / 100.0,
+               _lineitem.L_DISCOUNT / 100.0);*/
 
-        dest->L_EXTENDEDPRICE = _lineitem.L_EXTENDEDPRICE;
-        dest->L_DISCOUNT = _lineitem.L_DISCOUNT/100;
+        dest->L_EXTENDEDPRICE = _lineitem.L_EXTENDEDPRICE / 100.0;
+        dest->L_DISCOUNT = _lineitem.L_DISCOUNT/100.0;
 #warning MA: Discount from TPCH dbgen is created between 0 and 100 instead between 0 and 1.
     }
 
@@ -277,7 +277,7 @@ public:
     	q6_aggregate_tuple* output = aligned_cast<q6_aggregate_tuple>(dest.data);
         output->L_COUNT = agg->L_COUNT;
         output->L_SUM_REVENUE = agg->L_SUM_REVENUE;
-        TRACE (TRACE_QUERY_RESULTS, "Average Revenue: %lf\n",output->L_SUM_REVENUE/(double)output->L_COUNT);
+        //TRACE (TRACE_QUERY_RESULTS, "Average Revenue: %lf\n",output->L_SUM_REVENUE/(double)output->L_COUNT);
     }
 
     virtual q6_aggregate_t* clone() const {
