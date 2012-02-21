@@ -45,6 +45,8 @@
 using namespace shore;
 using namespace TPCE;
 
+//#define TRACE_TRX_FLOW TRACE_ALWAYS
+
 ENTER_NAMESPACE(tpce);
 
 /******************************************************************** 
@@ -59,7 +61,7 @@ w_rc_t ShoreTPCEEnv::xct_market_feed(const int xct_id, market_feed_input_t& pmfi
     // check whether it has input
     if(pmfin._type_limit_buy[0] == '\0') {
 	atomic_inc_uint_nv(&_num_invalid_input);
-	return (RC(se_INVALID_INPUT));
+	return (RCOK);
     }	
 
     // ensure a valid environment
@@ -102,11 +104,14 @@ w_rc_t ShoreTPCEEnv::xct_market_feed(const int xct_id, market_feed_input_t& pmfi
 	int		req_trade_qty;
 	char		req_trade_type[4]; //3
 	int 		rows_updated;
+	uint            num_deleted;
 
 	now_dts = time(NULL);
-
+	
 	//the transaction should formally start here!
 	for(rows_updated = 0; rows_updated < max_feed_len; rows_updated++) {
+	    num_deleted = 0;
+	    
 	    /**
 	       update
 	       LAST_TRADE
@@ -159,7 +164,12 @@ w_rc_t ShoreTPCEEnv::xct_market_feed(const int xct_id, market_feed_input_t& pmfi
 	    bool eof;
 	    TRACE( TRACE_TRX_FLOW, "App: %d MF:tr-iter-next \n", xct_id);
 	    e = tr_iter->next(_pssm, eof, *prtradereq);
-	    if (e.is_error()) {	goto done; }
+	    if (e.is_error()) {
+		if(e.err_num() == smlevel_0::eBADSLOTNUMBER) {
+		    eof = true;
+		    e = RCOK;
+		} else { goto done; }
+	    }
 	    while(!eof){
 		prtradereq->get_value(1, req_trade_type, 4);
 		prtradereq->get_value(4, req_price_quote);
@@ -181,10 +191,16 @@ w_rc_t ShoreTPCEEnv::xct_market_feed(const int xct_id, market_feed_input_t& pmfi
 		       where
 		       current of request_list
 		    */
-		    TRACE( TRACE_TRX_FLOW, "App: %d MF:tr-delete \n", xct_id);
-		    e = _ptrade_request_man->delete_tuple(_pssm, prtradereq);
-		    if (e.is_error()) { goto done; }
-
+		    // PIN: get the RID and perform the delete after the scan
+		    //      to prevent crashes.
+		    /*
+		      TRACE( TRACE_TRX_FLOW, "App: %d MF:tr-delete \n", xct_id);
+		      e = _ptrade_request_man->delete_tuple(_pssm, prtradereq);
+		      if (e.is_error()) { goto done; }
+		    */
+		    pmfin._trade_rid[num_deleted] = prtradereq->rid();
+		    num_deleted++;
+		    
 		    /**
 		       update
 		       TRADE
@@ -219,25 +235,41 @@ w_rc_t ShoreTPCEEnv::xct_market_feed(const int xct_id, market_feed_input_t& pmfi
 		} 
 		TRACE( TRACE_TRX_FLOW, "App: %d MF:tr-iter-next \n", xct_id);
 		e = tr_iter->next(_pssm, eof, *prtradereq);
-		if (e.is_error()) { goto done; }
+		if (e.is_error()) {
+		    if(e.err_num() == smlevel_0::eBADSLOTNUMBER) {
+			eof = true;
+			e = RCOK;
+		    } else { goto done; }
+		}
+	    }
+	    for(uint i=0; i<num_deleted; i++) {
+		TRACE(TRACE_TRX_FLOW, "%d - MF:tr-delete-tuple - (%d).(%d).(%d).(%d)\n", xct_id,
+		      (pmfin._trade_rid[i]).pid.vol().vol, (pmfin._trade_rid[i]).pid.store(),
+		      (pmfin._trade_rid[i]).pid.page, (pmfin._trade_rid[i]).slot);
+		e = _ptrade_request_man->tr_delete_tuple(_pssm, prtradereq, pmfin._trade_rid[i]);
+		if (e.is_error()) {
+		    if(e.err_num() == smlevel_0::eBADSLOTNUMBER) {
+			e = RCOK;
+		    } else { goto done; }
+		}
 	    }
 	}
 	assert(rows_updated == max_feed_len); //Harness Control
     }
 
     /* @note: PIN: the below is not executed because it ends up at an abstract virtual function
-       //send triggered trades to the Market Exchange Emulator
-       //via the SendToMarket interface.
-       //This should be done after the related database changes have committed
-       For (j=0; j<rows_sent; j++)
-       {
-         SendToMarketFromFrame(TradeRequestBuffer[i].symbol,
-	 TradeRequestBuffer[i].trade_id,
-	 TradeRequestBuffer[i].price_quote,
-	 TradeRequestBuffer[i].trade_qty,
-	 TradeRequestBuffer[i].trade_type);
-       }
-     */
+    //send triggered trades to the Market Exchange Emulator
+    //via the SendToMarket interface.
+    //This should be done after the related database changes have committed
+    For (j=0; j<rows_sent; j++)
+    {
+    SendToMarketFromFrame(TradeRequestBuffer[i].symbol,
+    TradeRequestBuffer[i].trade_id,
+    TradeRequestBuffer[i].price_quote,
+    TradeRequestBuffer[i].trade_qty,
+    TradeRequestBuffer[i].trade_type);
+    }
+    */
     
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction

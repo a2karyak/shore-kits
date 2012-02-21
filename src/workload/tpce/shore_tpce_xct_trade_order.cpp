@@ -19,7 +19,7 @@
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. THE AUTHORS
    DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
    RESULTING FROM THE USE OF THIS SOFTWARE.
- */
+*/
 
 /** @file:   shore_tpce_xct_trade_order.cpp
  *
@@ -166,14 +166,14 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 
 	    TRACE( TRACE_TRX_FLOW, "App: %d TO:ca-idx-probe (%ld) \n", xct_id,  ptoin._acct_id);
 	    e =  _pcustomer_account_man->ca_index_probe(_pssm, prcustacct, ptoin._acct_id);
-	    if (e.is_error()) { goto done; }
+	    if (e.is_error()) {	goto done; }
 
 	    char acct_name[51] = "\0"; //50
 	    prcustacct->get_value(1, broker_id);
 	    prcustacct->get_value(2, cust_id);
 	    prcustacct->get_value(3, acct_name, 51);
 	    prcustacct->get_value(4, tax_status);
-	     // PIN: might be needed in the future; getting it now since already done the probe
+	    // PIN: might be needed in the future; getting it now since already done the probe
 	    prcustacct->get_value(5, acct_bal);
 
 	    assert(acct_name[0] != 0); //Harness control
@@ -186,7 +186,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 
 	    TRACE( TRACE_TRX_FLOW, "App: %d TO:c-idx-probe (%ld) \n", xct_id,  cust_id);
 	    e =  _pcustomer_man->c_index_probe(_pssm, prcust, cust_id);
-	    if (e.is_error()) { goto done; }
+	    if (e.is_error()) {	goto done; }
 
 	    prcust->get_value(1, tax_id, 21);
 	    prcust->get_value(3, cust_l_name, 26);
@@ -244,7 +244,8 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 	       strcmp(ptoin._exec_f_name, cust_f_name) != 0 ||
 	       strcmp(ptoin._exec_tax_id, tax_id) != 0 ){
 		
-		TRACE( TRACE_TRX_FLOW, "App: %d TO:ap-idx-probe (%ld) (%s) \n", xct_id,  ptoin._acct_id, ptoin._exec_tax_id);
+		TRACE( TRACE_TRX_FLOW, "App: %d TO:ap-idx-probe (%ld) (%s) \n",
+		       xct_id,  ptoin._acct_id, ptoin._exec_tax_id);
 		e =  _paccount_permission_man->ap_index_probe(_pssm, pracctperm, ptoin._acct_id, ptoin._exec_tax_id);
 		if (e.is_error()) { goto done; } 
 
@@ -336,7 +337,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 		    e = _psecurity_man->s_get_iter_by_index4(_pssm, tmp_s_iter, prsecurity,
 							     lowrep, highrep, co_id, ptoin._issue);
 		    s_iter = tmp_s_iter;
-		    if (e.is_error()) { goto done; }
+		    if (e.is_error()) {	goto done; }
 		}
 
 		TRACE( TRACE_TRX_FLOW, "App: %d TO:s-iter-next \n", xct_id);
@@ -349,7 +350,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 				
 		    TRACE( TRACE_TRX_FLOW, "App: %d TO:s-iter-next \n", xct_id);
 		    e = s_iter->next(_pssm, eof, *prsecurity);
-		    if (e.is_error()) { goto done; }
+		    if (e.is_error()) {	goto done; }
 		}
 	    }
 	    else{
@@ -416,7 +417,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 
 	    TRACE( TRACE_TRX_FLOW, "App: %d TO:tt-idx-probe (%s) \n", xct_id,  ptoin._trade_type_id);
 	    e =  _ptrade_type_man->tt_index_probe(_pssm, prtradetype, ptoin._trade_type_id);
-	    if (e.is_error()) { goto done; }
+	    if (e.is_error()) {	goto done; }
 
 	    prtradetype->get_value(2, type_is_sell);
 	    prtradetype->get_value(3, type_is_market);
@@ -427,12 +428,11 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 
 	    double hold_price;
 	    int hold_qty;
-	    double needed_qty;
+	    int needed_qty = ptoin._trade_qty;
 	    int hs_qty = -1;
 
 	    buy_value = 0;
 	    sell_value = 0;
-	    needed_qty = ptoin._trade_qty;
 
 	    /**
 	     * 	select
@@ -453,323 +453,95 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 		prholdingsummary->get_value(2, hs_qty);
 	    }
 
-	    if(type_is_sell){
-		if(hs_qty > 0){
-		    /*
-		    desc_sort_buffer_t h_list(3); //change
-		    */
-		    guard<index_scan_iter_impl<holding_t> > h_iter;
-		    if(ptoin._is_lifo){
-			/**
-			 * SELECT	H_QTY, H_PRICE
-			 * FROM		HOLDING
-			 * WHERE	H_CA_ID = acct_id and H_S_SYMB = symbol
-			 * ORDER BY 	H_DTS DESC
-			 */
-			{  
-			    index_scan_iter_impl<holding_t>* tmp_h_iter;
-			    TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-by-idx2 \n", xct_id);
-			    e = _pholding_man->h_get_iter_by_index2(_pssm, tmp_h_iter,
-								    prholding, lowrep, highrep,
-								    ptoin._acct_id, symbol, true);
-			    if (e.is_error()) { goto done; }
-			    h_iter = tmp_h_iter;
-			}
-			/*
-			//descending order
-			h_list.setup(0, SQL_LONG);
-			h_list.setup(1, SQL_INT);
-			h_list.setup(2, SQL_FLOAT);
-			table_row_t rsb(&h_list);
-
-			rep_row_t sortrep(_pcompany_man->ts());
-			sortrep.set(_pcompany_desc->maxsize());
-			desc_sort_man_impl h_sorter(&h_list, &sortrep);
-			*/
-			
-			bool eof;
-			TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-next \n", xct_id);
-			e = h_iter->next(_pssm, eof, *prholding);
-			if (e.is_error()) { goto done; }
-			while (!eof) {
-			    /* put the value into the sorted buffer */
-			    /*
-			    int temp_qty;
-			    myTime temp_dts;
-			    double temp_price;
-		      	
-			    prholding->get_value(3, temp_dts);
-			    prholding->get_value(4, temp_price);
-			    prholding->get_value(5, temp_qty);
-
-			    rsb.set_value(0, temp_dts);
-			    rsb.set_value(1, temp_qty);
-			    rsb.set_value(2, temp_price);
-
-			    h_sorter.add_tuple(rsb);
-			    */
-
-			    int hold_qty;
-			    double hold_price;
-
-			    prholding->get_value(4, hold_price);
-			    prholding->get_value(5, hold_qty);
-
-			    if(hold_qty > needed_qty){
-				buy_value += needed_qty * hold_price;
-				sell_value += needed_qty * requested_price;
-				needed_qty = 0;
-			    }
-			    else{
-				buy_value += hold_qty * hold_price;
-				sell_value += hold_qty * requested_price;
-				needed_qty = needed_qty - hold_qty;
-			    }
-						    
-			    TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-next \n", xct_id);
-			    e = h_iter->next(_pssm, eof, *prholding);
-			    if (e.is_error()) { goto done; }
-			}
-			/* PIN: not needed; this is OK, we don't check for this in the !is_lifo branch of this
-			   and there is nothing in TPC-E spec that tells us that we should assert something here */
-			//assert (h_sorter.count());
-			/*
-			desc_sort_iter_impl h_list_sort_iter(_pssm, &h_list, &h_sorter);
-			TRACE( TRACE_TRX_FLOW, "App: %d TO:h-sort-iter-next \n", xct_id);
-			e = h_list_sort_iter.next(_pssm, eof, rsb);
-			if (e.is_error()) { goto done; }
-			while(needed_qty != 0 && !eof){
-			    int hold_qty;
-			    double hold_price;
-
-			    rsb.get_value(1, hold_qty);
-			    rsb.get_value(2, hold_price);
-
-			    if(hold_qty > needed_qty){
-				buy_value += needed_qty * hold_price;
-				sell_value += needed_qty * requested_price;
-				needed_qty = 0;
-			    }
-			    else{
-				buy_value += hold_qty * hold_price;
-				sell_value += hold_qty * requested_price;
-				needed_qty = needed_qty - hold_qty;
-			    }
-
-			    TRACE( TRACE_TRX_FLOW, "App: %d TO:h-sort-iter-next \n", xct_id);
-			    e = h_list_sort_iter.next(_pssm, eof, rsb);
-			    if (e.is_error()) { goto done; }
-			}
-			*/
-		    }
-		    else{
-			/**
-			 * 	SELECT	H_QTY, H_PRICE
-			 *   	FROM	HOLDING
-			 *	WHERE	H_CA_ID = acct_id and H_S_SYMB = symbol
-			 *	ORDER BY H_DTS ASC
-			 */
-
-			{
-			    index_scan_iter_impl<holding_t>* tmp_h_iter;
-			    TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-by-idx2 \n", xct_id);
-			    e = _pholding_man->h_get_iter_by_index2(_pssm, tmp_h_iter, prholding,
-								    lowrep, highrep, ptoin._acct_id, symbol);
-			    if (e.is_error()) { goto done; }
-			    h_iter = tmp_h_iter;
-			}
-			//already sorted in ascending order because of its index
-
-			bool eof;
-			TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-next \n", xct_id);
-			e = h_iter->next(_pssm, eof, *prholding);
-			if (e.is_error()) { goto done; }
-			while (needed_qty != 0 && !eof) {
-
-			    int hold_qty;
-			    double hold_price;
-
-			    prholding->get_value(4, hold_price);
-			    prholding->get_value(5, hold_qty);
-
-			    if(hold_qty > needed_qty){
-				buy_value += needed_qty * hold_price;
-				sell_value += needed_qty * requested_price;
-				needed_qty = 0;
-			    }
-			    else{
-				buy_value += hold_qty * hold_price;
-				sell_value += hold_qty * requested_price;
-				needed_qty = needed_qty - hold_qty;
-			    }
-			    TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-next \n", xct_id);
-			    e = h_iter->next(_pssm, eof, *prholding);
-			    if (e.is_error()) { goto done; }
-			}
-		    }
-		}
-	    }
-	    else{
-		/*
-		desc_sort_buffer_t h_list(3);
-		*/
+	    /* PIN: I made some changes regarding the query plan here:
+	     * (1) Since "if(type_is_sell)" branch cause some code repetition,
+	     *     instead this condition is put only on the places where it actually
+	     *     makes a difference. There are only two such places;
+	     *     (a) The condition that decides on whether to do the index scan or not
+	     *     (b        eDoraLockMode req_lm = DL_CC_EXCL;
+	     =>      if (base_action_t::is_read_only()) req_lm = DL_CC_SHARED;
+	     ) How to set the new values of buy_value, sell_value, and needed_qty
+	     *     Maybe this won't make that big of a difference in terms of performance but
+	     *     the code is much cleaner now.
+	     */
+	    if((type_is_sell && hs_qty > 0) ||
+	       (!type_is_sell && hs_qty < 0)){
 		guard<index_scan_iter_impl<holding_t> > h_iter;
-		if(hs_qty < 0){
-		    if(ptoin._is_lifo){
-			/**
-			 * 	SELECT	H_QTY, H_PRICE
-			 *   	FROM	HOLDING
-			 *	WHERE	H_CA_ID = acct_id and H_S_SYMB = symbol
-			 *	ORDER BY H_DTS DESC
-			 */
-			{
-			    index_scan_iter_impl<holding_t>* tmp_h_iter;
-			    TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-by-idx2 (%ld) (%s) \n",
-				   xct_id, ptoin._acct_id, symbol);
-			    e = _pholding_man->h_get_iter_by_index2(_pssm, tmp_h_iter,
-								    prholding, lowrep, highrep,
-								    ptoin._acct_id, symbol, true);
-			    if (e.is_error()) { goto done; }
-			    h_iter = tmp_h_iter;
-			}
-			/*
-			//descending order
-			rep_row_t sortrep(_pcompany_man->ts());
-			sortrep.set(_pcompany_desc->maxsize());
-
-			h_list.setup(0, SQL_LONG);
-			h_list.setup(1, SQL_INT);
-			h_list.setup(2, SQL_FLOAT);
-
-			table_row_t rsb(&h_list);
-			desc_sort_man_impl h_sorter(&h_list, &sortrep);
-			*/
-			bool eof;
-			TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-next \n", xct_id);
-			e = h_iter->next(_pssm, eof, *prholding);
+		if(ptoin._is_lifo){
+		    /**
+		     * SELECT	H_QTY, H_PRICE
+		     * FROM		HOLDING
+		     * WHERE	H_CA_ID = acct_id and H_S_SYMB = symbol
+		     * ORDER BY 	H_DTS DESC
+		     */
+		    {  
+			index_scan_iter_impl<holding_t>* tmp_h_iter;
+			TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-by-idx2 (%ld) (%s) \n",
+			       xct_id, ptoin._acct_id, symbol);
+			e = _pholding_man->h_get_iter_by_index2(_pssm, tmp_h_iter,
+								prholding, lowrep, highrep,
+								ptoin._acct_id, symbol, true);
 			if (e.is_error()) { goto done; }
-			while (!eof) {
-			    /* put the value into the sorted buffer */
-			    /*
-			    int temp_qty;
-			    myTime temp_dts;
-			    double temp_price;
-
-			    prholding->get_value(5, temp_qty);
-			    prholding->get_value(4, temp_price);
-			    prholding->get_value(3, temp_dts);
-
-			    rsb.set_value(0, temp_dts);
-			    rsb.set_value(1, temp_qty);
-			    rsb.set_value(2, temp_price);
-
-			    h_sorter.add_tuple(rsb);
-			    */
-
-			    int hold_qty;
-			    double hold_price;
-
-			    prholding->get_value(4, hold_price);
-			    prholding->get_value(5, hold_qty);
-
-			    if(hold_qty + needed_qty < 0){
-				sell_value += needed_qty * hold_price;
-				buy_value += needed_qty * requested_price;
-				needed_qty = 0;
-			    }
-			    else{
-				hold_qty = -hold_qty;
-				sell_value += hold_qty * hold_price;
-				buy_value += hold_qty * requested_price;
-				needed_qty = needed_qty - hold_qty;
-			    }
-
-			    
-			    TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-next \n", xct_id);
-			    e = h_iter->next(_pssm, eof, *prholding);
-			    if (e.is_error()) { goto done; }
-			}
-			/* PIN: not needed; this is OK, we don't check for this in the !is_lifo branch of this
-			   and there is nothing in TPC-E spec that tells us that we should assert something here */
-			//assert (h_sorter.count());
-			/*
-			desc_sort_iter_impl h_list_sort_iter(_pssm, &h_list, &h_sorter);
-
-			TRACE( TRACE_TRX_FLOW, "App: %d TO:h-sort-iter-next \n", xct_id);
-			e = h_list_sort_iter.next(_pssm, eof, rsb);
-			if (e.is_error()) { goto done; }
-			while(needed_qty != 0 && !eof){
-			    int hold_qty;
-			    double hold_price;
-
-			    rsb.get_value(1, hold_qty);
-			    rsb.get_value(2, hold_price);
-
-			    if(hold_qty + needed_qty < 0){
-				sell_value += needed_qty * hold_price;
-				buy_value += needed_qty * requested_price;
-				needed_qty = 0;
-			    }
-			    else{
-				hold_qty = -hold_qty;
-				sell_value += hold_qty * hold_price;
-				buy_value += hold_qty * requested_price;
-				needed_qty = needed_qty - hold_qty;
-			    }
-
-			    TRACE( TRACE_TRX_FLOW, "App: %d TO:h-sort-iter-next \n", xct_id);
-			    e = h_list_sort_iter.next(_pssm, eof, rsb);
-			    if (e.is_error()) { goto done; }
-			}
-			*/
+			h_iter = tmp_h_iter;
 		    }
-		    else{
-			/**
-			 * 	SELECT	H_QTY, H_PRICE
-			 *  	FROM	HOLDING
-			 *	WHERE	H_CA_ID = acct_id and H_S_SYMB = symbol
-			 *	ORDER BY H_DTS ASC
-			 */
-			{
-			    index_scan_iter_impl<holding_t>* tmp_h_iter;
-			    TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-by-idx2 \n", xct_id);
-			    e = _pholding_man->h_get_iter_by_index2(_pssm, tmp_h_iter, prholding,
-								    lowrep, highrep, ptoin._acct_id, symbol);
-			    if (e.is_error()) { goto done; }
-			    h_iter = tmp_h_iter;
-			}
-			//already sorted in ascending order because of its index
-			bool eof;
-			TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-next \n", xct_id);
-			e = h_iter->next(_pssm, eof, *prholding);
+		} else {
+		    /**
+		     * 	SELECT	H_QTY, H_PRICE
+		     *   	FROM	HOLDING
+		     *	WHERE	H_CA_ID = acct_id and H_S_SYMB = symbol
+		     *	ORDER BY H_DTS ASC
+		     */
+		    {
+			index_scan_iter_impl<holding_t>* tmp_h_iter;
+			TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-by-idx2 \n", xct_id);
+			e = _pholding_man->h_get_iter_by_index2(_pssm, tmp_h_iter,
+								prholding, lowrep, highrep,
+								ptoin._acct_id, symbol);
 			if (e.is_error()) { goto done; }
-			while (needed_qty != 0 && !eof) {
-			    /* put the value into the sorted buffer */
-
-			    int hold_qty;
-			    double hold_price;
-
-			    prholding->get_value(5, hold_qty);
-			    prholding->get_value(4, hold_price);
-
-			    if(hold_qty + needed_qty < 0){
-				sell_value += needed_qty * hold_price;
-				buy_value += needed_qty * requested_price;
-				needed_qty = 0;
-			    }
-			    else{
-				hold_qty = -hold_qty;
-				sell_value += hold_qty * hold_price;
-				buy_value += hold_qty * requested_price;
-				needed_qty = needed_qty - hold_qty;
-			    }
-			    TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-next \n", xct_id);
-			    e = h_iter->next(_pssm, eof, *prholding);
-			    if (e.is_error()) { goto done; }
-			}
+			h_iter = tmp_h_iter;
 		    }
 		}
+		
+		bool eof;
+		TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-next \n", xct_id);
+		e = h_iter->next(_pssm, eof, *prholding);
+		if (e.is_error()) { goto done; }
+		while (needed_qty != 0 && !eof) {
+		    int hold_qty;
+		    double hold_price;
+		    
+		    prholding->get_value(4, hold_price);
+		    prholding->get_value(5, hold_qty);
+
+		    if(type_is_sell) {
+			if(hold_qty > needed_qty) {
+			    buy_value += needed_qty * hold_price;
+			    sell_value += needed_qty * requested_price;
+			    needed_qty = 0;
+			} else {
+			    buy_value += hold_qty * hold_price;
+			    sell_value += hold_qty * requested_price;
+			    needed_qty = needed_qty - hold_qty;
+			}
+		    } else {
+			if(hold_qty + needed_qty < 0){
+			    sell_value += needed_qty * hold_price;
+			    buy_value += needed_qty * requested_price;
+			    needed_qty = 0;
+			} else {
+			    hold_qty = -hold_qty;
+			    sell_value += hold_qty * hold_price;
+			    buy_value += hold_qty * requested_price;
+			    needed_qty = needed_qty - hold_qty;
+			}
+		    }
+			
+		    TRACE( TRACE_TRX_FLOW, "App: %d TO:h-iter-next \n", xct_id);
+		    e = h_iter->next(_pssm, eof, *prholding);
+		    if (e.is_error()) {	goto done; }
+		}
 	    }
+		
 	    if((sell_value > buy_value) && ((tax_status == 1 || tax_status == 2))){
 		double tax_rates;
 		/**
@@ -793,7 +565,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 		    TRACE( TRACE_TRX_FLOW, "App: %d TO:cx-get-iter-by-idx (%ld) \n", xct_id, cust_id);
 		    e = _pcustomer_taxrate_man->cx_get_iter_by_index(_pssm, tmp_cx_iter, prcusttaxrate,
 								     lowrep, highrep, cust_id);
-		    if (e.is_error()) { goto done; }
+		    if (e.is_error()) {	goto done; }
 		    cx_iter = tmp_cx_iter;
 		}
 
@@ -815,7 +587,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 
 		    TRACE( TRACE_TRX_FLOW, "App: %d TO:cx-iter-next \n", xct_id);
 		    e = cx_iter->next(_pssm, eof, *prcusttaxrate);
-		    if (e.is_error()) { goto done; }
+		    if (e.is_error()) {	goto done; }
 		}
 		tax_amount = (sell_value - buy_value) * tax_rates;
 	    }
@@ -848,7 +620,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 	    bool eof;
 	    TRACE( TRACE_TRX_FLOW, "App: %d TO:cr-iter-next \n", xct_id);
 	    e = cr_iter->next(_pssm, eof, *prcommrate);
-	    if (e.is_error()) { goto done; }
+	    if (e.is_error()) {	goto done; }
 	    while (!eof) {
 		int to_qty;
 		prcommrate->get_value(4, to_qty);
@@ -876,7 +648,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 
 	    TRACE( TRACE_TRX_FLOW, "App: %d TO:ch-idx-probe (%d) (%s)  \n", xct_id, cust_tier, ptoin._trade_type_id);
 	    e =  _pcharge_man->ch_index_probe(_pssm, prcharge, cust_tier, ptoin._trade_type_id);
-	    if (e.is_error()) { goto done; }
+	    if (e.is_error()) {	goto done; }
 		
 	    prcharge->get_value(2, charge_amount);
  
@@ -919,7 +691,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 		    TRACE( TRACE_TRX_FLOW, "App: %d TO:hs-iter-by-idx (%ld) \n", xct_id, ptoin._acct_id);
 		    e = _pholding_summary_man->hs_get_iter_by_index(_pssm, tmp_hs_iter, prholdingsummary,
 								    lowrep, highrep, ptoin._acct_id);
-		    if (e.is_error()) { goto done; }
+		    if (e.is_error()) {	goto done; }
 		    hs_iter = tmp_hs_iter;
 		}
 
@@ -934,7 +706,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 
 		    TRACE( TRACE_TRX_FLOW, "App: %d TO:lt-idx-probe (%s) \n", xct_id, symb);
 		    e =  _plast_trade_man->lt_index_probe(_pssm, prlasttrade, symb);
-		    if(e.is_error()) {goto done; }
+		    if(e.is_error()) { goto done; }
 
 		    double lt_price;
 		    prlasttrade->get_value(3, lt_price);
@@ -942,7 +714,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 
 		    TRACE( TRACE_TRX_FLOW, "App: %d TO:hs-iter-next \n", xct_id);
 		    e = hs_iter->next(_pssm, eof, *prholdingsummary);
-		    if (e.is_error()) { goto done; }
+		    if (e.is_error()) {	goto done; }
 		}
 
 		cust_assets = hold_assets + acct_bal;
@@ -1022,7 +794,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 
 	    TRACE( TRACE_TRX_FLOW, "App: %d TO:t-add-tuple (%ld) \n", xct_id, trade_id);
 	    e = _ptrade_man->add_tuple(_pssm, prtrade);
-	    if (e.is_error()) { goto done; }
+	    if (e.is_error()) {	goto done; }
 
 	    if(!type_is_market){
 
@@ -1072,7 +844,7 @@ w_rc_t ShoreTPCEEnv::xct_trade_order(const int xct_id, trade_order_input_t& ptoi
 
 	    TRACE( TRACE_TRX_FLOW, "App: %d TO:th-add-tuple (%ld) \n", xct_id, trade_id);
 	    e = _ptrade_history_man->add_tuple(_pssm, prtradehist);
-	    if (e.is_error()) { goto done; }
+	    if (e.is_error()) {	goto done; }
 	}
 	//END FRAME4
 	    

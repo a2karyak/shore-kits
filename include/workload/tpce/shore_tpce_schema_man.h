@@ -288,7 +288,9 @@ public:
 
     w_rc_t ca_index_probe(ss_m* db, customer_account_tuple* ptuple, const TIdent acct_id);
 
-    w_rc_t ca_update_bal(ss_m* db, customer_account_tuple* ptuple,const double se_amount, lock_mode_t alm = EX);
+    w_rc_t ca_update_bal(ss_m* db, customer_account_tuple* ptuple,
+			 const TIdent acct_id, const double se_amount,
+			 lock_mode_t alm = EX);
     
     w_rc_t ca_get_iter_by_index2(ss_m* db,
 				 customer_account_index_iter* &iter,
@@ -359,16 +361,9 @@ public:
 				lock_mode_t alm = SH,
 				bool need_tuple = true);
 
-    /*
-     * @note: PIN: we have two cases here because there are cases where the ptuple has
-     *             the necessary information for the update/delete and there are cases
-     *             where it doesn't. For the cases that it doesn't we don't have to pass
-     *             the hold_id and do an index probe to get the tuple's RID.
-     */
-    w_rc_t h_update_qty(ss_m* db, holding_tuple* ptuple, const TIdent hold_id, const int qty, lock_mode_t lm = EX);
     w_rc_t h_update_qty(ss_m* db, holding_tuple* ptuple, const int qty, lock_mode_t lm = EX);
     
-    w_rc_t h_delete_by_index(ss_m* db, holding_tuple* ptuple, const TIdent hold_id);
+    w_rc_t h_delete_tuple(ss_m* db, holding_tuple* ptuple, rid_t rid);
     
 }; 
 
@@ -425,6 +420,8 @@ public:
 
     w_rc_t hs_update_qty(ss_m* db,
 		         holding_summary_tuple* ptuple,
+			 const TIdent acct_id,
+			 const char* symbol,
 		         const int qty,
 		         lock_mode_t lm = EX);
 			     
@@ -843,6 +840,8 @@ public:
 
     ~trade_request_man_impl() { }
 
+    w_rc_t tr_delete_tuple(ss_m* db, trade_request_tuple* ptuple, rid_t rid);
+    
     w_rc_t tr_get_iter_by_index4(ss_m* db,
 				 trade_request_index_iter* &iter,
 				 trade_request_tuple* ptuple,
@@ -861,15 +860,7 @@ public:
 				 const char* tr_s_symb,
 				 lock_mode_t alm = SH,
 				 bool need_tuple = true);
-    /*
-    w_rc_t tr_get_iter_by_index(ss_m* db,
-				trade_request_index_iter* &iter,
-				trade_request_tuple* ptuple,
-				rep_row_t &replow,
-				rep_row_t &rephigh,
-				lock_mode_t alm = SH,
-				bool need_tuple = true);
-    */
+
 };
 
 

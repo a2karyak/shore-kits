@@ -167,8 +167,8 @@ holding_t::holding_t(const uint4_t& pd)
     _desc[4].setup(SQL_FLOAT,   "H_PRICE");			//8
     _desc[5].setup(SQL_INT,     "H_QTY");			//4
 
-    
-    uint  keys[1] = { 0 };
+    // @note: PIN: not needed
+    //uint  keys[1] = { 0 }; // MSSQL - not used here
     /*
      * @note: PIN: the place where this index is used uses H_CA_ID and H_S_SYMB
      *             to reach H_PRICE, H_QTY, and H_T_ID. since, it needs the actual
@@ -179,7 +179,7 @@ holding_t::holding_t(const uint4_t& pd)
     //uint  keys1[4] = { 1, 2, 3, 0 };  // MSSQL - not used here
     uint  keys2[3] = { 1, 2, 3 };
     
-    create_primary_idx_desc("H_INDEX", 0, keys, 1, pd); //unique
+    //create_primary_idx_desc("H_INDEX", 0, keys, 1, pd); //unique
     //create_index_desc("H_INDEX_1", 0, keys2, 4, true, false, pd); //unique
     create_index_desc("H_INDEX_2", 0, keys2, 3, false, false, pd); //non-unique
  }

@@ -576,9 +576,14 @@ w_rc_t customer_account_man_impl::ca_index_probe(ss_m* db, customer_account_tupl
 }
 
 w_rc_t customer_account_man_impl::ca_update_bal(ss_m* db, customer_account_tuple* ptuple,
-						const double se_amount, lock_mode_t lm)
+						const TIdent acct_id, const double se_amount,
+						lock_mode_t lm)
 {
-    assert (ptuple);    	
+    assert (ptuple);
+
+    ptuple->set_value(0, acct_id);
+    W_DO(index_probe_forupdate_by_name(db, "CA_INDEX", ptuple));
+    
     double ca_bal;
     ptuple->get_value(5, ca_bal);
     ptuple->set_value(5, ca_bal + se_amount);
@@ -887,41 +892,24 @@ w_rc_t holding_man_impl::h_get_iter_by_index2(ss_m* db,
 
 w_rc_t holding_man_impl::h_update_qty(ss_m* db,
                                       holding_tuple* ptuple,
-                                      const TIdent hold_id,
                                       const int qty,
                                       lock_mode_t lm)
 {
-
-    assert (ptuple);
-    
-    ptuple->set_value(0, hold_id);
-    W_DO(index_probe_forupdate_by_name(db, "H_INDEX", ptuple));
-
-    ptuple->set_value(5, qty);
-    return (update_tuple(db, ptuple, lm));
-}
-
-w_rc_t holding_man_impl::h_update_qty(ss_m* db,
-                                      holding_tuple* ptuple,
-                                      const int qty,
-                                      lock_mode_t lm)
-{
-
+    // tuple is already retrieved
     assert (ptuple);
     ptuple->set_value(5, qty);
     return (update_tuple(db, ptuple, lm));
 }
 
-w_rc_t holding_man_impl::h_delete_by_index(ss_m* db, holding_tuple* ptuple, const TIdent hold_id)
+w_rc_t holding_man_impl::h_delete_tuple(ss_m* db, holding_tuple* ptuple, rid_t rid)
 {
     assert (ptuple);
 
-    // 1. idx probe holding
-    // 2. deletes the retrieved holding
+    // 1. read tuple
+    ptuple->set_rid(rid);
+    W_DO(read_tuple(ptuple, EX));
 
-    ptuple->set_value(0, hold_id);
-    W_DO(index_probe_forupdate_by_name(db, "H_INDEX", ptuple));
-    
+    // 2. delete tuple
     W_DO(delete_tuple(db, ptuple));
 
     return (RCOK);
@@ -986,10 +974,17 @@ w_rc_t holding_summary_man_impl::hs_index_probe(ss_m* db,
 
 w_rc_t holding_summary_man_impl::hs_update_qty(ss_m* db,
                                                holding_summary_tuple* ptuple,
+					       const TIdent acct_id,
+					       const char* symbol,
                                                const int qty,
                                                lock_mode_t lm)
 {
     assert (ptuple);
+
+    ptuple->set_value(0, acct_id);
+    ptuple->set_value(1, symbol);
+    W_DO(index_probe_forupdate_by_name(db, "HS_INDEX", ptuple));
+
     ptuple->set_value(2, qty);
     return (update_tuple(db, ptuple, lm));
 }
@@ -1793,6 +1788,20 @@ w_rc_t trade_history_man_impl::th_get_iter_by_index(ss_m* db,
 /* ---- TRADE_REQUEST ---- */
 /* ----------------------- */
 
+w_rc_t trade_request_man_impl::tr_delete_tuple(ss_m* db, trade_request_tuple* ptuple, rid_t rid)
+{
+    assert (ptuple);
+
+    // 1. read tuple
+    ptuple->set_rid(rid);
+    W_DO(read_tuple(ptuple, EX));
+
+    // 2. delete tuple
+    W_DO(delete_tuple(db, ptuple));
+
+    return (RCOK);    
+}
+
 w_rc_t trade_request_man_impl::tr_get_iter_by_index4(ss_m* db,
                                                      trade_request_index_iter* &iter,
                                                      trade_request_tuple* ptuple,
@@ -1867,42 +1876,6 @@ w_rc_t trade_request_man_impl::tr_get_iter_by_index4(ss_m* db,
 				 scan_index_i::lt, vec_t(rephigh._dest, highsz)));
     return (RCOK);
 }
-
-/*
-w_rc_t trade_request_man_impl::tr_get_iter_by_index(ss_m* db,
-						    trade_request_index_iter* &iter,
-						    trade_request_tuple* ptuple,
-						    rep_row_t &replow,
-						    rep_row_t &rephigh,
-						    lock_mode_t alm,
-						    bool need_tuple)
-{
-    assert (ptuple);
-
-    // find the index
-    assert (_ptable);
-    index_desc_t* pindex = _ptable->find_index("TR_INDEX");
-    assert (pindex);
-
-    // T_INDEX: { 0 }
-
-    // prepare the key to be probed
-    ptuple->set_value(0, (TIdent)0);
-
-    int lowsz = format_key(pindex, ptuple, replow);
-    assert (replow._dest);
-
-    ptuple->set_value(0, MAX_ID);
-    int highsz = format_key(pindex, ptuple, rephigh);
-    assert (rephigh._dest);    
-
-    // index only access
-    W_DO(get_iter_for_index_scan(db, pindex, iter, alm, need_tuple,
-				 scan_index_i::ge, vec_t(replow._dest, lowsz),
-				 scan_index_i::le, vec_t(rephigh._dest, highsz)));
-    return (RCOK);
-}
-*/
 
 
 /* -------------------- */
