@@ -63,6 +63,10 @@
 #include "dora/tpcb/dora_tpcb_client.h"
 #endif
 
+#ifdef CFG_VTUNE
+#include <ittnotify.h> // VTune API definitions
+#endif
+
 using namespace shore;
 
 using namespace tpcc;
@@ -103,6 +107,9 @@ using namespace dora;
 #warning Configuration: QPipe enabled
 #endif
 
+#ifdef CFG_VTUNE
+#warning Configuration: VTune controls enabled
+#endif
 
 //////////////////////////////
 
@@ -401,6 +408,11 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const double iQueriedSF,
                                         const int iIterations,
                                         const eBindingType abt)
 {
+#ifdef CFG_VTUNE
+    // to resume sampling
+    __itt_resume();
+#endif
+    
     // print measurement info
     print_MEASURE_info(iQueriedSF, iSpread, iNumOfThreads, iDuration, 
                        iSelectedTrx, iIterations, abt);
@@ -502,7 +514,11 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const double iQueriedSF,
         TRACE( TRACE_ALWAYS, "!!! Problem preparing for the next run\n");
     }
 
-
+#ifdef CFG_VTUNE
+    // to pause sampling
+    __itt_pause();
+#endif 
+    
     return (SHELL_NEXT_CONTINUE);
 }
 
@@ -567,6 +583,11 @@ void usage()
 
 int main(int argc, char* argv[]) 
 {
+#ifdef CFG_VTUNE
+    // to pause sampling
+    __itt_pause();
+#endif 
+    
     thread_init();
 
 #ifdef CFG_SIMICS

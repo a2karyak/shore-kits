@@ -39,10 +39,18 @@ PROCSTAT_INCLUDES = -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -I/usr/i
 PROCSTAT_LIBS = -lgtop-2.0
 endif
 
+if USE_VTUNE
+VTUNE_INCLUDES = -I/opt/intel/vtune_amplifier_xe_2011/include
+VTUNE_LIBS = -L/opt/intel/vtune_amplifier_xe_2011/lib64 -littnotify
+else
+VTUNE_INCLUDES =
+VTUNE_LIBS =
+endif
 
 # GLOBAL includes/ld
-INCLUDES = -I$(top_srcdir)/include $(SHORE_INCLUDES) -I/usr/local/include -I$(READLINE_INCLUDE) $(PROCSTAT_INCLUDES)
-LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -L$(READLINE_LIBS) -lreadline $(PROCSTAT_LIBS)
+INCLUDES = -I$(top_srcdir)/include $(SHORE_INCLUDES) -I/usr/local/include \
+	-I$(READLINE_INCLUDE) $(PROCSTAT_INCLUDES) $(VTUNE_INCLUDES)
+LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -L$(READLINE_LIBS) -lreadline $(PROCSTAT_LIBS) $(VTUNE_LIBS)
 
 # List of libraries
 
