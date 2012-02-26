@@ -972,5 +972,54 @@ w_rc_t ShoreTPCBEnv::_pad_TELLERS()
 }
   
 
+/********************************************************************* 
+ *
+ *  @fn:   db_print
+ *
+ *  @brief: Prints the current tpcb tables to files
+ *
+ *********************************************************************/ 
+
+w_rc_t ShoreTPCBEnv::db_print(int lines) 
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+
+    // print tables
+    W_DO(_pbranch_man->print_table(_pssm, lines));
+    W_DO(_pteller_man->print_table(_pssm, lines));    
+    W_DO(_paccount_man->print_table(_pssm, lines));
+    W_DO(_phistory_man->print_table(_pssm, lines));    
+
+    return (RCOK);
+}
+
+
+/********************************************************************* 
+ *
+ *  @fn:   db_fetch
+ *
+ *  @brief: Fetches the current tpcb tables to buffer pool
+ *
+ *********************************************************************/ 
+
+w_rc_t ShoreTPCBEnv::db_fetch() 
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+
+    // fetch tables
+    W_DO(_pbranch_man->fetch_table(_pssm));
+    W_DO(_pteller_man->fetch_table(_pssm));    
+    W_DO(_paccount_man->fetch_table(_pssm));
+    W_DO(_phistory_man->fetch_table(_pssm));    
+
+    return (RCOK);
+}
+
 
 EXIT_NAMESPACE(tpcb);

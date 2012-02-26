@@ -632,4 +632,29 @@ w_rc_t ShoreTM1Env::db_print(int lines)
 }
 
 
+/********************************************************************* 
+ *
+ *  @fn:   db_fetch
+ *
+ *  @brief: Fetches the current tm1 tables to buffer pool
+ *
+ *********************************************************************/ 
+
+w_rc_t ShoreTM1Env::db_fetch() 
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+
+    // fetch tables
+    W_DO(_psub_man->fetch_table(_pssm));
+    W_DO(_pai_man->fetch_table(_pssm));    
+    W_DO(_psf_man->fetch_table(_pssm));
+    W_DO(_pcf_man->fetch_table(_pssm));    
+
+    return (RCOK);
+}
+
+
 EXIT_NAMESPACE(tm1);

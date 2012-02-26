@@ -813,5 +813,64 @@ w_rc_t ShoreTPCCEnv::_post_init_impl()
 }
   
 
+/********************************************************************* 
+ *
+ *  @fn:   db_print
+ *
+ *  @brief: Prints the current tpcc tables to files
+ *
+ *********************************************************************/ 
+
+w_rc_t ShoreTPCCEnv::db_print(int lines) 
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+
+    // print tables
+    W_DO(_pwarehouse_man->print_table(_pssm, lines));
+    W_DO(_pdistrict_man->print_table(_pssm, lines));    
+    W_DO(_pstock_man->print_table(_pssm, lines));
+    W_DO(_porder_line_man->print_table(_pssm, lines));
+    W_DO(_pcustomer_man->print_table(_pssm, lines));    
+    W_DO(_phistory_man->print_table(_pssm, lines));
+    W_DO(_porder_man->print_table(_pssm, lines));
+    W_DO(_pnew_order_man->print_table(_pssm, lines));
+    W_DO(_pitem_man->print_table(_pssm, lines));
+	    
+    return (RCOK);
+}
+
+
+/********************************************************************* 
+ *
+ *  @fn:   db_fetch
+ *
+ *  @brief: Fetches the current tpcc tables to buffer pool
+ *
+ *********************************************************************/ 
+
+w_rc_t ShoreTPCCEnv::db_fetch() 
+{
+    // ensure a valid environment
+    assert (_pssm);
+    assert (_initialized);
+    assert (_loaded);
+
+    // fetch tables
+    W_DO(_pwarehouse_man->fetch_table(_pssm));
+    W_DO(_pdistrict_man->fetch_table(_pssm));    
+    W_DO(_pstock_man->fetch_table(_pssm));
+    W_DO(_porder_line_man->fetch_table(_pssm));
+    W_DO(_pcustomer_man->fetch_table(_pssm));    
+    W_DO(_phistory_man->fetch_table(_pssm));
+    W_DO(_porder_man->fetch_table(_pssm));
+    W_DO(_pnew_order_man->fetch_table(_pssm));
+    W_DO(_pitem_man->fetch_table(_pssm));
+
+    return (RCOK);
+}
+
 
 EXIT_NAMESPACE(tpcc);

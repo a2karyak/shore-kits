@@ -930,7 +930,7 @@ w_rc_t ShoreTPCEEnv::db_print(int lines)
  *
  *  @fn:   db_fetch
  *
- *  @brief: Prints the current tpce tables to files
+ *  @brief: Fetches the current tpce tables to buffer pool
  *
  *********************************************************************/ 
 
