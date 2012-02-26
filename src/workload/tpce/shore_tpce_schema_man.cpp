@@ -703,9 +703,9 @@ w_rc_t daily_market_man_impl::dm_index_probe(ss_m* db, daily_market_tuple* ptupl
 					     const char* symbol, const myTime start_date)
 {
     assert (ptuple);    
-    ptuple->set_value(1, symbol);
     ptuple->set_value(0, start_date);
-    return (index_probe_by_name(db, "DM_INDEX", ptuple));
+    ptuple->set_value(1, symbol);
+    return (index_probe_by_name(db, "DM_INDEX_2", ptuple));
 }
 
 w_rc_t daily_market_man_impl::dm_update_vol(ss_m* db,

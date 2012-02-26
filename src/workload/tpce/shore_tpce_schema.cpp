@@ -480,11 +480,10 @@ daily_market_t::daily_market_t(const uint4_t& pd)
     _desc[5].setup(SQL_INT,     "DM_VOL");
 		
     uint  keys1[2] = { 1, 0 };
-    // @note: PIN: i cannot see any access that this index can be useful for
-    //uint  keys2[2] = { 0, 1 };   // MSSQL - not used here
-    	
+    uint  keys2[2] = { 0, 1 };
+    
     create_primary_idx_desc("DM_INDEX", 0, keys1, 2, pd); //unique
-    //create_index_desc("DM_INDEX_2", 0, keys2, 2, true, false, pd); //unique
+    create_index_desc("DM_INDEX_2", 0, keys2, 2, true, false, pd); //unique
 }
 
 
