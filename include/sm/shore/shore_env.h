@@ -176,6 +176,7 @@ const int    SHORE_NUM_DB_OPTIONS  = 5;
             w_rc_t e2 = _pssm->abort_xct();                             \
             if(e2.is_error()) TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n", xct_id, e2.err_num()); \
             prequest->notify_client();                                  \
+            _request_pool.destroy(prequest);				\
             if ((*&_measure)!=MST_MEASURE) return (e);                  \
             _env_stats.inc_trx_att();                                   \
             return (e); }                                               \
