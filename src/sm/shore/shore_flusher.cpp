@@ -330,6 +330,7 @@ int flusher_t::_check_waiting(bool& bSleepNext,
             if (durablelsn > xctlsn) {
                 _stats.alreadyFlushed++;
                 preq->notify_client();
+                _env->inc_trx_com();
                 _env->_request_pool.destroy(preq);
             }
             else {
@@ -370,6 +371,7 @@ int flusher_t::_move_from_flushing(const lsn_t& durablelsn)
         xctlsn = preq->my_last_lsn();
         assert (xctlsn < durablelsn);
         preq->notify_client();
+        _env->inc_trx_com();
         _env->_request_pool.destroy(preq);
     }
 
