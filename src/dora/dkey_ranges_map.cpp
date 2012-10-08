@@ -66,8 +66,11 @@ dkey_ranges_map::dkey_ranges_map(const stid_t& stid,
 // This should be called when in PLP
 dkey_ranges_map::dkey_ranges_map(const stid_t& stid,
                                  key_ranges_map* krm)
-    : _isplp(true), _rmap(krm)
+    : _isplp(true)
 {
+    _rmap = new key_ranges_map();
+    *(_rmap) = *(krm);
+
     w_rc_t e = ss_m::get_store_info(stid,_sinfo);
     if (e.is_error()) {  assert(0); }
 }
