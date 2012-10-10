@@ -163,7 +163,12 @@ public:
 
 protected:
 
-    virtual w_rc_t _run()=0;        
+    virtual w_rc_t _run()
+    {
+	notify_partitions();
+	giveback();
+	return (RCOK);
+    }
     
 }; // EOF: rvp_t
 

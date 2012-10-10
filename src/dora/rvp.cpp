@@ -134,16 +134,13 @@ int rvp_t::add_action(base_action_t* paction)
  *
  * @fn:    run()
  *
- * @brief: Call the _run() and then gives back the object
+ * @brief: Wrapper of the _run() call
  *
  ******************************************************************/
 
 w_rc_t rvp_t::run()
 {
-    w_rc_t e = _run();
-    notify_partitions();
-    giveback();
-    return (e);
+    return (_run());
 }
 
 
@@ -292,7 +289,13 @@ w_rc_t terminal_rvp_t::_run()
     // client. Otherwise, we will not notify the client here, but only after we 
     // know that the xct had been flushed
     notify_client();
+
+    // In addition, if DFlusher is enabled, the notification of the partitions and the
+    // giveback of the RVP will happen by the dflusher
+    notify_partitions();
+    giveback();
 #endif
+
     return (rcdec);
 }
 
