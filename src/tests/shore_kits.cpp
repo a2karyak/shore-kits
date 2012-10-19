@@ -162,8 +162,10 @@ private:
 
 public:
 
-    kit_t(const char* prompt, const bool netmode, const int port) 
-        : shore_shell_t(prompt,netmode,port)
+    kit_t(const char* prompt, 
+          const bool netmode, const int port,
+          const bool inputfilemode, const string inputfile) 
+        : shore_shell_t(prompt,netmode,port,inputfilemode,inputfile)
     {
         // load supported trxs and binding policies maps
         load_trxs_map();
@@ -576,6 +578,7 @@ void usage()
            "-x            : Enable physical design hacks\n"   \
            "-g <RANGE>    : Use specific range (in some workloads)\n"   \
            "-f <FILE>     : Use specific configuration file (ie. instead of shore.conf)\n" \
+           "-i <IN_FILE>  : Run the commands in the specific input file\n" \
            "-h            : Print this message and exit\n");
 }
 
@@ -609,6 +612,8 @@ int main(int argc, char* argv[])
 
     // Get options
     bool netmode = false;
+    bool inputfilemode = false;
+    string inputfile;
     int netport = 0;
     string system,physical;
     int iRange = 0;    
@@ -621,7 +626,7 @@ int main(int argc, char* argv[])
     // Check if there is any particular configuration selected
     // We first need to make sure we use the correct config file
 
-    while ((c = getopt(argc,argv,"f:rnp:c:s:d:xg:h")) != -1) {
+    while ((c = getopt(argc,argv,"f:rnp:c:s:d:xg:i:h")) != -1) {
         switch (c) {
         case 'f':
             TRACE( TRACE_ALWAYS, "CONFIGFILE (%s)\n", optarg);
@@ -671,15 +676,23 @@ int main(int argc, char* argv[])
             TRACE( TRACE_ALWAYS, "RANGE (%d)\n", iRange);
             ev->setVarInt("records-to-access",iRange);
             break;
+        case 'i':
+            inputfilemode = true;
+            TRACE( TRACE_ALWAYS, "INPUTFILE (%s)\n", optarg);
+            inputfile = (string)optarg;            
+            break;
         case 'h':
             usage();
             return (2);
-            break;
+            break;                 
         default:
             TRACE( TRACE_ALWAYS, "Wrong parameter. Accepted: rnp:c:xg:s:d:h\n");
             return (2);
         }
     }
+
+    // make sure that no netmode and inputfilemode are selected at the same time
+    assert((inputfilemode == true) && (netmode == true) != true);
 
     // Get env vars
     initsysnamemap();
@@ -709,14 +722,14 @@ int main(int argc, char* argv[])
         switch (mSysnameValue[sysname]) {
         case snBaseline:
             dbname += "base) ";
-            kit = new baselineTPCCKit(dbname.c_str(),netmode,netport);
+            kit = new baselineTPCCKit(dbname.c_str(),netmode,netport,inputfilemode,inputfile);
             break;
 #ifdef CFG_DORA
         case snDORA:
             dbname += "dora) "; nameset=true;
         case snPLP:
             if (!nameset) dbname += "plp) ";
-            kit = new doraTPCCKit(dbname.c_str(),netmode,netport);
+            kit = new doraTPCCKit(dbname.c_str(),netmode,netport,inputfilemode,inputfile);
             break;
 #endif
         default:
@@ -731,14 +744,14 @@ int main(int argc, char* argv[])
         switch (mSysnameValue[sysname]) {
         case snBaseline:
             dbname += "base) ";
-            kit = new baselineTM1Kit(dbname.c_str(),netmode,netport);
+            kit = new baselineTM1Kit(dbname.c_str(),netmode,netport,inputfilemode,inputfile);
             break;
 #ifdef CFG_DORA
         case snDORA:
             dbname += "dora) "; nameset=true;
         case snPLP:
             if (!nameset) dbname += "plp) ";
-            kit = new doraTM1Kit(dbname.c_str(),netmode,netport);
+            kit = new doraTM1Kit(dbname.c_str(),netmode,netport,inputfilemode,inputfile);
             break;
 #endif
         default:
@@ -753,14 +766,14 @@ int main(int argc, char* argv[])
         switch (mSysnameValue[sysname]) {
         case snBaseline:
             dbname += "base) ";
-            kit = new baselineTPCBKit(dbname.c_str(),netmode,netport);
+            kit = new baselineTPCBKit(dbname.c_str(),netmode,netport,inputfilemode,inputfile);
             break;
 #ifdef CFG_DORA
         case snDORA:
             dbname += "dora) "; nameset=true;
         case snPLP:
             if (!nameset) dbname += "plp) ";
-            kit = new doraTPCBKit(dbname.c_str(),netmode,netport);
+            kit = new doraTPCBKit(dbname.c_str(),netmode,netport,inputfilemode,inputfile);
             break;
 #endif
         default:
@@ -773,13 +786,13 @@ int main(int argc, char* argv[])
     if (benchmarkname.compare("tpch")==0) {
         switch (mSysnameValue[sysname]) {
         case snBaseline:
-            kit = new baselineTPCHKit("(tpch-base) ",netmode,netport);
+            kit = new baselineTPCHKit("(tpch-base) ",netmode,netport,inputfilemode,inputfile);
             break;
 #ifdef CFG_DORA
         case snDORA:
             dbname += "dora) "; nameset=true;
             assert (0); // TODO
-            //kit = new doraTPCHKit("(tpch-dora) ",netmode,netport);
+            //kit = new doraTPCHKit("(tpch-dora) ",netmode,netport,inputfilemode,inputfile);
             break;
 #endif
         default:
@@ -793,13 +806,13 @@ int main(int argc, char* argv[])
     if (benchmarkname.compare("ssb")==0) {
         switch (mSysnameValue[sysname]) {
         case snBaseline:
-            kit = new baselineSSBKit("(ssb-base) ",netmode,netport);
+            kit = new baselineSSBKit("(ssb-base) ",netmode,netport,inputfilemode,inputfile);
             break;
 #ifdef CFG_DORA
         case snDORA:
             dbname += "dora) "; nameset=true;
             assert (0); // TODO
-            //kit = new doraSSBKit("(ssb-dora) ",netmode,netport);
+            //kit = new doraSSBKit("(ssb-dora) ",netmode,netport,inputfilemode,inputfile);
             break;
 #endif
         default:
@@ -814,13 +827,13 @@ int main(int argc, char* argv[])
     if (benchmarkname.compare("tpce")==0) {
         switch (mSysnameValue[sysname]) {
         case snBaseline:
-            kit = new baselineTPCEKit("(tpce-base) ",netmode,netport);
+            kit = new baselineTPCEKit("(tpce-base) ",netmode,netport,inputfilemode,inputfile);
             break;
 #ifdef CFG_DORA
         case snDORA:
             dbname += "dora) "; nameset=true;
             assert (0); // TODO
-            //kit = new doraTPCEKit("(tpce-dora) ",netmode,netport);
+            //kit = new doraTPCEKit("(tpce-dora) ",netmode,netport,inputfilemode,inputfile);
             break;
 #endif
         default:
@@ -869,8 +882,10 @@ int main(int argc, char* argv[])
 
     // Start processing commands
     TRACE ( TRACE_ALWAYS, "Starting processing commands\n" );
+
     int start = kit->start();
-    if (start < 0) {
+    if (start < 0) 
+    {
         TRACE( TRACE_ALWAYS, "Error in starting shell\n");
         return (8);
     }

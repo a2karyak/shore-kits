@@ -240,6 +240,8 @@ public:
     shore_shell_t(const char* prompt, 
                   const bool netmode,
                   const int netport,                  
+                  const bool inputfilemode, 
+                  const string inputfile,
                   processorid_t acpustart = PBIND_NONE);
     virtual ~shore_shell_t();
 

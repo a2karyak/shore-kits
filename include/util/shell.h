@@ -36,16 +36,23 @@
 #include <map>
 
 
+#include <assert.h>
+#include <signal.h>
+#include <errno.h>
+
+// For reading from std::in
+#include <readline/readline.h>
+#include <readline/history.h>
+
+// For reading from network
 #include <sys/types.h>  // for socket
 #include <sys/socket.h> 
 #include <netdb.h>      // for clientaddr structures
 
-
-#include <readline/readline.h>
-#include <readline/history.h>
-#include <assert.h>
-#include <signal.h>
-#include <errno.h>
+// For reading from FILE
+#include <iostream>
+#include <fstream>
+#include <string>
 
 #include "util/command/command_handler.h"
 #include "util/command/tracer.h"
@@ -220,6 +227,11 @@ protected:
     bool   _net_mode;
     uint_t _net_port;
 
+    // For input file mode
+    bool   _inputfile_mode;
+    string _inputfile;
+    ifstream _inputfilestream;
+
     file_guard_t _in_stream;
     int _listen_fd;
 
@@ -250,9 +262,11 @@ public:
     shell_t(const char* prompt = SCLIENT_PROMPT, 
             const bool save_history = true,
             const bool net_mode = false,
-            const uint_t net_port = SCLIENT_NET_MODE_LISTEN_PORT);
+            const uint_t net_port = SCLIENT_NET_MODE_LISTEN_PORT,
+            const bool inputfile_mode = false,
+            const string inputfile = "");
 
-    virtual ~shell_t() { }
+    virtual ~shell_t();
 
     static shell_t* &instance() { 
         static shell_t* _instance; return _instance; 
@@ -277,9 +291,18 @@ public:
     // basic shell functionality    
     virtual int SIGINT_handler() { return (ECANCELED); /* exit immediately */ }     
     int start();
+
+    // Executes a command read from std::in
     int process_readline();
+
+    // Executes a command read from the network socket
     int process_network();
-    int process_one(char* cmd);
+
+    // Executes a command read from the input file
+    int process_fileline();
+
+    // Executes a specific command
+    int process_one(const char* cmd);
 
 }; // EOF: shell_t
 

@@ -65,8 +65,10 @@ double _theSF = DF_SF;
 shore_shell_t::shore_shell_t(const char* prompt, 
                              const bool netmode,
                              const int netport,                  
+                             const bool inputfilemode, 
+                             const string inputfile,
                              processorid_t acpustart) 
-    : shell_t(prompt,true,netmode,netport), 
+    : shell_t(prompt,true,netmode,netport,inputfilemode,inputfile), 
       _env(NULL), 
       _start_prs_id(acpustart), _current_prs_id(acpustart)
 {

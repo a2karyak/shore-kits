@@ -53,13 +53,18 @@ void sig_handler_fwd(int sig)
 shell_t::shell_t(const char* prompt, 
                  const bool save_history,
                  const bool net_mode,
-                 const uint_t net_port) 
+                 const uint_t net_port,
+                 const bool inputfile_mode,
+                 const string inputfile
+) 
         : _cmd_counter(0), 
           _save_history(save_history), 
           _state(SHELL_NEXT_CONTINUE), 
           _processing_command(false),
           _net_mode(net_mode),
           _net_port(net_port),
+          _inputfile_mode(inputfile_mode),
+          _inputfile(inputfile),
           _listen_fd(-1), _conn_fd(-1), _net_conn_cnt(0)
 {
     // 1. Set prompt
@@ -68,6 +73,26 @@ shell_t::shell_t(const char* prompt,
     if (prompt) strncpy(_cmd_prompt, prompt, strlen(prompt));
     _register_commands();
 }
+
+
+
+/*********************************************************************
+ *
+ *  @fn:    destructor
+ *  
+ *  @brief: Closes any open resources
+ *
+ *********************************************************************/
+
+shell_t::~shell_t() 
+{
+    // 2. If in inputfile mode, close file
+    if (_inputfile_mode)
+    {
+        _inputfilestream.close();
+    }
+}
+
 
 
 
@@ -108,26 +133,49 @@ int shell_t::start()
             return (-2);
         }
     }
+    
+    // 3. If in input FILE mode, open file stream
+    if (_inputfile_mode)
+    {
+        // 3a. Open file stream
+        _inputfilestream.open(_inputfile.c_str());
+        if ((!_inputfilestream.is_open()) || (!_inputfilestream.good()))
+        {
+            TRACE( TRACE_ALWAYS, "File (%s) empty or not found.\n",
+                   _inputfile.c_str());
+            return (-3);
+        }
+    }
 
-    // 3. Init all commands
+    // 4. Init all commands
     init_cmds();
 
-    // 4. Open saved command history (optional)
+    // 5. Open saved command history (optional)
     if (_save_history) {
         _save_history = history_open();
     }
         
-    // 5. Command loop
+    // 6. Command loop
     _state = SHELL_NEXT_CONTINUE;
-    while (_state == SHELL_NEXT_CONTINUE) {
-        if (!_net_mode) {
-            _state = process_readline();
-        }
-        else {
+    while (_state == SHELL_NEXT_CONTINUE) 
+    {
+        if (_net_mode) 
+        {
             _state = process_network();
-            if (_state == SHELL_NEXT_DISCONNECT) {
+            if (_state == SHELL_NEXT_DISCONNECT) 
+            {
                 _conn_fd = -1;
                 _state = SHELL_NEXT_CONTINUE;
+            }
+        }
+        else {
+            if (_inputfile_mode) 
+            {
+                _state = process_fileline();
+            }
+            else
+            {
+                _state = process_readline();
             }
         }
     }    
@@ -161,6 +209,7 @@ int shell_t::start()
 int shell_t::process_readline()
 {
     assert (!_net_mode);
+    assert (!_inputfile_mode);
 
     char *cmd = (char*)NULL;
         
@@ -187,6 +236,7 @@ int shell_t::process_readline()
 int shell_t::process_network()
 {
     assert (_net_mode);
+    assert (!_inputfile_mode);
     assert (_listen_fd>=0);
 
     // 1. Check if connection already opened
@@ -241,6 +291,41 @@ int shell_t::process_network()
 }
 
 
+
+/*********************************************************************
+ *
+ *  @fn:    process_fileline
+ *  
+ *  @brief: Get input from the input FILE and process it
+ *
+ *********************************************************************/
+
+int shell_t::process_fileline()
+{
+    assert (!_net_mode);
+    assert (_inputfile_mode);
+
+    string cmd_read;
+        
+    // Read a line from the FILE
+    if (_inputfilestream.eof())
+    {
+        return (SHELL_NEXT_QUIT);
+    }
+    getline(_inputfilestream,cmd_read);
+    cout << "FILECMD: " << cmd_read;
+
+    // char* cmd = cmd_read.c_str()
+
+    // // 4. Chomp off trailing '\n' or '\r', if they exist
+    // chomp_newline(cmd);
+    // chomp_carriage_return(cmd);
+        
+    return (process_one(cmd_read.c_str()));
+}
+
+
+
 /*********************************************************************
  *
  *  @fn:    process_one
@@ -249,9 +334,9 @@ int shell_t::process_network()
  *
  *********************************************************************/
 
-int shell_t::process_one(char* acmd) 
+int shell_t::process_one(const char* acmd) 
 {
-    assert (acmd);
+    assert (acmd != NULL);
 
     // 2. Lock shell
     char cmd_tag[SERVER_COMMAND_BUFFER_SIZE];
