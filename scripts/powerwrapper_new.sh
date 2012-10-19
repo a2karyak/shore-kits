@@ -80,8 +80,10 @@ cat shore.conf | grep "^$SELECTEDDB" | tee -a $OUTFILE
 
 ## Clobbers the db
 if [ "$HACK" = "x" ]; then
+    echo "KITS CMD: $TRXSHELL -c $SELECTEDDB -s $DESIGN -d $TYPE -x -r" | tee -a OUTFILE
     ($EXPSHELL $LOW $HIGH $XCT $TIME $ITER $SLEEPTIME $CLIENTSET $LOGTYPE $SLI $ELR | $TRXSHELL -c $SELECTEDDB -s $DESIGN -d $TYPE -x -r) 2>&1 | tee -a $OUTFILE
 else
+    echo "KITS CMD: $TRXSHELL -c $SELECTEDDB -s $DESIGN -d $TYPE -r" | tee -a OUTFILE
     ($EXPSHELL $LOW $HIGH $XCT $TIME $ITER $SLEEPTIME $CLIENTSET $LOGTYPE $SLI $ELR | $TRXSHELL -c $SELECTEDDB -s $DESIGN -d $TYPE -r) 2>&1 | tee -a $OUTFILE
 fi
 
