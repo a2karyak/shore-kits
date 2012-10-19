@@ -1,0 +1,6 @@
+echo TPC-B run
+echo 1
+measure 32 1 2 20 31 1
+echo 2
+measure 32 1 4 20 31 1
+quit
