@@ -692,7 +692,7 @@ int main(int argc, char* argv[])
     }
 
     // make sure that no netmode and inputfilemode are selected at the same time
-    assert((inputfilemode == true) && (netmode == true) != true);
+    assert( ((inputfilemode == true) && (netmode == true)) == false);
 
     // Get env vars
     initsysnamemap();
