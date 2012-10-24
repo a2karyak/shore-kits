@@ -90,7 +90,7 @@ CLIENT_SEQ=(1 4 8 12 16 20 24 28 32 36 40 44 48 52 56 58 64 68 74)
 
 ## x86
 if [ "$CLIENTSET" = "x86" ]; then
-    CLIENT_SEQ=(1 2 4 6 8 10 12 14 16)
+    CLIENT_SEQ=(1 2 4 6 8 10 12 14 16 18)
 fi
 
 
