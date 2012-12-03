@@ -137,12 +137,7 @@ public:
     // INTERFACE 
 
     // default action on rvp - commit trx
-    w_rc_t run();
-
-    // notifies for any committed actions 
-    // only the final_rvps may notify
-    // for midway rvps it should be a noop
-    virtual int notify_partitions() { return(0); } 
+    virtual w_rc_t run();
 
     // should give memory back to the atomic trash stack
     virtual void giveback()=0;
@@ -163,12 +158,7 @@ public:
 
 protected:
 
-    virtual w_rc_t _run()
-    {
-	notify_partitions();
-	giveback();
-	return (RCOK);
-    }
+    virtual w_rc_t _run()=0;
     
 }; // EOF: rvp_t
 
@@ -211,6 +201,7 @@ public:
         _denv = denv;
     }
 
+    w_rc_t run();
 
     void notify_on_abort();
 

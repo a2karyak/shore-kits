@@ -134,13 +134,15 @@ int rvp_t::add_action(base_action_t* paction)
  *
  * @fn:    run()
  *
- * @brief: Wrapper of the _run() call
+ * @brief: Call the _run() and then gives back the object
  *
  ******************************************************************/
 
 w_rc_t rvp_t::run()
 {
-    return (_run());
+    w_rc_t e = _run();
+    giveback();
+    return (e);
 }
 
 
@@ -207,6 +209,18 @@ int terminal_rvp_t::notify_partitions()
     return (_actions.size());
 }
 
+/****************************************************************** 
+ *
+ * @fn:    run()
+ *
+ * @brief: Wrapper for the _run() call
+ *
+ ******************************************************************/
+
+w_rc_t terminal_rvp_t::run()
+{
+    return(_run());
+}
 
 
 /****************************************************************** 
@@ -245,6 +259,10 @@ w_rc_t terminal_rvp_t::_run()
             TRACE( TRACE_TRX_FLOW, "Xct (%d) aborted\n", _tid.get_lo());
             upd_aborted_stats();
         }
+
+#ifdef CFG_FLUSHER
+        notify_on_abort();
+#endif
     }
     else {
 
