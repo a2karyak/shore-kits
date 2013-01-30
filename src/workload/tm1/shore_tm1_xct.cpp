@@ -42,7 +42,7 @@ ENTER_NAMESPACE(tm1);
 
 
 
-template<class T, class M>
+template<class M, class T=table_row_t>
 struct tuple_guard {
     T* ptr;
     M* manager;
@@ -296,20 +296,12 @@ w_rc_t ShoreTM1Env::xct_populate_one(const int sub_id)
 {
     assert (sub_id>=0);
 
-    w_rc_t e = RCOK;
-
     // get table tuples from the caches
-    table_row_t* prsub = _psub_man->get_tuple();
-    assert (prsub);
 
-    table_row_t* prai = _pai_man->get_tuple();
-    assert (prai);
-
-    table_row_t* prsf = _psf_man->get_tuple();
-    assert (prsf);
-
-    table_row_t* prcf = _pcf_man->get_tuple();
-    assert (prcf);
+    tuple_guard<sub_man_impl> prsub(_psub_man);
+    tuple_guard<ai_man_impl> prai(_pai_man);
+    tuple_guard<sf_man_impl> prsf(_psf_man);
+    tuple_guard<cf_man_impl> prcf(_pcf_man);
 
     rep_row_t areprow(_psub_man->ts());
     rep_row_t areprow_key(_psub_man->ts());
@@ -392,8 +384,7 @@ w_rc_t ShoreTM1Env::xct_populate_one(const int sub_id)
         prsub->set_value(34, "padding");         // PADDING
 #endif
         
-        e = _psub_man->add_tuple(_pssm, prsub);
-        if (e.is_error()) { goto done; }
+        W_DO(_psub_man->add_tuple(_pssm, prsub));
 
         TRACE (TRACE_TRX_FLOW, "Added SUB - (%d)\n", sub_id);
 
@@ -427,9 +418,7 @@ w_rc_t ShoreTM1Env::xct_populate_one(const int sub_id)
             prai->set_value(6, "padding");            // PADDING
 #endif
 
-            e = _pai_man->add_tuple(_pssm, prai);
-            if (e.is_error()) { goto done; }
-
+            W_DO(_pai_man->add_tuple(_pssm, prai));
 
             TRACE (TRACE_TRX_FLOW, "Added AI-%d - (%d|%d|%s|%s)\n",
                    i,sub_id,i+1,data3,data4);
@@ -461,8 +450,7 @@ w_rc_t ShoreTM1Env::xct_populate_one(const int sub_id)
             prsf->set_value(6, "padding");            // PADDING
 #endif
 
-            e = _psf_man->add_tuple(_pssm, prsf);
-            if (e.is_error()) { goto done; }
+            W_DO(_psf_man->add_tuple(_pssm, prsf));
 
             TRACE (TRACE_TRX_FLOW, "Added SF-%d - (%d|%d|%s)\n",
                    i,sub_id,i+1,datab);
@@ -498,8 +486,7 @@ w_rc_t ShoreTM1Env::xct_populate_one(const int sub_id)
                 prcf->set_value(5, "padding");                // PADDING
 #endif
 
-                e = _pcf_man->add_tuple(_pssm, prcf);
-                if (e.is_error()) { goto done; }                
+                W_DO(_pcf_man->add_tuple(_pssm, prcf));          
 
                 TRACE (TRACE_TRX_FLOW, "Added CF-%d - (%d|%d|%d)\n",
                        i,sub_id,i+1,j*8);
@@ -509,13 +496,7 @@ w_rc_t ShoreTM1Env::xct_populate_one(const int sub_id)
     } // goto
 
 
- done:
-    // return the tuples to the cache
-    _psub_man->give_tuple(prsub);
-    _pai_man->give_tuple(prai);
-    _psf_man->give_tuple(prsf);
-    _pcf_man->give_tuple(prcf);
-    return (e);
+    return RCOK;
 }
 
 
@@ -530,8 +511,6 @@ w_rc_t ShoreTM1Env::xct_populate_one(const int sub_id)
 w_rc_t ShoreTM1Env::xct_get_sub_data(const int xct_id, 
                                      get_sub_data_input_t& gsdin)
 {
-    w_rc_t e = RCOK;
-
     // ensure a valid environment
     assert (_pssm);
     assert (_initialized);
@@ -539,8 +518,7 @@ w_rc_t ShoreTM1Env::xct_get_sub_data(const int xct_id,
 
     // Touches 1 table:
     // Subscriber
-    table_row_t* prsub = _psub_man->get_tuple();
-    assert (prsub);
+    tuple_guard<sub_man_impl> prsub(_psub_man);
 
     rep_row_t areprow(_psub_man->ts());
 
@@ -564,8 +542,7 @@ w_rc_t ShoreTM1Env::xct_get_sub_data(const int xct_id,
         TRACE( TRACE_TRX_FLOW, 
                "App: %d GSD:sub-idx-probe (%d)\n", 
                xct_id, gsdin._s_id);
-        e = _psub_man->sub_idx_probe(_pssm, prsub, gsdin._s_id);
-        if (e.is_error()) { goto done; }
+        W_DO(_psub_man->sub_idx_probe(_pssm, prsub, gsdin._s_id));
 
         tm1_sub_t asub;
 
@@ -621,11 +598,7 @@ w_rc_t ShoreTM1Env::xct_get_sub_data(const int xct_id,
     prsub->print_tuple();
 #endif
 
-
-done:    
-    // return the tuples to the cache
-    _psub_man->give_tuple(prsub);
-    return (e);
+    return RCOK;
 
 } // EOF: GET_SUB_DATA
 
@@ -641,8 +614,6 @@ done:
 w_rc_t ShoreTM1Env::xct_get_new_dest(const int xct_id, 
                                      get_new_dest_input_t& gndin)
 {
-    w_rc_t e = RCOK;
-
     // ensure a valid environment
     assert (_pssm);
     assert (_initialized);
@@ -650,11 +621,8 @@ w_rc_t ShoreTM1Env::xct_get_new_dest(const int xct_id,
 
     // Touches 2 tables:
     // SpecialFacility and CallForwarding
-    table_row_t* prsf = _psf_man->get_tuple();
-    assert (prsf);
-
-    table_row_t* prcf = _pcf_man->get_tuple();
-    assert (prcf);
+    tuple_guard<sf_man_impl> prsf(_psf_man);
+    tuple_guard<cf_man_impl> prcf(_pcf_man);
 
     // allocate space for the larger of the 2 table representations
     rep_row_t areprow(_pcf_man->ts());
@@ -697,9 +665,8 @@ w_rc_t ShoreTM1Env::xct_get_new_dest(const int xct_id,
         TRACE( TRACE_TRX_FLOW, 
                "App: %d GND:sf-idx-probe (%d) (%d)\n", 
                xct_id, gndin._s_id, gndin._sf_type);
-        e = _psf_man->sf_idx_probe(_pssm, prsf, 
-                                   gndin._s_id, gndin._sf_type);
-        if (e.is_error()) { goto done; }
+        W_DO(_psf_man->sf_idx_probe(_pssm, prsf, 
+				    gndin._s_id, gndin._sf_type));
 
         prsf->get_value(2, asf.IS_ACTIVE);
 
@@ -711,16 +678,14 @@ w_rc_t ShoreTM1Env::xct_get_new_dest(const int xct_id,
 	    {
 		index_scan_iter_impl<call_forwarding_t>* tmp_cf_iter;
 		TRACE( TRACE_TRX_FLOW, "App: %d GND:cf-idx-iter\n", xct_id);
-		e = _pcf_man->cf_get_idx_iter(_pssm, tmp_cf_iter, prcf,
-                                              lowrep, highrep,
-                                              gndin._s_id, gndin._sf_type, 
-                                              gndin._s_time);
-		if (e.is_error()) { goto done; }
+		W_DO(_pcf_man->cf_get_idx_iter(_pssm, tmp_cf_iter, prcf,
+					       lowrep, highrep,
+					       gndin._s_id, gndin._sf_type, 
+					       gndin._s_time));
 		cf_iter = tmp_cf_iter;
 	    }
 
-            e = cf_iter->next(_pssm, eof, *prcf);
-            if (e.is_error()) { goto done; }
+            W_DO(cf_iter->next(_pssm, eof, *prcf));
 
             while (!eof) {
 
@@ -734,13 +699,12 @@ w_rc_t ShoreTM1Env::xct_get_new_dest(const int xct_id,
                 }
                 
 		TRACE( TRACE_TRX_FLOW, "App: %d GND:cf-idx-iter-next\n", xct_id);
-                e = cf_iter->next(_pssm, eof, *prcf);
-                if (e.is_error()) { goto done; }
+                W_DO(cf_iter->next(_pssm, eof, *prcf));
             }
         }
 
         if (!bFound) { 
-            e = RC(se_NO_CURRENT_TUPLE); 
+            return RC(se_NO_CURRENT_TUPLE); 
         }
 
     } // goto
@@ -752,12 +716,7 @@ w_rc_t ShoreTM1Env::xct_get_new_dest(const int xct_id,
     prcf->print_tuple();
 #endif
 
-
-done:    
-    // return the tuples to the cache
-    _psf_man->give_tuple(prsf);
-    _pcf_man->give_tuple(prcf);
-    return (e);
+    return RCOK;
 
 } // EOF: GET_NEW_DEST
 
@@ -780,7 +739,7 @@ w_rc_t ShoreTM1Env::xct_get_acc_data(const int xct_id,
 
     // Touches 1 table:
     // AccessInfo
-    tuple_guard<table_row_t, ai_man_impl> prai(_pai_man);
+    tuple_guard<ai_man_impl> prai(_pai_man);
 
     rep_row_t areprow(_pai_man->ts());
 
@@ -803,7 +762,7 @@ w_rc_t ShoreTM1Env::xct_get_acc_data(const int xct_id,
         TRACE( TRACE_TRX_FLOW, 
                "App: %d GAD:ai-idx-probe (%d) (%d)\n", 
                xct_id, gadin._s_id, gadin._ai_type);
-        W_DO(_pai_man->ai_idx_probe(_pssm, prai, 
+	W_DO(_pai_man->ai_idx_probe(_pssm, prai, 
 				    gadin._s_id, gadin._ai_type));
 
         tm1_ai_t aai;
@@ -822,8 +781,7 @@ w_rc_t ShoreTM1Env::xct_get_acc_data(const int xct_id,
     // dumps the status of all the table rows used
     prai->print_tuple();
 #endif
-
-
+    
     return RCOK;
 } // EOF: GET_ACC_DATA
 
@@ -838,8 +796,6 @@ w_rc_t ShoreTM1Env::xct_get_acc_data(const int xct_id,
 w_rc_t ShoreTM1Env::xct_upd_sub_data(const int xct_id, 
                                      upd_sub_data_input_t& usdin)
 {
-    w_rc_t e = RCOK;
-
     // ensure a valid environment
     assert (_pssm);
     assert (_initialized);
@@ -847,11 +803,8 @@ w_rc_t ShoreTM1Env::xct_upd_sub_data(const int xct_id,
 
     // Touches 2 tables:
     // Subscriber, SpecialFacility
-    table_row_t* prsub = _psub_man->get_tuple();
-    assert (prsub);
-
-    table_row_t* prsf = _psf_man->get_tuple();
-    assert (prsf);
+    tuple_guard<sub_man_impl> prsub(_psub_man);
+    tuple_guard<sf_man_impl> prsf(_psf_man);
 
     rep_row_t areprow(_psub_man->ts());
 
@@ -887,28 +840,24 @@ w_rc_t ShoreTM1Env::xct_upd_sub_data(const int xct_id,
         TRACE( TRACE_TRX_FLOW, 
                "App: %d USD:sf-idx-upd (%d) (%d)\n", 
                xct_id, usdin._s_id, usdin._sf_type);
-        e = _psf_man->sf_idx_upd(_pssm, prsf, 
-                                 usdin._s_id, usdin._sf_type);
-        if (e.is_error()) { goto done; }
+        W_DO(_psf_man->sf_idx_upd(_pssm, prsf, 
+				  usdin._s_id, usdin._sf_type));
 
         prsf->set_value(4, usdin._a_data);
         
-        e = _psf_man->update_tuple(_pssm, prsf);
+        W_DO(_psf_man->update_tuple(_pssm, prsf));
 
-        if (e.is_error()) { goto done; }
-      
 
         // 2. Update Subscriber
         TRACE( TRACE_TRX_FLOW, 
                "App: %d USD:sub-idx-upd (%d)\n", 
                xct_id, usdin._s_id);
-        e = _psub_man->sub_idx_upd(_pssm, prsub, 
-                                   usdin._s_id);
-        if (e.is_error()) { goto done; }
+        W_DO(_psub_man->sub_idx_upd(_pssm, prsub, 
+				    usdin._s_id));
 
         prsub->set_value(2, usdin._a_bit);
         
-        e = _psub_man->update_tuple(_pssm, prsub);
+        W_DO(_psub_man->update_tuple(_pssm, prsub));
 
     } // goto
 
@@ -919,12 +868,7 @@ w_rc_t ShoreTM1Env::xct_upd_sub_data(const int xct_id,
     prsf->print_tuple();
 #endif
 
-
-done:    
-    // return the tuples to the cache
-    _psub_man->give_tuple(prsub);
-    _psf_man->give_tuple(prsf);
-    return (e);
+    return RCOK;
 
 } // EOF: UPD_SUB_DATA
 
@@ -939,8 +883,6 @@ done:
 w_rc_t ShoreTM1Env::xct_upd_loc(const int xct_id, 
                                 upd_loc_input_t& ulin)
 {
-    w_rc_t e = RCOK;
-
     // ensure a valid environment
     assert (_pssm);
     assert (_initialized);
@@ -948,8 +890,7 @@ w_rc_t ShoreTM1Env::xct_upd_loc(const int xct_id,
 
     // Touches 1 table:
     // Subscriber
-    table_row_t* prsub = _psub_man->get_tuple();
-    assert (prsub);
+    tuple_guard<sub_man_impl> prsub(_psub_man);
 
     rep_row_t areprow(_psub_man->ts());
 
@@ -971,13 +912,12 @@ w_rc_t ShoreTM1Env::xct_upd_loc(const int xct_id,
         TRACE( TRACE_TRX_FLOW, 
                "App: %d UL:sub-nbr-idx-upd (%d)\n", 
                xct_id, ulin._s_id);
-        e = _psub_man->sub_nbr_idx_upd(_pssm, prsub, 
-                                       ulin._sub_nbr);
-        if (e.is_error()) { goto done; }
+        W_DO(_psub_man->sub_nbr_idx_upd(_pssm, prsub, 
+					ulin._sub_nbr));
 
         prsub->set_value(33, ulin._vlr_loc);
         
-        e = _psub_man->update_tuple(_pssm, prsub);
+        W_DO(_psub_man->update_tuple(_pssm, prsub));
 
     } // goto
 
@@ -987,11 +927,7 @@ w_rc_t ShoreTM1Env::xct_upd_loc(const int xct_id,
     prsub->print_tuple();
 #endif
 
-
-done:    
-    // return the tuples to the cache
-    _psub_man->give_tuple(prsub);
-    return (e);
+    return RCOK;
 
 } // EOF: UPD_LOC
 
@@ -1006,8 +942,6 @@ done:
 w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id, 
                                      ins_call_fwd_input_t& icfin)
 {
-    w_rc_t e = RCOK;
-
     // ensure a valid environment
     assert (_pssm);
     assert (_initialized);
@@ -1015,14 +949,9 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
 
     // Touches 3 tables:
     // Subscriber, SpecialFacility, CallForwarding
-    table_row_t* prsub = _psub_man->get_tuple();
-    assert (prsub);
-
-    table_row_t* prsf = _psf_man->get_tuple();
-    assert (prsf);
-
-    table_row_t* prcf = _pcf_man->get_tuple();
-    assert (prcf);
+    tuple_guard<sub_man_impl> prsub(_psub_man);
+    tuple_guard<sf_man_impl> prsf(_psf_man);
+    tuple_guard<cf_man_impl> prcf(_pcf_man);
 
     rep_row_t areprow(_psub_man->ts());
 
@@ -1067,9 +996,8 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
         TRACE( TRACE_TRX_FLOW, 
                "App: %d ICF:sub-nbr-idx (%d)\n", 
                xct_id, icfin._s_id);
-        e = _psub_man->sub_nbr_idx_probe(_pssm, prsub, 
-                                         icfin._sub_nbr);
-        if (e.is_error()) { goto done; }
+        W_DO(_psub_man->sub_nbr_idx_probe(_pssm, prsub, 
+					  icfin._sub_nbr));
 
         prsub->get_value(0, icfin._s_id);
 
@@ -1080,15 +1008,13 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
         {
             index_scan_iter_impl<special_facility_t>* tmp_sf_iter;
             TRACE( TRACE_TRX_FLOW, "App: %d ICF:sf-idx-iter\n", xct_id);
-            e = _psf_man->sf_get_idx_iter(_pssm, tmp_sf_iter, prsf,
-                                          lowrep, highrep,
-                                          icfin._s_id);
+            W_DO(_psf_man->sf_get_idx_iter(_pssm, tmp_sf_iter, prsf,
+					   lowrep, highrep,
+					   icfin._s_id));
             sf_iter = tmp_sf_iter;
-            if (e.is_error()) { goto done; }
         }
 
-        e = sf_iter->next(_pssm, eof, *prsf);
-        if (e.is_error()) { goto done; }
+        W_DO(sf_iter->next(_pssm, eof, *prsf));
 
         while (!eof) {
 
@@ -1103,21 +1029,18 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
             }
             
             TRACE( TRACE_TRX_FLOW, "App: %d ICF:sf-idx-iter-next\n", xct_id);
-            e = sf_iter->next(_pssm, eof, *prsf);
-            if (e.is_error()) { goto done; }
+            W_DO(sf_iter->next(_pssm, eof, *prsf));
         }            
                 
-        if (bFound == false) { 
-            e = RC(se_NO_CURRENT_TUPLE); 
-            goto done; 
-        }
+        if (bFound == false) 
+            return RC(se_NO_CURRENT_TUPLE); 
 
         // 3. Check if it can successfully insert
         TRACE( TRACE_TRX_FLOW, 
                "App: %d ICF:cf-idx-probe (%d) (%d) (%d)\n", 
                xct_id, icfin._s_id, icfin._sf_type, icfin._s_time);
-        e = _pcf_man->cf_idx_probe(_pssm, prcf, 
-                                   icfin._s_id, icfin._sf_type, icfin._s_time);
+        w_rc_t e = _pcf_man->cf_idx_probe(_pssm, prcf, icfin._s_id,
+					  icfin._sf_type, icfin._s_time);
             
         // idx probes return se_TUPLE_NOT_FOUND
         if (e.err_num() == se_TUPLE_NOT_FOUND) { 
@@ -1135,11 +1058,11 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
                 
             TRACE (TRACE_TRX_FLOW, "App: %d ICF:ins-cf\n", xct_id);
 
-            e = _pcf_man->add_tuple(_pssm, prcf);
+            W_DO(_pcf_man->add_tuple(_pssm, prcf));
         }             
         else {
             // in any other case it should fail
-            e = RC(se_CANNOT_INSERT_TUPLE);
+            return RC(se_CANNOT_INSERT_TUPLE);
         }        
 
     } // goto
@@ -1152,13 +1075,8 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
     prcf->print_tuple();
 #endif
 
-done:    
-    // return the tuples to the cache
-    _psub_man->give_tuple(prsub);
-    _psf_man->give_tuple(prsf);
-    _pcf_man->give_tuple(prcf);
-    return (e);
-
+    return RCOK;
+    
 } // EOF: INS_CALL_FWD
 
 
@@ -1172,8 +1090,6 @@ done:
 w_rc_t ShoreTM1Env::xct_del_call_fwd(const int xct_id, 
                                      del_call_fwd_input_t& dcfin)
 {
-    w_rc_t e = RCOK;
-
     // ensure a valid environment
     assert (_pssm);
     assert (_initialized);
@@ -1181,11 +1097,8 @@ w_rc_t ShoreTM1Env::xct_del_call_fwd(const int xct_id,
 
     // Touches 2 tables:
     // Subscriber, CallForwarding
-    table_row_t* prsub = _psub_man->get_tuple();
-    assert (prsub);
-
-    table_row_t* prcf = _pcf_man->get_tuple();
-    assert (prcf);
+    tuple_guard<sub_man_impl> prsub(_psub_man);
+    tuple_guard<cf_man_impl> prcf(_pcf_man);
 
     rep_row_t areprow(_psub_man->ts());
 
@@ -1216,9 +1129,8 @@ w_rc_t ShoreTM1Env::xct_del_call_fwd(const int xct_id,
                "App: %d DCF:sub-nbr-idx (%d)\n", 
                xct_id, dcfin._s_id);
 
-        e = _psub_man->sub_nbr_idx_probe(_pssm, prsub, 
-                                         dcfin._sub_nbr);
-        if (e.is_error()) { goto done; }
+        W_DO(_psub_man->sub_nbr_idx_probe(_pssm, prsub, 
+					  dcfin._sub_nbr));
 
         prsub->get_value(0, dcfin._s_id);
 
@@ -1228,15 +1140,12 @@ w_rc_t ShoreTM1Env::xct_del_call_fwd(const int xct_id,
                "App: %d DCF:cf-idx-upd (%d) (%d) (%d)\n", 
                xct_id, dcfin._s_id, dcfin._sf_type, dcfin._s_time);
 
-        e = _pcf_man->cf_idx_upd(_pssm, prcf, 
-                                 dcfin._s_id, dcfin._sf_type, dcfin._s_time);
-
-        if (e.is_error()) { goto done; }
-
+        W_DO(_pcf_man->cf_idx_upd(_pssm, prcf, 
+				  dcfin._s_id, dcfin._sf_type, dcfin._s_time));
 
         TRACE (TRACE_TRX_FLOW, "App: %d DCF:del-cf\n", xct_id);        
 
-        e = _pcf_man->delete_tuple(_pssm, prcf);
+        W_DO(_pcf_man->delete_tuple(_pssm, prcf));
 
     } // goto
 
@@ -1247,12 +1156,7 @@ w_rc_t ShoreTM1Env::xct_del_call_fwd(const int xct_id,
     prcf->print_tuple();
 #endif
 
-
-done:    
-    // return the tuples to the cache
-    _psub_man->give_tuple(prsub);
-    _pcf_man->give_tuple(prcf);
-    return (e);
+    return RCOK;
 
 } // EOF: DEL_CALL_FWD
 
@@ -1268,8 +1172,6 @@ done:
 w_rc_t ShoreTM1Env::xct_get_sub_nbr(const int xct_id, 
                                     get_sub_nbr_input_t& gsnin)
 {
-    w_rc_t e = RCOK;
-
     // ensure a valid environment
     assert (_pssm);
     assert (_initialized);
@@ -1277,8 +1179,7 @@ w_rc_t ShoreTM1Env::xct_get_sub_nbr(const int xct_id,
 
     // Touches 1 table:
     // Subscriber
-    table_row_t* prsub = _psub_man->get_tuple();
-    assert (prsub);
+    tuple_guard<sub_man_impl> prsub(_psub_man);
 
     rep_row_t areprow(_psub_man->ts());
     // allocate space for the larger table representation
@@ -1313,18 +1214,16 @@ w_rc_t ShoreTM1Env::xct_get_sub_nbr(const int xct_id,
             TRACE( TRACE_TRX_FLOW, 
                    "App: %d GSN:sub-nbr-idx-iter (%d) (%d)\n", 
                    xct_id, gsnin._s_id, range);
-            e = _psub_man->sub_get_idx_iter(_pssm, tmp_sub_iter, prsub, 
-                                            lowrep,highrep,
-                                            gsnin._s_id,range,
-                                            SH,     /* read-only access */
-                                            true);  /* retrieve record  */
-            if (e.is_error()) { goto done; }                   
+            W_DO(_psub_man->sub_get_idx_iter(_pssm, tmp_sub_iter, prsub, 
+					     lowrep,highrep,
+					     gsnin._s_id,range,
+					     SH,     /* read-only access */
+					     true));  /* retrieve record  */
             sub_iter = tmp_sub_iter;
         }
 
         // 2. Read all the returned records
-        e = sub_iter->next(_pssm, eof, *prsub);
-        if (e.is_error()) { goto done; }
+        W_DO(sub_iter->next(_pssm, eof, *prsub));
 
         while (!eof) {
             prsub->get_value(0, sid);
@@ -1333,15 +1232,12 @@ w_rc_t ShoreTM1Env::xct_get_sub_nbr(const int xct_id,
             TRACE( TRACE_TRX_FLOW, "App: %d GSN: read (%d) (%d)\n", 
                    xct_id, sid, vlrloc);
 
-            e = sub_iter->next(_pssm, eof, *prsub);
+            W_DO(sub_iter->next(_pssm, eof, *prsub));
         }
 
     } // goto
 
-done:    
-    // return the tuples to the cache
-    _psub_man->give_tuple(prsub);
-    return (e);
+    return RCOK;
 
 } // EOF: GET_SUB_NBR
 
@@ -1357,8 +1253,6 @@ done:
 w_rc_t ShoreTM1Env::xct_ins_call_fwd_bench(const int xct_id,
 					   ins_call_fwd_bench_input_t& icfbin)
 {
-    w_rc_t e = RCOK;
-
     // ensure a valid environment
     assert (_pssm);
     assert (_initialized);
@@ -1366,11 +1260,8 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd_bench(const int xct_id,
 
     // Touches 3 tables:
     // Subscriber, SpecialFacility, CallForwarding
-    table_row_t* prsub = _psub_man->get_tuple();
-    assert (prsub);
-
-    table_row_t* prcf = _pcf_man->get_tuple();
-    assert (prcf);
+    tuple_guard<sub_man_impl> prsub(_psub_man);
+    tuple_guard<cf_man_impl> prcf(_pcf_man);
 
     rep_row_t areprow(_psub_man->ts());
 
@@ -1388,9 +1279,8 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd_bench(const int xct_id,
 	TRACE( TRACE_TRX_FLOW,
 	       "App: %d ICFB:sub-nbr-idx (%d)\n",
 	       xct_id, icfbin._s_id);
-	e = _psub_man->sub_nbr_idx_probe(_pssm, prsub,
-					 icfbin._sub_nbr);
-	if (e.is_error()) { goto done; }
+	W_DO(_psub_man->sub_nbr_idx_probe(_pssm, prsub,
+					  icfbin._sub_nbr));
 
 	prsub->get_value(0, icfbin._s_id);
 
@@ -1399,8 +1289,8 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd_bench(const int xct_id,
 	TRACE( TRACE_TRX_FLOW,
 	       "App: %d ICFB:cf-idx-probe (%d) (%d) (%d)\n",
 	       xct_id, icfbin._s_id, icfbin._sf_type, icfbin._s_time);
-	e = _pcf_man->cf_idx_upd(_pssm, prcf,
-                                 icfbin._s_id, icfbin._sf_type, icfbin._s_time);
+	w_rc_t e = _pcf_man->cf_idx_upd(_pssm, prcf,
+					icfbin._s_id, icfbin._sf_type, icfbin._s_time);
 
 	// idx probes return se_TUPLE_NOT_FOUND
 	if (e.is_error()) {
@@ -1420,7 +1310,7 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd_bench(const int xct_id,
 	    
 	    TRACE (TRACE_TRX_FLOW, "App: %d ICF:ins-cf\n", xct_id);
 	    
-	    e = _pcf_man->add_tuple(_pssm, prcf);
+	    W_DO(_pcf_man->add_tuple(_pssm, prcf));
 	}
 	else { // 3. Delete Call Forwarding record if tuple found
 	    
@@ -1428,7 +1318,7 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd_bench(const int xct_id,
 // 				     icfbin._s_id, icfbin._sf_type, icfbin._s_time);
 // 	    if (e.is_error()) { goto done; }
 	    TRACE (TRACE_TRX_FLOW, "App: %d DCF:del-cf\n", xct_id);
-	    e = _pcf_man->delete_tuple(_pssm, prcf);
+	    W_DO(_pcf_man->delete_tuple(_pssm, prcf));
 	}
 	
     } // goto
@@ -1440,11 +1330,7 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd_bench(const int xct_id,
     prcf->print_tuple();
 #endif
     
- done:
-    // return the tuples to the cache
-    _psub_man->give_tuple(prsub);
-    _pcf_man->give_tuple(prcf);
-    return (e);
+    return RCOK;
     
 } // EOF: INS_CALL_FWD_BENCH
 
@@ -1460,8 +1346,6 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd_bench(const int xct_id,
 w_rc_t ShoreTM1Env::xct_del_call_fwd_bench(const int xct_id,
 					   del_call_fwd_bench_input_t& dcfbin)
 {
-    w_rc_t e = RCOK;
-    
     // ensure a valid environment
     assert (_pssm);
     assert (_initialized);
@@ -1469,11 +1353,8 @@ w_rc_t ShoreTM1Env::xct_del_call_fwd_bench(const int xct_id,
 
     // Touches 2 tables:
     // Subscriber, CallForwarding
-    table_row_t* prsub = _psub_man->get_tuple();
-    assert (prsub);
-
-    table_row_t* prcf = _pcf_man->get_tuple();
-    assert (prcf);
+    tuple_guard<sub_man_impl> prsub(_psub_man);
+    tuple_guard<cf_man_impl> prcf(_pcf_man);
 
     rep_row_t areprow(_psub_man->ts());
 
@@ -1504,9 +1385,8 @@ w_rc_t ShoreTM1Env::xct_del_call_fwd_bench(const int xct_id,
 	       "App: %d DCFB:sub-nbr-idx (%d)\n",
 		   xct_id, dcfbin._s_id);
 	
-	e = _psub_man->sub_nbr_idx_probe(_pssm, prsub,
-					 dcfbin._sub_nbr);
-	if (e.is_error()) { goto done; }
+	W_DO(_psub_man->sub_nbr_idx_probe(_pssm, prsub,
+					  dcfbin._sub_nbr));
 
 	prsub->get_value(0, dcfbin._s_id);
 	
@@ -1516,8 +1396,8 @@ w_rc_t ShoreTM1Env::xct_del_call_fwd_bench(const int xct_id,
 	       "App: %d DCFB:cf-idx-upd (%d) (%d) (%d)\n",
 	       xct_id, dcfbin._s_id, dcfbin._sf_type, dcfbin._s_time);
 
-	e = _pcf_man->cf_idx_upd(_pssm, prcf,
-				 dcfbin._s_id, dcfbin._sf_type, dcfbin._s_time);
+	w_rc_t e = _pcf_man->cf_idx_upd(_pssm, prcf,
+					dcfbin._s_id, dcfbin._sf_type, dcfbin._s_time);
 
 	if (e.is_error()) { // If record not found
 	    if (e.err_num() != se_TUPLE_NOT_FOUND)
@@ -1541,10 +1421,10 @@ w_rc_t ShoreTM1Env::xct_del_call_fwd_bench(const int xct_id,
 
 	    TRACE (TRACE_TRX_FLOW, "App: %d DCFB:ins-cf\n", xct_id);
 
-	    e = _pcf_man->add_tuple(_pssm, prcf);
+	    W_DO(_pcf_man->add_tuple(_pssm, prcf));
 	} else {
 	    TRACE (TRACE_TRX_FLOW, "App: %d DCF:del-cf\n", xct_id);
-	    e = _pcf_man->delete_tuple(_pssm, prcf);
+	    W_DO(_pcf_man->delete_tuple(_pssm, prcf));
 	}
     } // goto
 
@@ -1555,12 +1435,7 @@ w_rc_t ShoreTM1Env::xct_del_call_fwd_bench(const int xct_id,
     prcf->print_tuple();
 #endif
 
-
- done:
-    // return the tuples to the cache
-    _psub_man->give_tuple(prsub);
-    _pcf_man->give_tuple(prcf);
-    return (e);
+    return RCOK;
     
 } // EOF: DEL_CALL_FWD_BENCH
 
