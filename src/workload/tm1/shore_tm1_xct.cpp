@@ -1403,7 +1403,9 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd_bench(const int xct_id,
                                  icfbin._s_id, icfbin._sf_type, icfbin._s_time);
 
 	// idx probes return se_TUPLE_NOT_FOUND
-	if (e.err_num() == se_TUPLE_NOT_FOUND) {
+	if (e.is_error()) {
+	    if (e.err_num() != se_TUPLE_NOT_FOUND)
+		W_DO(e);
 	    
 	    // 3. Insert Call Forwarding record
 	    prcf->set_value(0, icfbin._s_id);
@@ -1518,6 +1520,9 @@ w_rc_t ShoreTM1Env::xct_del_call_fwd_bench(const int xct_id,
 				 dcfbin._s_id, dcfbin._sf_type, dcfbin._s_time);
 
 	if (e.is_error()) { // If record not found
+	    if (e.err_num() != se_TUPLE_NOT_FOUND)
+		W_DO(e);
+	    
 	    // 3. Insert Call Forwarding record
 	    prcf->set_value(0, dcfbin._s_id);
 	    prcf->set_value(1, dcfbin._sf_type);
