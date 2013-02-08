@@ -12,13 +12,18 @@ else
 SHORE_INCLUDES += -I$(SHORE_HOME)/../ppmcs
 endif
 
-SHORE_LDADD = -L$(SHORE_SRC)/fc -L$(SHORE_SRC)/sm -L$(SHORE_SRC)/common -L$(SHORE_SRC)/sthread -lsm -lcommon -lsthread -lfc
+SHORE_LDADD = \
+	$(SHORE_SRC)/sm/libsm.a \
+	$(SHORE_SRC)/common/libcommon.a \
+	$(SHORE_SRC)/sthread/libsthread.a \
+	$(SHORE_SRC)/fc/libfc.a
+
 ### -lmtmalloc <-- which malloc library will be included is responsibility of configure
 
 if USE_SHORE_6
-SHORE_LDADD += -L$(SHORE_SRC)/atomic_ops -latomic_ops
+SHORE_LDADD += $(SHORE_SRC)/atomic_ops/libatomic_ops.a
 else
-SHORE_LDADD += -L$(SHORE_HOME)/../ppmcs -lppmcs
+SHORE_LDADD += $(SHORE_HOME)/../ppmcs/libppmcs.a
 endif
 
 
