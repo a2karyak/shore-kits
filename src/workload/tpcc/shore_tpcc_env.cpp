@@ -758,6 +758,9 @@ w_rc_t ShoreTPCCEnv::_post_init_impl()
                                     , false
 #endif
                                     ));
+                // for small databases, first padded record fits on this page
+                if (not handle->up_to_date())
+                    handle->repin();
 
                 // mark the old record for deletion
 		hit_list.push_back(handle->rid());
