@@ -255,33 +255,25 @@ w_rc_t r_wh_nord_action::trx_exec()
     assert (_penv);
 
     // get table tuple from the cache
-    table_row_t* prwh = _penv->warehouse_man()->get_tuple();
-    assert (prwh);
+    tuple_guard<warehouse_man_impl> prwh(_penv->warehouse_man());
 
     rep_row_t areprow(_penv->warehouse_man()->ts());
     areprow.set(_penv->warehouse_desc()->maxsize()); 
     prwh->_rep = &areprow;
 
-    w_rc_t e = RCOK;
-
-    { // make gotos safe
-
-        /* SELECT w_tax
-         * FROM warehouse
-         * WHERE w_id = :w_id
-         *
-         * plan: index probe on "W_IDX"
-         */
-
-        // 1. retrieve warehouse (read-only)
-        TRACE( TRACE_TRX_FLOW, "App: %d NO:wh-idx-nl (%d)\n", _tid.get_lo(), _in._wh_id);
-
-        e = _penv->warehouse_man()->wh_index_probe_nl(_penv->db(), 
-                                                      prwh, _in._wh_id);
-        if (e.is_error()) { goto done; }
-        prwh->get_value(7, _prvp->_in._awh.W_TAX);
-
-    } // goto
+    /* SELECT w_tax
+     * FROM warehouse
+     * WHERE w_id = :w_id
+     *
+     * plan: index probe on "W_IDX"
+     */
+    
+    // 1. retrieve warehouse (read-only)
+    TRACE( TRACE_TRX_FLOW, "App: %d NO:wh-idx-nl (%d)\n",
+	   _tid.get_lo(), _in._wh_id);
+    W_DO(_penv->warehouse_man()->wh_index_probe_nl(_penv->db(), prwh,
+						   _in._wh_id));
+    prwh->get_value(7, _prvp->_in._awh.W_TAX);
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -289,10 +281,7 @@ w_rc_t r_wh_nord_action::trx_exec()
     prwh->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->warehouse_man()->give_tuple(prwh);
-    return (e);
+    return RCOK;
 }
 
 
@@ -312,39 +301,28 @@ w_rc_t r_cust_nord_action::trx_exec()
     assert (_penv);
 
     // get table tuple from the cache
-    table_row_t* prcust = _penv->customer_man()->get_tuple();
-    assert (prcust);
+    tuple_guard<customer_man_impl> prcust(_penv->customer_man());
 
     rep_row_t areprow(_penv->customer_man()->ts());
     areprow.set(_penv->customer_desc()->maxsize()); 
     prcust->_rep = &areprow;
 
-    w_rc_t e = RCOK;
-
-    { // make gotos safe
-
-        /* SELECT c_discount, c_last, c_credit
-         * FROM customer
-         * WHERE w_id = :w_id AND c_d_id = :d_id AND c_id = :c_id
-         *
-         * plan: index probe on "C_IDX"
-         */
-
-        // 1. retrieve customer (read-only)
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d NO:cust-idx-nl (%d) (%d) (%d)\n", 
-               _tid.get_lo(), _in._wh_id, _in._d_id, _in._c_id);
-
-        e = _penv->customer_man()->cust_index_probe_nl(_penv->db(), prcust,
-                                                       _in._wh_id, _in._d_id, 
-                                                       _in._c_id);
-        if (e.is_error()) { goto done; }
-
-        prcust->get_value(15, _prvp->_in._acust.C_DISCOUNT);
-        prcust->get_value(13, _prvp->_in._acust.C_CREDIT, 3);
-        prcust->get_value(5, _prvp->_in._acust.C_LAST, 17);
-
-    } // goto
+    /* SELECT c_discount, c_last, c_credit
+     * FROM customer
+     * WHERE w_id = :w_id AND c_d_id = :d_id AND c_id = :c_id
+     *
+     * plan: index probe on "C_IDX"
+     */
+    
+    // 1. retrieve customer (read-only)
+    TRACE( TRACE_TRX_FLOW, "App: %d NO:cust-idx-nl (%d) (%d) (%d)\n", 
+	   _tid.get_lo(), _in._wh_id, _in._d_id, _in._c_id);
+    W_DO(_penv->customer_man()->cust_index_probe_nl(_penv->db(), prcust,
+						    _in._wh_id, _in._d_id, 
+						    _in._c_id));
+    prcust->get_value(15, _prvp->_in._acust.C_DISCOUNT);
+    prcust->get_value(13, _prvp->_in._acust.C_CREDIT, 3);
+    prcust->get_value(5, _prvp->_in._acust.C_LAST, 17);
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -352,10 +330,7 @@ w_rc_t r_cust_nord_action::trx_exec()
     prcust->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->customer_man()->give_tuple(prcust);
-    return (e);
+    return RCOK;
 }
 
 
@@ -374,60 +349,42 @@ w_rc_t upd_dist_nord_action::trx_exec()
     assert (_penv);
 
     // get table tuple from the cache
-    table_row_t* prdist = _penv->district_man()->get_tuple();
-    assert (prdist);
+    tuple_guard<district_man_impl> prdist(_penv->district_man());
 
     rep_row_t areprow(_penv->district_man()->ts());
     areprow.set(_penv->district_desc()->maxsize()); 
     prdist->_rep = &areprow;
 
-    w_rc_t e = RCOK;
+    /* SELECT d_tax, d_next_o_id
+     * FROM district
+     * WHERE d_id = :d_id AND d_w_id = :w_id
+     *
+     * plan: index probe on "D_IDX"
+     */
+    
+    // 1. retrieve district for update
+    TRACE( TRACE_TRX_FLOW, "App: %d NO:dist-idx-nl (%d) (%d)\n", 
+	   _tid.get_lo(), _in._wh_id, _in._d_id);
+    W_DO(_penv->district_man()->dist_index_probe_nl(_penv->db(), prdist,
+						    _in._wh_id, _in._d_id));
+    prdist->get_value(8, _prvp->_in._adist.D_TAX);
+    prdist->get_value(10, _prvp->_in._adist.D_NEXT_O_ID);
+    _prvp->_in._adist.D_NEXT_O_ID++;
+    
+    /* UPDATE district
+     * SET d_next_o_id = :d_next_o_id+1
+     * WHERE CURRENT OF dist_cur
+     */
+    
+    // 2. Update next_o_id
+    const int next_o_id = _prvp->_in._adist.D_NEXT_O_ID;
+    TRACE( TRACE_TRX_FLOW, "App: %d NO:dist-upd-next-o-id-nl (%d)\n", 
+	   _tid.get_lo(), next_o_id);
+    W_DO(_penv->district_man()->dist_update_next_o_id_nl(_penv->db(), prdist,
+							 next_o_id));
 
-    { // make gotos safe
-
-        /* SELECT d_tax, d_next_o_id
-         * FROM district
-         * WHERE d_id = :d_id AND d_w_id = :w_id
-         *
-         * plan: index probe on "D_IDX"
-         */
-
-        // 1. retrieve district for update
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d NO:dist-idx-nl (%d) (%d)\n", 
-               _tid.get_lo(), _in._wh_id, _in._d_id);
-
-        e = _penv->district_man()->dist_index_probe_nl(_penv->db(), 
-                                                       prdist, 
-                                                       _in._wh_id, _in._d_id);
-        if (e.is_error()) { goto done; }
-
-        prdist->get_value(8, _prvp->_in._adist.D_TAX);
-        prdist->get_value(10, _prvp->_in._adist.D_NEXT_O_ID);
-        _prvp->_in._adist.D_NEXT_O_ID++;
-
-        /* UPDATE district
-         * SET d_next_o_id = :d_next_o_id+1
-         * WHERE CURRENT OF dist_cur
-         */
-
-        // 2. Update next_o_id
-        const int next_o_id = _prvp->_in._adist.D_NEXT_O_ID;
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d NO:dist-upd-next-o-id-nl (%d)\n", 
-               _tid.get_lo(), next_o_id);
-
-        e = _penv->district_man()->dist_update_next_o_id_nl(_penv->db(), 
-                                                            prdist, 
-                                                            next_o_id);
-        if (e.is_error()) { goto done; }
-
-        // 3. Update midway RVP 
-        _prvp->_in._d_next_o_id = next_o_id;            
-//         TRACE(TRACE_ALWAYS, 
-//               "(%d) %d %d %d\n", 
-//               _tid, _in._wh_id, _in._d_id, next_o_id);
-    } // goto
+    // 3. Update midway RVP 
+    _prvp->_in._d_next_o_id = next_o_id;            
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -435,10 +392,7 @@ w_rc_t upd_dist_nord_action::trx_exec()
     prdist->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->district_man()->give_tuple(prdist);
-    return (e);
+    return RCOK;
 }
 
 
@@ -457,55 +411,44 @@ w_rc_t r_item_nord_action::trx_exec()
     assert (_penv);
 
     // get table tuple from the cache
-    table_row_t* pritem = _penv->item_man()->get_tuple();
-    assert (pritem);
+    tuple_guard<item_man_impl> pritem(_penv->item_man());
 
     rep_row_t areprow(_penv->item_man()->ts());
     areprow.set(_penv->item_desc()->maxsize()); 
     pritem->_rep = &areprow;
 
-    w_rc_t e = RCOK;
-
-    { // make gotos safe
-
-        // 1. Probe item (read-only)
-        int idx=0;
-
-        TRACE( TRACE_TRX_FLOW, "App: %d NO:r-item (%d)\n", 
-               _tid.get_lo(), _in._ol_cnt);
-
-        // IP: The new version of the r-tem does all the work in a single action
-        for (idx=0; idx<_in._ol_cnt; idx++) {
-
-            int ol_i_id = _in.items[idx]._ol_i_id;
-            int ol_supply_w_id = _in.items[idx]._ol_supply_wh_id;
-            assert (_in._wh_id==ol_supply_w_id); // IP: only local NewOrders
-
-            /* SELECT i_price, i_name, i_data
-             * FROM item
-             * WHERE i_id = :ol_i_id
-             *
-             * plan: index probe on "I_IDX"
-             */
-        
-            TRACE( TRACE_TRX_FLOW, "App: %d NO:item-idx-nl-%d (%d)\n", 
+    // 1. Probe item (read-only)
+    int idx=0;
+    
+    TRACE(TRACE_TRX_FLOW, "App: %d NO:r-item (%d)\n", _tid.get_lo(), _in._ol_cnt);
+    
+    // IP: The new version of the r-tem does all the work in a single action
+    for (idx=0; idx<_in._ol_cnt; idx++) {
+	
+	int ol_i_id = _in.items[idx]._ol_i_id;
+	int ol_supply_w_id = _in.items[idx]._ol_supply_wh_id;
+	assert (_in._wh_id==ol_supply_w_id); // IP: only local NewOrders
+	
+	/* SELECT i_price, i_name, i_data
+	 * FROM item
+	 * WHERE i_id = :ol_i_id
+	 *
+	 * plan: index probe on "I_IDX"
+	 */
+	TRACE( TRACE_TRX_FLOW, "App: %d NO:item-idx-nl-%d (%d)\n", 
                    _tid.get_lo(), idx, ol_i_id);
+	W_DO(_penv->item_man()->it_index_probe_nl(_penv->db(), pritem, ol_i_id));
 
-            e = _penv->item_man()->it_index_probe_nl(_penv->db(), 
-                                                     pritem, 
-                                                     ol_i_id);
-            if (e.is_error()) { goto done; }
-
-            // 2a. Calculate the item amount
-            pritem->get_value(4, _in.items[idx]._aitem.I_DATA, 51);
-            pritem->get_value(3, _in.items[idx]._aitem.I_PRICE);
-            pritem->get_value(2, _in.items[idx]._aitem.I_NAME, 25);        
-            _in.items[idx]._item_amount = _in.items[idx]._aitem.I_PRICE * _in.items[idx]._ol_quantity; 
-
-            // 2b. Update RVP data
-            _prvp->_in.items[idx]._item_amount = _in.items[idx]._item_amount;
-        }
-    } // goto
+	// 2a. Calculate the item amount
+	pritem->get_value(4, _in.items[idx]._aitem.I_DATA, 51);
+	pritem->get_value(3, _in.items[idx]._aitem.I_PRICE);
+	pritem->get_value(2, _in.items[idx]._aitem.I_NAME, 25);        
+	_in.items[idx]._item_amount = _in.items[idx]._aitem.I_PRICE *
+	    _in.items[idx]._ol_quantity; 
+	
+	// 2b. Update RVP data
+	_prvp->_in.items[idx]._item_amount = _in.items[idx]._item_amount;
+    }
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -513,10 +456,7 @@ w_rc_t r_item_nord_action::trx_exec()
     pritem->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->item_man()->give_tuple(pritem);
-    return (e);
+    return RCOK;
 }
 
 
@@ -547,8 +487,7 @@ w_rc_t ins_ord_nord_action::trx_exec()
     assert (_penv);
 
     // get table tuple from the cache
-    table_row_t* prord = _penv->order_man()->get_tuple();
-    assert (prord);
+    tuple_guard<order_man_impl> prord(_penv->order_man());
 
     rep_row_t areprow(_penv->order_man()->ts());
     areprow.set(_penv->order_desc()->maxsize()); 
@@ -558,32 +497,23 @@ w_rc_t ins_ord_nord_action::trx_exec()
     areprow_key.set(_penv->order_desc()->maxsize()); 
     prord->_rep_key = &areprow_key;
 
-    w_rc_t e = RCOK;
-
-    { // make gotos safe
-
-        // 1. insert row to ORDERS table
-
-        /* INSERT INTO orders
-         * VALUES (o_id, o_d_id, o_w_id, o_c_id, o_entry_d, o_ol_cnt, o_all_local)
-         */
-
-        prord->set_value(0, _in._d_next_o_id);
-        prord->set_value(1, _in._c_id);
-        prord->set_value(2, _in._d_id);
-        prord->set_value(3, _in._wh_id);
-        prord->set_value(4, _in._tstamp);
-        prord->set_value(5, 0);
-        prord->set_value(6, _in._ol_cnt);
-        prord->set_value(7, _in._all_local);
-
-        TRACE( TRACE_TRX_FLOW, "App: %d NO:ord-add-tuple-nl (%d)\n", 
-               _tid.get_lo(), _in._d_next_o_id);
-
-        e = _penv->order_man()->add_tuple(_penv->db(), prord, NL);
-        if (e.is_error()) { goto done; }
-
-    } // goto
+    // 1. insert row to ORDERS table
+    
+    /* INSERT INTO orders
+     * VALUES (o_id, o_d_id, o_w_id, o_c_id, o_entry_d, o_ol_cnt, o_all_local)
+     */
+    prord->set_value(0, _in._d_next_o_id);
+    prord->set_value(1, _in._c_id);
+    prord->set_value(2, _in._d_id);
+    prord->set_value(3, _in._wh_id);
+    prord->set_value(4, _in._tstamp);
+    prord->set_value(5, 0);
+    prord->set_value(6, _in._ol_cnt);
+    prord->set_value(7, _in._all_local);
+    
+    TRACE( TRACE_TRX_FLOW, "App: %d NO:ord-add-tuple-nl (%d)\n", 
+	   _tid.get_lo(), _in._d_next_o_id);
+    W_DO(_penv->order_man()->add_tuple(_penv->db(), prord, NL));
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -591,10 +521,7 @@ w_rc_t ins_ord_nord_action::trx_exec()
     prord->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->order_man()->give_tuple(prord);
-    return (e);
+    return RCOK;
 }
 
 
@@ -613,8 +540,7 @@ w_rc_t ins_nord_nord_action::trx_exec()
     assert (_penv);
 
     // get table tuple from the cache
-    table_row_t* prno = _penv->new_order_man()->get_tuple();
-    assert (prno);
+    tuple_guard<new_order_man_impl> prno(_penv->new_order_man());
 
     rep_row_t areprow(_penv->new_order_man()->ts());
     areprow.set(_penv->new_order_desc()->maxsize()); 
@@ -624,26 +550,17 @@ w_rc_t ins_nord_nord_action::trx_exec()
     areprow_key.set(_penv->new_order_desc()->maxsize()); 
     prno->_rep_key = &areprow_key;
 
-    w_rc_t e = RCOK;
-
-    { // make gotos safe
-
-        // 1. insert row to NEW_ORDER table
-
-        /* INSERT INTO new_order VALUES (o_id, d_id, w_id)
-         */
-
-        prno->set_value(0, _in._d_next_o_id);
-        prno->set_value(1, _in._d_id);
-        prno->set_value(2, _in._wh_id);
-
-        TRACE( TRACE_TRX_FLOW, "App: %d NO:nord-add-tuple (%d) (%d) (%d)\n", 
-               _tid.get_lo(), _in._wh_id, _in._d_id, _in._d_next_o_id);
+    // 1. insert row to NEW_ORDER table
     
-        e = _penv->new_order_man()->add_tuple(_penv->db(), prno, NL);
-        if (e.is_error()) { goto done; }
+    // INSERT INTO new_order VALUES (o_id, d_id, w_id)
 
-    } // goto
+    prno->set_value(0, _in._d_next_o_id);
+    prno->set_value(1, _in._d_id);
+    prno->set_value(2, _in._wh_id);
+    
+    TRACE( TRACE_TRX_FLOW, "App: %d NO:nord-add-tuple (%d) (%d) (%d)\n", 
+	   _tid.get_lo(), _in._wh_id, _in._d_id, _in._d_next_o_id);
+    W_DO(_penv->new_order_man()->add_tuple(_penv->db(), prno, NL));
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -651,10 +568,7 @@ w_rc_t ins_nord_nord_action::trx_exec()
     prno->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->new_order_man()->give_tuple(prno);
-    return (e);
+    return RCOK;
 }
 
 
@@ -684,8 +598,7 @@ w_rc_t ins_ol_nord_action::trx_exec()
     assert (_penv);
 
     // get table tuple from the cache
-    table_row_t* prol = _penv->order_line_man()->get_tuple();
-    assert (prol);
+    tuple_guard<order_line_man_impl> prol(_penv->order_line_man());
 
     rep_row_t areprow(_penv->order_line_man()->ts());
     areprow.set(_penv->order_line_desc()->maxsize()); 
@@ -695,46 +608,33 @@ w_rc_t ins_ol_nord_action::trx_exec()
     areprow_key.set(_penv->order_line_desc()->maxsize()); 
     prol->_rep_key = &areprow_key;
 
-    w_rc_t e = RCOK;
-
-    { // make gotos safe
-
-        // 1. insert row to ORDER_LINE
-        int idx = 0;
-
-        TRACE( TRACE_TRX_FLOW, "App: %d NO:ins-ol (%d)\n", 
-               _tid.get_lo(), _in._ol_cnt);
-
-        for (idx=0; idx<_in._ol_cnt; idx++) {
-
-            /* INSERT INTO order_line
-             * VALUES (o_id, d_id, w_id, ol_ln, ol_i_id, supply_w_id,
-             *        '0001-01-01-00.00.01.000000', ol_quantity, iol_amount, dist)
-             */
-
-            prol->set_value(0, _in._d_next_o_id);
-            prol->set_value(1, _in._d_id);
-            prol->set_value(2, _in._wh_id);
-            prol->set_value(3, idx+1);
-            prol->set_value(4, _in.items[idx]._ol_i_id);
-            prol->set_value(5, _in.items[idx]._ol_supply_wh_id);
-            prol->set_value(6, _in._tstamp);
-            prol->set_value(7, _in.items[idx]._ol_quantity);
-            prol->set_value(8, _in.items[idx]._item_amount);
-
-            //prol->set_value(9, _in.items[idx]._astock.S_DIST[6+_in._d_id]);
-            prol->set_value(9, _in.items[idx]._astock.S_DIST[_in._d_id]);
-
-            TRACE( TRACE_TRX_FLOW, 
-                   "App: %d NO:ol-add-tuple-%d (%d) (%d) (%d) (%d)\n", 
-                   _tid.get_lo(), idx, _in._wh_id, _in._d_id, _in._d_next_o_id, 
-                   _in.items[idx]._ol_i_id);
-
-            e = _penv->order_line_man()->add_tuple(_penv->db(), prol, NL);
-            if (e.is_error()) { goto done; }
-        }
-        
-    } // goto
+    // 1. insert row to ORDER_LINE
+    int idx = 0;
+    
+    TRACE(TRACE_TRX_FLOW, "App: %d NO:ins-ol (%d)\n", _tid.get_lo(), _in._ol_cnt);
+    
+    for (idx=0; idx<_in._ol_cnt; idx++) {
+	
+	/* INSERT INTO order_line
+	 * VALUES (o_id, d_id, w_id, ol_ln, ol_i_id, supply_w_id,
+	 *        '0001-01-01-00.00.01.000000', ol_quantity, iol_amount, dist)
+	 */
+	prol->set_value(0, _in._d_next_o_id);
+	prol->set_value(1, _in._d_id);
+	prol->set_value(2, _in._wh_id);
+	prol->set_value(3, idx+1);
+	prol->set_value(4, _in.items[idx]._ol_i_id);
+	prol->set_value(5, _in.items[idx]._ol_supply_wh_id);
+	prol->set_value(6, _in._tstamp);
+	prol->set_value(7, _in.items[idx]._ol_quantity);
+	prol->set_value(8, _in.items[idx]._item_amount);
+	prol->set_value(9, _in.items[idx]._astock.S_DIST[_in._d_id]);
+	
+	TRACE( TRACE_TRX_FLOW, "App: %d NO:ol-add-tuple-%d (%d) (%d) (%d) (%d)\n",
+	       _tid.get_lo(), idx, _in._wh_id, _in._d_id, _in._d_next_o_id, 
+	       _in.items[idx]._ol_i_id);
+	W_DO(_penv->order_line_man()->add_tuple(_penv->db(), prol, NL));
+    }
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -742,10 +642,7 @@ w_rc_t ins_ol_nord_action::trx_exec()
     prol->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->order_line_man()->give_tuple(prol);
-    return (e);
+    return RCOK;
 }
 
 
@@ -773,95 +670,80 @@ w_rc_t upd_sto_nord_action::trx_exec()
     assert (_penv);
 
     // get table tuple from the cache
-    table_row_t* prst = _penv->stock_man()->get_tuple();
-    assert (prst);
+    tuple_guard<stock_man_impl> prst(_penv->stock_man());
 
     rep_row_t areprow(_penv->stock_man()->ts());
     areprow.set(_penv->stock_desc()->maxsize()); 
     prst->_rep = &areprow;
 
-    w_rc_t e = RCOK;
+    int idx=0;
+    int ol_i_id=0;
+    int ol_supply_w_id=0;
+    
+    TRACE( TRACE_TRX_FLOW, "App: %d NO:upd-stock (%d)\n",
+	   _tid.get_lo(), _in._ol_cnt);
+    
+    // IP: The new version of the upd-stock does all the work in a single action
+    for (idx=0; idx<_in._ol_cnt; idx++) {
+	
+	// 4. probe stock (for update)
+	ol_i_id = _in.items[idx]._ol_i_id;
+	ol_supply_w_id = _in.items[idx]._ol_supply_wh_id;
+	
+	/* SELECT s_quantity, s_remote_cnt, s_data, s_dist0, s_dist1, s_dist2, ...
+	 * FROM stock
+	 * WHERE s_i_id = :ol_i_id AND s_w_id = :ol_supply_w_id
+	 *
+	 * plan: index probe on "S_IDX"
+	 */
+	
+	tpcc_stock_tuple* pstock = &_in.items[idx]._astock;
+	tpcc_item_tuple*  pitem  = &_in.items[idx]._aitem;
+	TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-idx-nl-%d (%d) (%d)\n", 
+	       _tid.get_lo(), idx, ol_supply_w_id, ol_i_id);
+	W_DO(_penv->stock_man()->st_index_probe_nl(_penv->db(), prst,
+						   ol_supply_w_id, ol_i_id));
 
-    { // make gotos safe
-
-        int idx=0;
-        int ol_i_id=0;
-        int ol_supply_w_id=0;
-
-        TRACE( TRACE_TRX_FLOW, "App: %d NO:upd-stock (%d)\n", 
-               _tid.get_lo(), _in._ol_cnt);
-
-        // IP: The new version of the upd-stock does all the work in a single action
-        for (idx=0; idx<_in._ol_cnt; idx++) {
-
-            // 4. probe stock (for update)
-            ol_i_id = _in.items[idx]._ol_i_id;
-            ol_supply_w_id = _in.items[idx]._ol_supply_wh_id;
-
-            /* SELECT s_quantity, s_remote_cnt, s_data, s_dist0, s_dist1, s_dist2, ...
-             * FROM stock
-             * WHERE s_i_id = :ol_i_id AND s_w_id = :ol_supply_w_id
-             *
-             * plan: index probe on "S_IDX"
-             */
-            
-            tpcc_stock_tuple* pstock = &_in.items[idx]._astock;
-            tpcc_item_tuple*  pitem  = &_in.items[idx]._aitem;
-            TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-idx-nl-%d (%d) (%d)\n", 
-                   _tid.get_lo(), idx, ol_supply_w_id, ol_i_id);
-
-            e = _penv->stock_man()->st_index_probe_nl(_penv->db(), prst, 
-                                                      ol_supply_w_id, ol_i_id);
-            if (e.is_error()) { goto done; }
-
-            prst->get_value(0, pstock->S_I_ID);
-            prst->get_value(1, pstock->S_W_ID);
-            prst->get_value(5, pstock->S_YTD);
-            pstock->S_YTD += _in.items[idx]._ol_quantity;
-            prst->get_value(2, pstock->S_REMOTE_CNT);        
-            prst->get_value(3, pstock->S_QUANTITY);
-            pstock->S_QUANTITY -= _in.items[idx]._ol_quantity;
-            if (pstock->S_QUANTITY < 10) pstock->S_QUANTITY += 91;
-
-            //prst->get_value(6+_in._d_id, pstock->S_DIST[6+_in._d_id], 25);
-            prst->get_value(6+_in._d_id, pstock->S_DIST[_in._d_id], 25);
-
-            prst->get_value(16, pstock->S_DATA, 51);
-
-            char c_s_brand_generic;
-            if (strstr(pitem->I_DATA, "ORIGINAL") != NULL && 
-                strstr(pstock->S_DATA, "ORIGINAL") != NULL)
-                c_s_brand_generic = 'B';
-            else c_s_brand_generic = 'G';
-
-            prst->get_value(4, pstock->S_ORDER_CNT);
-            pstock->S_ORDER_CNT++;
-
-
-            if (_in._wh_id != _in.items[idx]._ol_supply_wh_id) { 
-                pstock->S_REMOTE_CNT++;
-                // Should not happen, because we have disabled the remote xcts
-                assert (0); 
-            }
-
-            /* UPDATE stock
-             * SET s_quantity = :s_quantity, s_order_cnt = :s_order_cnt
-             * WHERE s_w_id = :w_id AND s_i_id = :ol_i_id;
-             */
-
-            TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-upd-tuple-nl-%d (%d) (%d)\n", 
-                   _tid.get_lo(), idx, pstock->S_W_ID, pstock->S_I_ID);
-
-            e = _penv->stock_man()->st_update_tuple_nl(_penv->db(), prst, 
-                                                       pstock);
-            if (e.is_error()) { goto done; }
-
-            // update RVP
-            // The RVP is updated throught the pstock
-            
-        } // EOF: OLCNT upd-stocks
-
-    } // goto
+	prst->get_value(0, pstock->S_I_ID);
+	prst->get_value(1, pstock->S_W_ID);
+	prst->get_value(5, pstock->S_YTD);
+	pstock->S_YTD += _in.items[idx]._ol_quantity;
+	prst->get_value(2, pstock->S_REMOTE_CNT);        
+	prst->get_value(3, pstock->S_QUANTITY);
+	pstock->S_QUANTITY -= _in.items[idx]._ol_quantity;
+	if (pstock->S_QUANTITY < 10) {
+	    pstock->S_QUANTITY += 91;
+	}
+	prst->get_value(6+_in._d_id, pstock->S_DIST[_in._d_id], 25);
+	prst->get_value(16, pstock->S_DATA, 51);
+	char c_s_brand_generic;
+	if (strstr(pitem->I_DATA, "ORIGINAL") != NULL && 
+	    strstr(pstock->S_DATA, "ORIGINAL") != NULL) {
+	    c_s_brand_generic = 'B';
+	} else {
+	    c_s_brand_generic = 'G';
+	}
+	prst->get_value(4, pstock->S_ORDER_CNT);
+	pstock->S_ORDER_CNT++;
+	
+	if (_in._wh_id != _in.items[idx]._ol_supply_wh_id) { 
+	    pstock->S_REMOTE_CNT++;
+	    // Should not happen, because we have disabled the remote xcts
+	    assert (0); 
+	}
+	
+	/* UPDATE stock
+	 * SET s_quantity = :s_quantity, s_order_cnt = :s_order_cnt
+	 * WHERE s_w_id = :w_id AND s_i_id = :ol_i_id;
+	 */
+	
+	TRACE( TRACE_TRX_FLOW, "App: %d NO:stock-upd-tuple-nl-%d (%d) (%d)\n", 
+	       _tid.get_lo(), idx, pstock->S_W_ID, pstock->S_I_ID);
+	W_DO(_penv->stock_man()->st_update_tuple_nl(_penv->db(), prst, pstock));
+	
+	// update RVP
+	// The RVP is updated throught the pstock
+    } // EOF: OLCNT upd-stocks
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -869,10 +751,7 @@ w_rc_t upd_sto_nord_action::trx_exec()
     prst->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->stock_man()->give_tuple(prst);
-    return (e);
+    return RCOK;
 }
 
 

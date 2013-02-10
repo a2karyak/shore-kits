@@ -42,22 +42,6 @@ ENTER_NAMESPACE(tm1);
 
 
 
-template<class M, class T=table_row_t>
-struct tuple_guard {
-    T* ptr;
-    M* manager;
-    tuple_guard(M* m)
-	: ptr(m->get_tuple()), manager(m) { assert(ptr); }
-    ~tuple_guard() { manager->give_tuple(ptr); }
-    T* operator->() { return ptr; }
-    operator T*() { return ptr; }
-private:
-    // no you copy!
-    tuple_guard(tuple_guard&);
-    void operator=(tuple_guard&);
-};
-
-
 /******************************************************************** 
  *
  * Thread-local TM1 TRXS Stats
@@ -297,7 +281,6 @@ w_rc_t ShoreTM1Env::xct_populate_one(const int sub_id)
     assert (sub_id>=0);
 
     // get table tuples from the caches
-
     tuple_guard<sub_man_impl> prsub(_psub_man);
     tuple_guard<ai_man_impl> prai(_pai_man);
     tuple_guard<sf_man_impl> prsf(_psf_man);
@@ -331,171 +314,159 @@ w_rc_t ShoreTM1Env::xct_populate_one(const int sub_id)
 
     short num_cf = 0;
 
-    { // make gotos safe
+    // POPULATE SUBSCRIBER
 
-        // POPULATE SUBSCRIBER
-
-        prsub->set_value(0, sub_id);
-        char asubnbr[STRSIZE(TM1_SUB_NBR_SZ)];
-        memset(asubnbr,0,STRSIZE(TM1_SUB_NBR_SZ));
-        sprintf(asubnbr,"%015d",sub_id);
-        prsub->set_value(1, asubnbr);
-
-        // BIT_XX
-        prsub->set_value(2,  URandBool());
-        prsub->set_value(3,  URandBool());
-        prsub->set_value(4,  URandBool());
-        prsub->set_value(5,  URandBool());
-        prsub->set_value(6,  URandBool());
-        prsub->set_value(7,  URandBool());
-        prsub->set_value(8,  URandBool());
-        prsub->set_value(9,  URandBool());
-        prsub->set_value(10, URandBool());
-        prsub->set_value(11, URandBool());
-
-        // HEX_XX
-        prsub->set_value(12, URandShort(0,15));
-        prsub->set_value(13, URandShort(0,15));
-        prsub->set_value(14, URandShort(0,15));
-        prsub->set_value(15, URandShort(0,15));
-        prsub->set_value(16, URandShort(0,15));
-        prsub->set_value(17, URandShort(0,15));
-        prsub->set_value(18, URandShort(0,15));
-        prsub->set_value(19, URandShort(0,15));
-        prsub->set_value(20, URandShort(0,15));
-        prsub->set_value(21, URandShort(0,15));
-
-        // BYTE2_XX
-        prsub->set_value(22, URandShort(0,255));
-        prsub->set_value(23, URandShort(0,255));
-        prsub->set_value(24, URandShort(0,255));
-        prsub->set_value(25, URandShort(0,255));
-        prsub->set_value(26, URandShort(0,255));
-        prsub->set_value(27, URandShort(0,255));
-        prsub->set_value(28, URandShort(0,255));
-        prsub->set_value(29, URandShort(0,255));
-        prsub->set_value(30, URandShort(0,255));
-        prsub->set_value(31, URandShort(0,255));
-
-        prsub->set_value(32, URand(0,(2<<16)-1));
-        prsub->set_value(33, URand(0,(2<<16)-1));
-
+    prsub->set_value(0, sub_id);
+    char asubnbr[STRSIZE(TM1_SUB_NBR_SZ)];
+    memset(asubnbr,0,STRSIZE(TM1_SUB_NBR_SZ));
+    sprintf(asubnbr,"%015d",sub_id);
+    prsub->set_value(1, asubnbr);
+    
+    // BIT_XX
+    prsub->set_value(2,  URandBool());
+    prsub->set_value(3,  URandBool());
+    prsub->set_value(4,  URandBool());
+    prsub->set_value(5,  URandBool());
+    prsub->set_value(6,  URandBool());
+    prsub->set_value(7,  URandBool());
+    prsub->set_value(8,  URandBool());
+    prsub->set_value(9,  URandBool());
+    prsub->set_value(10, URandBool());
+    prsub->set_value(11, URandBool());
+    
+    // HEX_XX
+    prsub->set_value(12, URandShort(0,15));
+    prsub->set_value(13, URandShort(0,15));
+    prsub->set_value(14, URandShort(0,15));
+    prsub->set_value(15, URandShort(0,15));
+    prsub->set_value(16, URandShort(0,15));
+    prsub->set_value(17, URandShort(0,15));
+    prsub->set_value(18, URandShort(0,15));
+    prsub->set_value(19, URandShort(0,15));
+    prsub->set_value(20, URandShort(0,15));
+    prsub->set_value(21, URandShort(0,15));
+    
+    // BYTE2_XX
+    prsub->set_value(22, URandShort(0,255));
+    prsub->set_value(23, URandShort(0,255));
+    prsub->set_value(24, URandShort(0,255));
+    prsub->set_value(25, URandShort(0,255));
+    prsub->set_value(26, URandShort(0,255));
+    prsub->set_value(27, URandShort(0,255));
+    prsub->set_value(28, URandShort(0,255));
+    prsub->set_value(29, URandShort(0,255));
+    prsub->set_value(30, URandShort(0,255));
+    prsub->set_value(31, URandShort(0,255));
+    
+    prsub->set_value(32, URand(0,(2<<16)-1));
+    prsub->set_value(33, URand(0,(2<<16)-1));
+    
 #ifdef CFG_HACK
-        prsub->set_value(34, "padding");         // PADDING
+    prsub->set_value(34, "padding");         // PADDING
 #endif
+    
+    W_DO(_psub_man->add_tuple(_pssm, prsub));
+    
+    TRACE( TRACE_TRX_FLOW, "Added SUB - (%d)\n", sub_id);
+    
+    short type;
+    
+    // POPULATE ACCESS_INFO
+    
+    for (i=0; i<num_ai; ++i) {
+	
+	prai->set_value(0, sub_id);
+	
+	// AI_TYPE
+	type = i+1;
+	prai->set_value(1, type);
+	
+	// DATA 1,2
+	prai->set_value(2, URandShort(0,255));
+	prai->set_value(3, URandShort(0,255));
+	
+	// DATA 3,4
+	char data3[TM1_AI_DATA3_SZ];
+	URandFillStrCaps(data3,TM1_AI_DATA3_SZ);
+	prai->set_value(4, data3);
+	
+	char data4[TM1_AI_DATA4_SZ];
+	URandFillStrCaps(data4,TM1_AI_DATA4_SZ);
+	prai->set_value(5, data4);      
+		
+#ifdef CFG_HACK
+	prai->set_value(6, "padding");            // PADDING
+#endif
+	
+	W_DO(_pai_man->add_tuple(_pssm, prai));
+	
+	TRACE( TRACE_TRX_FLOW, "Added AI-%d - (%d|%d|%s|%s)\n",
+	       i,sub_id,i+1,data3,data4);
+    }
+    
+    // POPULATE SPECIAL_FACILITY
+    
+    for (i=0; i<num_sf; ++i) {
+	
+	prsf->set_value(0, sub_id);
         
-        W_DO(_psub_man->add_tuple(_pssm, prsub));
+	// SF_TYPE 
+	type = i+1;
+	prsf->set_value(1, type);	
 
-        TRACE (TRACE_TRX_FLOW, "Added SUB - (%d)\n", sub_id);
+	prsf->set_value(2, (URand(1,100)<85? true : false));
+	prsf->set_value(3, URandShort(0,255));
+	prsf->set_value(4, URandShort(0,255));
+	
+	// DATA_B
+	char datab[TM1_SF_DATA_B_SZ];
+	URandFillStrCaps(datab,TM1_SF_DATA_B_SZ);
+	prsf->set_value(5, datab);
+	
+#ifdef CFG_HACK
+	prsf->set_value(6, "padding");            // PADDING
+#endif
+	
+	W_DO(_psf_man->add_tuple(_pssm, prsf));
+	
+	TRACE( TRACE_TRX_FLOW, "Added SF-%d - (%d|%d|%s)\n",
+	       i,sub_id,i+1,datab);
 
-        short type;
-
-        // POPULATE ACCESS_INFO
+	// POPULATE CALL_FORWARDING
+	
+	// decide how many CF to have for this SF
+	num_cf = URand(TM1_MIN_CF_PER_SF,
+		       TM1_MAX_CF_PER_SF);
+	
+	short atime;
         
-        for (i=0; i<num_ai; ++i) {
-
-            prai->set_value(0, sub_id);
-
-            // AI_TYPE
-            type = i+1;
-            prai->set_value(1, type);
-
-            // DATA 1,2
-            prai->set_value(2, URandShort(0,255));
-            prai->set_value(3, URandShort(0,255));
-
-            // DATA 3,4
-            char data3[TM1_AI_DATA3_SZ];
-            URandFillStrCaps(data3,TM1_AI_DATA3_SZ);
-            prai->set_value(4, data3);
-
-            char data4[TM1_AI_DATA4_SZ];
-            URandFillStrCaps(data4,TM1_AI_DATA4_SZ);
-            prai->set_value(5, data4);      
-
-
-#ifdef CFG_HACK
-            prai->set_value(6, "padding");            // PADDING
-#endif
-
-            W_DO(_pai_man->add_tuple(_pssm, prai));
-
-            TRACE (TRACE_TRX_FLOW, "Added AI-%d - (%d|%d|%s|%s)\n",
-                   i,sub_id,i+1,data3,data4);
-        }
-
-
-
-        // POPULATE SPECIAL_FACILITY
-
-        for (i=0; i<num_sf; ++i) {
-
-            prsf->set_value(0, sub_id);
+	for (j=0; j<num_cf; ++j) {
+	    
+	    prcf->set_value(0, sub_id);
+	    
+	    type = i+1;
+	    prcf->set_value(1, type);
+	    
+	    atime = j*8;
+	    prcf->set_value(2, atime);
+	    
+	    atime = j*8 + URandShort(1,8);
+	    prcf->set_value(3, atime);
             
-            // SF_TYPE 
-            type = i+1;
-            prsf->set_value(1, type);
-
-            prsf->set_value(2, (URand(1,100)<85? true : false));
-            prsf->set_value(3, URandShort(0,255));
-            prsf->set_value(4, URandShort(0,255));
-
-            // DATA_B
-            char datab[TM1_SF_DATA_B_SZ];
-            URandFillStrCaps(datab,TM1_SF_DATA_B_SZ);
-            prsf->set_value(5, datab);
-
-
+	    char numbx[TM1_CF_NUMBERX_SZ];
+	    URandFillStrNumbx(numbx,TM1_CF_NUMBERX_SZ);
+	    prcf->set_value(4, numbx);                	    
 #ifdef CFG_HACK
-            prsf->set_value(6, "padding");            // PADDING
+	    prcf->set_value(5, "padding");                // PADDING
 #endif
-
-            W_DO(_psf_man->add_tuple(_pssm, prsf));
-
-            TRACE (TRACE_TRX_FLOW, "Added SF-%d - (%d|%d|%s)\n",
-                   i,sub_id,i+1,datab);
-
-
-
-            // POPULATE CALL_FORWARDING
-
-            // decide how many CF to have for this SF
-            num_cf = URand(TM1_MIN_CF_PER_SF,
-                           TM1_MAX_CF_PER_SF);
-
-            short atime;
-            
-            for (j=0; j<num_cf; ++j) {
-
-                prcf->set_value(0, sub_id);
-
-                type = i+1;
-                prcf->set_value(1, type);
-
-                atime = j*8;
-                prcf->set_value(2, atime);
-
-                atime = j*8 + URandShort(1,8);
-                prcf->set_value(3, atime);
-                
-                char numbx[TM1_CF_NUMBERX_SZ];
-                URandFillStrNumbx(numbx,TM1_CF_NUMBERX_SZ);
-                prcf->set_value(4, numbx);                
-
-#ifdef CFG_HACK
-                prcf->set_value(5, "padding");                // PADDING
-#endif
-
-                W_DO(_pcf_man->add_tuple(_pssm, prcf));          
-
-                TRACE (TRACE_TRX_FLOW, "Added CF-%d - (%d|%d|%d)\n",
-                       i,sub_id,i+1,j*8);
-            }
-        }
-
-    } // goto
-
-
+	    
+	    W_DO(_pcf_man->add_tuple(_pssm, prcf));          
+	    
+	    TRACE( TRACE_TRX_FLOW, "Added CF-%d - (%d|%d|%d)\n",
+		   i,sub_id,i+1,j*8);
+	}
+    }
+    
     return RCOK;
 }
 
@@ -515,18 +486,19 @@ w_rc_t ShoreTM1Env::xct_get_sub_data(const int xct_id,
     assert (_pssm);
     assert (_initialized);
     assert (_loaded);
-
+    
     // Touches 1 table:
     // Subscriber
     tuple_guard<sub_man_impl> prsub(_psub_man);
-
+    
     rep_row_t areprow(_psub_man->ts());
 
     // allocate space for the table representations
     areprow.set(_psub_desc->maxsize()); 
+
     prsub->_rep = &areprow;
 
-
+    
     /* SELECT s_id, sub_nbr, 
      *        bit_XX, hex_XX, byte2_XX,
      *        msc_location, vlr_location
@@ -536,62 +508,57 @@ w_rc_t ShoreTM1Env::xct_get_sub_data(const int xct_id,
      * plan: index probe on "S_IDX"
      */
 
-    { // make gotos safe
-
-        /* 1. retrieve Subscriber (read-only) */
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d GSD:sub-idx-probe (%d)\n", 
-               xct_id, gsdin._s_id);
-        W_DO(_psub_man->sub_idx_probe(_pssm, prsub, gsdin._s_id));
-
-        tm1_sub_t asub;
-
-        // READ SUBSCRIBER
-
-        prsub->get_value(0,  asub.S_ID);
-        prsub->get_value(1,  asub.SUB_NBR, 17);
-
-        // BIT_XX
-        prsub->get_value(2,  asub.BIT_XX[0]);
-        prsub->get_value(3,  asub.BIT_XX[1]);
-        prsub->get_value(4,  asub.BIT_XX[2]);
-        prsub->get_value(5,  asub.BIT_XX[3]);
-        prsub->get_value(6,  asub.BIT_XX[4]);
-        prsub->get_value(7,  asub.BIT_XX[5]);
-        prsub->get_value(8,  asub.BIT_XX[6]);
-        prsub->get_value(9,  asub.BIT_XX[7]);
-        prsub->get_value(10, asub.BIT_XX[8]);
-        prsub->get_value(11, asub.BIT_XX[9]);
-
-        // HEX_XX
-        prsub->get_value(12, asub.HEX_XX[0]);
-        prsub->get_value(13, asub.HEX_XX[1]);
-        prsub->get_value(14, asub.HEX_XX[2]);
-        prsub->get_value(15, asub.HEX_XX[3]);
-        prsub->get_value(16, asub.HEX_XX[4]);
-        prsub->get_value(17, asub.HEX_XX[5]);
-        prsub->get_value(18, asub.HEX_XX[6]);
-        prsub->get_value(19, asub.HEX_XX[7]);
-        prsub->get_value(20, asub.HEX_XX[8]);
-        prsub->get_value(21, asub.HEX_XX[9]);
-
-        // BYTE2_XX
-        prsub->get_value(22, asub.BYTE2_XX[0]);
-        prsub->get_value(23, asub.BYTE2_XX[1]);
-        prsub->get_value(24, asub.BYTE2_XX[2]);
-        prsub->get_value(25, asub.BYTE2_XX[3]);
-        prsub->get_value(26, asub.BYTE2_XX[4]);
-        prsub->get_value(27, asub.BYTE2_XX[5]);
-        prsub->get_value(28, asub.BYTE2_XX[6]);
-        prsub->get_value(29, asub.BYTE2_XX[7]);
-        prsub->get_value(30, asub.BYTE2_XX[8]);
-        prsub->get_value(31, asub.BYTE2_XX[9]);
-
-        prsub->get_value(32, asub.MSC_LOCATION);
-        prsub->get_value(33, asub.VLR_LOCATION);
-
-    } // goto
-
+    // 1. retrieve Subscriber (read-only)
+    TRACE( TRACE_TRX_FLOW, "App: %d GSD:sub-idx-probe (%d)\n", 
+	   xct_id, gsdin._s_id);
+    W_DO(_psub_man->sub_idx_probe(_pssm, prsub, gsdin._s_id));
+    
+    tm1_sub_t asub;
+    
+    // READ SUBSCRIBER
+    
+    prsub->get_value(0,  asub.S_ID);
+    prsub->get_value(1,  asub.SUB_NBR, 17);
+    
+    // BIT_XX
+    prsub->get_value(2,  asub.BIT_XX[0]);
+    prsub->get_value(3,  asub.BIT_XX[1]);
+    prsub->get_value(4,  asub.BIT_XX[2]);
+    prsub->get_value(5,  asub.BIT_XX[3]);
+    prsub->get_value(6,  asub.BIT_XX[4]);
+    prsub->get_value(7,  asub.BIT_XX[5]);
+    prsub->get_value(8,  asub.BIT_XX[6]);
+    prsub->get_value(9,  asub.BIT_XX[7]);
+    prsub->get_value(10, asub.BIT_XX[8]);
+    prsub->get_value(11, asub.BIT_XX[9]);
+    
+    // HEX_XX
+    prsub->get_value(12, asub.HEX_XX[0]);
+    prsub->get_value(13, asub.HEX_XX[1]);
+    prsub->get_value(14, asub.HEX_XX[2]);
+    prsub->get_value(15, asub.HEX_XX[3]);
+    prsub->get_value(16, asub.HEX_XX[4]);
+    prsub->get_value(17, asub.HEX_XX[5]);
+    prsub->get_value(18, asub.HEX_XX[6]);
+    prsub->get_value(19, asub.HEX_XX[7]);
+    prsub->get_value(20, asub.HEX_XX[8]);
+    prsub->get_value(21, asub.HEX_XX[9]);
+    
+    // BYTE2_XX
+    prsub->get_value(22, asub.BYTE2_XX[0]);
+    prsub->get_value(23, asub.BYTE2_XX[1]);
+    prsub->get_value(24, asub.BYTE2_XX[2]);
+    prsub->get_value(25, asub.BYTE2_XX[3]);
+    prsub->get_value(26, asub.BYTE2_XX[4]);
+    prsub->get_value(27, asub.BYTE2_XX[5]);
+    prsub->get_value(28, asub.BYTE2_XX[6]);
+    prsub->get_value(29, asub.BYTE2_XX[7]);
+    prsub->get_value(30, asub.BYTE2_XX[8]);
+    prsub->get_value(31, asub.BYTE2_XX[9]);
+    
+    prsub->get_value(32, asub.MSC_LOCATION);
+    prsub->get_value(33, asub.VLR_LOCATION);
+    
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
     // dumps the status of all the table rows used
@@ -626,6 +593,7 @@ w_rc_t ShoreTM1Env::xct_get_new_dest(const int xct_id,
 
     // allocate space for the larger of the 2 table representations
     rep_row_t areprow(_pcf_man->ts());
+
     areprow.set(_pcf_desc->maxsize()); 
 
     prsf->_rep = &areprow;
@@ -659,55 +627,43 @@ w_rc_t ShoreTM1Env::xct_get_new_dest(const int xct_id,
      *       iter on index  "CF_IDX"
      */
 
-    { // make gotos safe
+    // 1. Retrieve SpecialFacility (read-only)
+    TRACE( TRACE_TRX_FLOW, "App: %d GND:sf-idx-probe (%d) (%d)\n", 
+	   xct_id, gndin._s_id, gndin._sf_type);
+    W_DO(_psf_man->sf_idx_probe(_pssm, prsf, 
+				gndin._s_id, gndin._sf_type));    
+    prsf->get_value(2, asf.IS_ACTIVE);
 
-        // 1. Retrieve SpecialFacility (read-only)
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d GND:sf-idx-probe (%d) (%d)\n", 
-               xct_id, gndin._s_id, gndin._sf_type);
-        W_DO(_psf_man->sf_idx_probe(_pssm, prsf, 
-				    gndin._s_id, gndin._sf_type));
-
-        prsf->get_value(2, asf.IS_ACTIVE);
-
-
-        //    If it is and active special facility
-        // 2. Retrieve the call forwarding destination (read-only)
-        if (asf.IS_ACTIVE) {
-            guard<index_scan_iter_impl<call_forwarding_t> > cf_iter;
-	    {
-		index_scan_iter_impl<call_forwarding_t>* tmp_cf_iter;
-		TRACE( TRACE_TRX_FLOW, "App: %d GND:cf-idx-iter\n", xct_id);
-		W_DO(_pcf_man->cf_get_idx_iter(_pssm, tmp_cf_iter, prcf,
-					       lowrep, highrep,
-					       gndin._s_id, gndin._sf_type, 
-					       gndin._s_time));
-		cf_iter = tmp_cf_iter;
-	    }
-
-            W_DO(cf_iter->next(_pssm, eof, *prcf));
-
-            while (!eof) {
-
-                // check the retrieved CF e_time                
-                prcf->get_value(3, acf.END_TIME);
-                if (acf.END_TIME > gndin._e_time) {
-                    prcf->get_value(4, acf.NUMBERX, 17);
-                    TRACE( TRACE_TRX_FLOW, "App: %d GND: found (%d) (%d) (%s)\n", 
-                           xct_id, gndin._e_time, acf.END_TIME, acf.NUMBERX);
-                    bFound = true;
-                }
-                
-		TRACE( TRACE_TRX_FLOW, "App: %d GND:cf-idx-iter-next\n", xct_id);
-                W_DO(cf_iter->next(_pssm, eof, *prcf));
-            }
-        }
-
-        if (!bFound) { 
-            return RC(se_NO_CURRENT_TUPLE); 
-        }
-
-    } // goto
+    // If it is and active special facility
+    // 2. Retrieve the call forwarding destination (read-only)
+    if (asf.IS_ACTIVE) {
+	guard<index_scan_iter_impl<call_forwarding_t> > cf_iter;
+	{
+	    index_scan_iter_impl<call_forwarding_t>* tmp_cf_iter;
+	    TRACE( TRACE_TRX_FLOW, "App: %d GND:cf-idx-iter\n", xct_id);
+	    W_DO(_pcf_man->cf_get_idx_iter(_pssm, tmp_cf_iter, prcf,
+					   lowrep, highrep,
+					   gndin._s_id, gndin._sf_type, 
+					   gndin._s_time));
+	    cf_iter = tmp_cf_iter;
+	}	
+	W_DO(cf_iter->next(_pssm, eof, *prcf));
+	while (!eof) {	    
+	    // check the retrieved CF e_time                
+	    prcf->get_value(3, acf.END_TIME);
+	    if (acf.END_TIME > gndin._e_time) {
+		prcf->get_value(4, acf.NUMBERX, 17);
+		TRACE( TRACE_TRX_FLOW, "App: %d GND: found (%d) (%d) (%s)\n", 
+		       xct_id, gndin._e_time, acf.END_TIME, acf.NUMBERX);
+		bFound = true;
+	    }	    
+	    TRACE( TRACE_TRX_FLOW, "App: %d GND:cf-idx-iter-next\n", xct_id);
+	    W_DO(cf_iter->next(_pssm, eof, *prcf));
+	}
+    }
+    if (!bFound) { 
+	return RC(se_NO_CURRENT_TUPLE); 
+    }
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -717,7 +673,7 @@ w_rc_t ShoreTM1Env::xct_get_new_dest(const int xct_id,
 #endif
 
     return RCOK;
-
+    
 } // EOF: GET_NEW_DEST
 
 
@@ -745,6 +701,7 @@ w_rc_t ShoreTM1Env::xct_get_acc_data(const int xct_id,
 
     // allocate space for the table representations
     areprow.set(_pai_desc->maxsize()); 
+
     prai->_rep = &areprow;
 
 
@@ -756,25 +713,15 @@ w_rc_t ShoreTM1Env::xct_get_acc_data(const int xct_id,
      * plan: index probe on "AI_IDX"
      */
 
-    { // make gotos safe
-
-        /* 1. retrieve AccessInfo (read-only) */
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d GAD:ai-idx-probe (%d) (%d)\n", 
-               xct_id, gadin._s_id, gadin._ai_type);
-	W_DO(_pai_man->ai_idx_probe(_pssm, prai, 
-				    gadin._s_id, gadin._ai_type));
-
-        tm1_ai_t aai;
-
-        // READ ACCESS-INFO
-
-        prai->get_value(2,  aai.DATA1);
-        prai->get_value(3,  aai.DATA2);
-        prai->get_value(4,  aai.DATA3, 5);
-        prai->get_value(5,  aai.DATA4, 9);
-
-    } // goto
+    // 1. retrieve AccessInfo (read-only)
+    TRACE( TRACE_TRX_FLOW, "App: %d GAD:ai-idx-probe (%d) (%d)\n", 
+	   xct_id, gadin._s_id, gadin._ai_type);
+    W_DO(_pai_man->ai_idx_probe(_pssm, prai, gadin._s_id, gadin._ai_type));
+    tm1_ai_t aai;
+    prai->get_value(2,  aai.DATA1);
+    prai->get_value(3,  aai.DATA2);
+    prai->get_value(4,  aai.DATA3, 5);
+    prai->get_value(5,  aai.DATA4, 9);
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -783,7 +730,9 @@ w_rc_t ShoreTM1Env::xct_get_acc_data(const int xct_id,
 #endif
     
     return RCOK;
+
 } // EOF: GET_ACC_DATA
+
 
 
 
@@ -810,6 +759,7 @@ w_rc_t ShoreTM1Env::xct_upd_sub_data(const int xct_id,
 
     // allocate space for the larger table representation
     areprow.set(_psub_desc->maxsize()); 
+
     prsub->_rep = &areprow;
     prsf->_rep = &areprow;
 
@@ -828,38 +778,23 @@ w_rc_t ShoreTM1Env::xct_upd_sub_data(const int xct_id,
      * plan: index probe on "SF_IDX"
      */
 
-    { // make gotos safe
+    // IP: Moving the Upd(SF) first because it is the only 
+    //     operation on this trx that may fail
+    //#warning baseline::upd_sub_data does first the Upd(SF) and then Upd(Sub)
+    
+    // 1. Update SpecialFacility
+    TRACE( TRACE_TRX_FLOW, "App: %d USD:sf-idx-upd (%d) (%d)\n", 
+	   xct_id, usdin._s_id, usdin._sf_type);
+    W_DO(_psf_man->sf_idx_upd(_pssm, prsf, usdin._s_id, usdin._sf_type));    
+    prsf->set_value(4, usdin._a_data);        
+    W_DO(_psf_man->update_tuple(_pssm, prsf));
 
-
-        // IP: Moving the Upd(SF) first because it is the only 
-        //     operation on this trx that may fail
-
-        //#warning baseline::upd_sub_data does first the Upd(SF) and then Upd(Sub)
-
-        // 1. Update SpecialFacility
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d USD:sf-idx-upd (%d) (%d)\n", 
-               xct_id, usdin._s_id, usdin._sf_type);
-        W_DO(_psf_man->sf_idx_upd(_pssm, prsf, 
-				  usdin._s_id, usdin._sf_type));
-
-        prsf->set_value(4, usdin._a_data);
-        
-        W_DO(_psf_man->update_tuple(_pssm, prsf));
-
-
-        // 2. Update Subscriber
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d USD:sub-idx-upd (%d)\n", 
-               xct_id, usdin._s_id);
-        W_DO(_psub_man->sub_idx_upd(_pssm, prsub, 
-				    usdin._s_id));
-
-        prsub->set_value(2, usdin._a_bit);
-        
-        W_DO(_psub_man->update_tuple(_pssm, prsub));
-
-    } // goto
+    // 2. Update Subscriber
+    TRACE( TRACE_TRX_FLOW, "App: %d USD:sub-idx-upd (%d)\n", 
+	   xct_id, usdin._s_id);
+    W_DO(_psub_man->sub_idx_upd(_pssm, prsub, usdin._s_id));
+    prsub->set_value(2, usdin._a_bit);
+    W_DO(_psub_man->update_tuple(_pssm, prsub));
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -871,6 +806,7 @@ w_rc_t ShoreTM1Env::xct_upd_sub_data(const int xct_id,
     return RCOK;
 
 } // EOF: UPD_SUB_DATA
+
 
 
 
@@ -896,6 +832,7 @@ w_rc_t ShoreTM1Env::xct_upd_loc(const int xct_id,
 
     // allocate space for the larger table representation
     areprow.set(_psub_desc->maxsize()); 
+
     prsub->_rep = &areprow;
 
 
@@ -906,30 +843,23 @@ w_rc_t ShoreTM1Env::xct_upd_loc(const int xct_id,
      * plan: index probe on "SUB_NBR_IDX"
      */
 
-    { // make gotos safe
-
-        /* 1. Update Subscriber */
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d UL:sub-nbr-idx-upd (%d)\n", 
-               xct_id, ulin._s_id);
-        W_DO(_psub_man->sub_nbr_idx_upd(_pssm, prsub, 
-					ulin._sub_nbr));
-
-        prsub->set_value(33, ulin._vlr_loc);
-        
-        W_DO(_psub_man->update_tuple(_pssm, prsub));
-
-    } // goto
+    // 1. Update Subscriber
+    TRACE( TRACE_TRX_FLOW, "App: %d UL:sub-nbr-idx-upd (%d)\n", 
+	   xct_id, ulin._s_id);
+    W_DO(_psub_man->sub_nbr_idx_upd(_pssm, prsub, ulin._sub_nbr));
+    prsub->set_value(33, ulin._vlr_loc);
+    W_DO(_psub_man->update_tuple(_pssm, prsub));
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
     // dumps the status of all the table rows used
     prsub->print_tuple();
 #endif
-
+    
     return RCOK;
 
 } // EOF: UPD_LOC
+
 
 
 
@@ -957,20 +887,20 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
 
     // allocate space for the larger table representation
     areprow.set(_psub_desc->maxsize()); 
+
     prsub->_rep = &areprow;
     prsf->_rep = &areprow;
     prcf->_rep = &areprow;
-
 
     rep_row_t lowrep(_psf_man->ts());
     rep_row_t highrep(_psf_man->ts());
     lowrep.set(_psf_desc->maxsize()); 
     highrep.set(_psf_desc->maxsize()); 
 
-
     tm1_sf_t  asf;
     bool bFound = false;
     bool eof;
+
 
     /* SELECT <s_id bind subid s_id>
      * FROM   Subscriber
@@ -990,82 +920,59 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
      *         <numberx rndstr>);
      */
 
-    { // make gotos safe
-
-        // 1. Retrieve Subscriber (Read-only)
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d ICF:sub-nbr-idx (%d)\n", 
-               xct_id, icfin._s_id);
-        W_DO(_psub_man->sub_nbr_idx_probe(_pssm, prsub, 
-					  icfin._sub_nbr));
-
-        prsub->get_value(0, icfin._s_id);
-
+    // 1. Retrieve Subscriber (Read-only)
+    TRACE( TRACE_TRX_FLOW, "App: %d ICF:sub-nbr-idx (%d)\n", 
+	   xct_id, icfin._s_id);
+    W_DO(_psub_man->sub_nbr_idx_probe(_pssm, prsub, icfin._sub_nbr));
+    prsub->get_value(0, icfin._s_id);
         
-        // 2. Retrieve SpecialFacility (Read-only)
-        
-        guard<index_scan_iter_impl<special_facility_t> > sf_iter;
-        {
-            index_scan_iter_impl<special_facility_t>* tmp_sf_iter;
-            TRACE( TRACE_TRX_FLOW, "App: %d ICF:sf-idx-iter\n", xct_id);
-            W_DO(_psf_man->sf_get_idx_iter(_pssm, tmp_sf_iter, prsf,
-					   lowrep, highrep,
-					   icfin._s_id));
-            sf_iter = tmp_sf_iter;
-        }
+    // 2. Retrieve SpecialFacility (Read-only)
+    guard<index_scan_iter_impl<special_facility_t> > sf_iter;
+    {
+	index_scan_iter_impl<special_facility_t>* tmp_sf_iter;
+	TRACE( TRACE_TRX_FLOW, "App: %d ICF:sf-idx-iter\n", xct_id);
+	W_DO(_psf_man->sf_get_idx_iter(_pssm, tmp_sf_iter, prsf,
+				       lowrep, highrep, icfin._s_id));
+	sf_iter = tmp_sf_iter;
+    }
+    W_DO(sf_iter->next(_pssm, eof, *prsf));
+    while (!eof) {
+	// check the retrieved SF sf_type
+	prsf->get_value(1, asf.SF_TYPE);
+	if (asf.SF_TYPE == icfin._sf_type) {
+	    TRACE( TRACE_TRX_FLOW, "App: %d ICF: found (%d) (%d)\n", 
+		   xct_id, icfin._s_id, asf.SF_TYPE);
+	    bFound = true;
+	    break;
+	}            
+	TRACE( TRACE_TRX_FLOW, "App: %d ICF:sf-idx-iter-next\n", xct_id);
+	W_DO(sf_iter->next(_pssm, eof, *prsf));
+    }            
+    if (bFound == false) 
+	return RC(se_NO_CURRENT_TUPLE);     
 
-        W_DO(sf_iter->next(_pssm, eof, *prsf));
-
-        while (!eof) {
-
-            // check the retrieved SF sf_type
-            prsf->get_value(1, asf.SF_TYPE);
-
-            if (asf.SF_TYPE == icfin._sf_type) {
-                TRACE( TRACE_TRX_FLOW, "App: %d ICF: found (%d) (%d)\n", 
-                       xct_id, icfin._s_id, asf.SF_TYPE);
-                bFound = true;
-                break;
-            }
-            
-            TRACE( TRACE_TRX_FLOW, "App: %d ICF:sf-idx-iter-next\n", xct_id);
-            W_DO(sf_iter->next(_pssm, eof, *prsf));
-        }            
-                
-        if (bFound == false) 
-            return RC(se_NO_CURRENT_TUPLE); 
-
-        // 3. Check if it can successfully insert
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d ICF:cf-idx-probe (%d) (%d) (%d)\n", 
-               xct_id, icfin._s_id, icfin._sf_type, icfin._s_time);
-        w_rc_t e = _pcf_man->cf_idx_probe(_pssm, prcf, icfin._s_id,
-					  icfin._sf_type, icfin._s_time);
-            
-        // idx probes return se_TUPLE_NOT_FOUND
-        if (e.err_num() == se_TUPLE_NOT_FOUND) { 
-
-            // 4. Insert Call Forwarding record
-            prcf->set_value(0, icfin._s_id);
-            prcf->set_value(1, icfin._sf_type);
-            prcf->set_value(2, icfin._s_time);
-            prcf->set_value(3, icfin._e_time);
-            prcf->set_value(4, icfin._numberx);                
-
+    // 3. Check if it can successfully insert
+    TRACE( TRACE_TRX_FLOW, "App: %d ICF:cf-idx-probe (%d) (%d) (%d)\n", 
+	   xct_id, icfin._s_id, icfin._sf_type, icfin._s_time);
+    w_rc_t e = _pcf_man->cf_idx_probe(_pssm, prcf, icfin._s_id,
+				      icfin._sf_type, icfin._s_time);
+    
+    // idx probes return se_TUPLE_NOT_FOUND
+    if (e.err_num() == se_TUPLE_NOT_FOUND) { 	
+	// 4. Insert Call Forwarding record
+	prcf->set_value(0, icfin._s_id);
+	prcf->set_value(1, icfin._sf_type);
+	prcf->set_value(2, icfin._s_time);
+	prcf->set_value(3, icfin._e_time);
+	prcf->set_value(4, icfin._numberx);                	
 #ifdef CFG_HACK
-            prcf->set_value(5, "padding"); // PADDING
+	prcf->set_value(5, "padding"); // PADDING
 #endif
-                
-            TRACE (TRACE_TRX_FLOW, "App: %d ICF:ins-cf\n", xct_id);
-
-            W_DO(_pcf_man->add_tuple(_pssm, prcf));
-        }             
-        else {
-            // in any other case it should fail
-            return RC(se_CANNOT_INSERT_TUPLE);
-        }        
-
-    } // goto
+	TRACE (TRACE_TRX_FLOW, "App: %d ICF:ins-cf\n", xct_id);
+	W_DO(_pcf_man->add_tuple(_pssm, prcf));
+    } else { // in any other case it should fail	
+	return RC(se_CANNOT_INSERT_TUPLE);
+    }        
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -1078,6 +985,7 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd(const int xct_id,
     return RCOK;
     
 } // EOF: INS_CALL_FWD
+
 
 
 
@@ -1104,6 +1012,7 @@ w_rc_t ShoreTM1Env::xct_del_call_fwd(const int xct_id,
 
     // allocate space for the larger table representation
     areprow.set(_psub_desc->maxsize()); 
+
     prsub->_rep = &areprow;
     prcf->_rep = &areprow;
 
@@ -1122,32 +1031,19 @@ w_rc_t ShoreTM1Env::xct_del_call_fwd(const int xct_id,
      * plan: index probe on "CF_IDX"     
      */
 
-    { // make gotos safe
-
-        /* 1. Retrieve Subscriber (Read-only) */
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d DCF:sub-nbr-idx (%d)\n", 
-               xct_id, dcfin._s_id);
-
-        W_DO(_psub_man->sub_nbr_idx_probe(_pssm, prsub, 
-					  dcfin._sub_nbr));
-
-        prsub->get_value(0, dcfin._s_id);
-
-
-        /* 2. Delete CallForwarding record */
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d DCF:cf-idx-upd (%d) (%d) (%d)\n", 
-               xct_id, dcfin._s_id, dcfin._sf_type, dcfin._s_time);
-
-        W_DO(_pcf_man->cf_idx_upd(_pssm, prcf, 
-				  dcfin._s_id, dcfin._sf_type, dcfin._s_time));
-
-        TRACE (TRACE_TRX_FLOW, "App: %d DCF:del-cf\n", xct_id);        
-
-        W_DO(_pcf_man->delete_tuple(_pssm, prcf));
-
-    } // goto
+    // 1. Retrieve Subscriber (Read-only)
+    TRACE( TRACE_TRX_FLOW, "App: %d DCF:sub-nbr-idx (%d)\n", 
+	   xct_id, dcfin._s_id);
+    W_DO(_psub_man->sub_nbr_idx_probe(_pssm, prsub, dcfin._sub_nbr));
+    prsub->get_value(0, dcfin._s_id);
+    
+    // 2. Delete CallForwarding record
+    TRACE( TRACE_TRX_FLOW, "App: %d DCF:cf-idx-upd (%d) (%d) (%d)\n", 
+	   xct_id, dcfin._s_id, dcfin._sf_type, dcfin._s_time);
+    W_DO(_pcf_man->cf_idx_upd(_pssm, prcf, 
+			      dcfin._s_id, dcfin._sf_type, dcfin._s_time));
+    TRACE( TRACE_TRX_FLOW, "App: %d DCF:del-cf\n", xct_id);        
+    W_DO(_pcf_man->delete_tuple(_pssm, prcf));
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -1182,8 +1078,10 @@ w_rc_t ShoreTM1Env::xct_get_sub_nbr(const int xct_id,
     tuple_guard<sub_man_impl> prsub(_psub_man);
 
     rep_row_t areprow(_psub_man->ts());
+
     // allocate space for the larger table representation
     areprow.set(_psub_desc->maxsize()); 
+
     prsub->_rep = &areprow;
 
     rep_row_t lowrep(_psub_man->ts());
@@ -1205,40 +1103,32 @@ w_rc_t ShoreTM1Env::xct_get_sub_nbr(const int xct_id,
      * plan: index probe on "SUB_NBR_IDX"
      */
 
-    { // make gotos safe
+    // 1. Secondary index access to Subscriber using sub_nbr and range
+    guard<index_scan_iter_impl<subscriber_t> > sub_iter;
+    {
+	index_scan_iter_impl<subscriber_t>* tmp_sub_iter;
+	TRACE( TRACE_TRX_FLOW, "App: %d GSN:sub-nbr-idx-iter (%d) (%d)\n", 
+	       xct_id, gsnin._s_id, range);
+	W_DO(_psub_man->sub_get_idx_iter(_pssm, tmp_sub_iter, prsub, 
+					 lowrep,highrep,
+					 gsnin._s_id,range,
+					 SH,     // read-only access
+					 true));  // retrieve record
+	sub_iter = tmp_sub_iter;
+    }
 
-        // 1. Secondary index access to Subscriber using sub_nbr and range
-        guard<index_scan_iter_impl<subscriber_t> > sub_iter;
-        {
-            index_scan_iter_impl<subscriber_t>* tmp_sub_iter;
-            TRACE( TRACE_TRX_FLOW, 
-                   "App: %d GSN:sub-nbr-idx-iter (%d) (%d)\n", 
-                   xct_id, gsnin._s_id, range);
-            W_DO(_psub_man->sub_get_idx_iter(_pssm, tmp_sub_iter, prsub, 
-					     lowrep,highrep,
-					     gsnin._s_id,range,
-					     SH,     /* read-only access */
-					     true));  /* retrieve record  */
-            sub_iter = tmp_sub_iter;
-        }
-
-        // 2. Read all the returned records
-        W_DO(sub_iter->next(_pssm, eof, *prsub));
-
-        while (!eof) {
-            prsub->get_value(0, sid);
-            prsub->get_value(33, vlrloc);
-            
-            TRACE( TRACE_TRX_FLOW, "App: %d GSN: read (%d) (%d)\n", 
-                   xct_id, sid, vlrloc);
-
-            W_DO(sub_iter->next(_pssm, eof, *prsub));
-        }
-
-    } // goto
-
+    // 2. Read all the returned records
+    W_DO(sub_iter->next(_pssm, eof, *prsub));
+    while (!eof) {
+	prsub->get_value(0, sid);
+	prsub->get_value(33, vlrloc);
+	TRACE( TRACE_TRX_FLOW, "App: %d GSN: read (%d) (%d)\n", 
+	       xct_id, sid, vlrloc);
+	W_DO(sub_iter->next(_pssm, eof, *prsub));
+    }
+    
     return RCOK;
-
+    
 } // EOF: GET_SUB_NBR
 
 
@@ -1267,61 +1157,45 @@ w_rc_t ShoreTM1Env::xct_ins_call_fwd_bench(const int xct_id,
 
     // allocate space for the larger table representation
     areprow.set(_psub_desc->maxsize());
+
     prsub->_rep = &areprow;
     prcf->_rep = &areprow;
 
-
     // try to insert to call_forwarding_t if the record to insert
     // is not already there, otherwise delete the found record
-    { // make gotos safe
 
-	// 1. Retrieve Subscriber (Read-only)
-	TRACE( TRACE_TRX_FLOW,
-	       "App: %d ICFB:sub-nbr-idx (%d)\n",
-	       xct_id, icfbin._s_id);
-	W_DO(_psub_man->sub_nbr_idx_probe(_pssm, prsub,
-					  icfbin._sub_nbr));
+    // 1. Retrieve Subscriber (Read-only)
+    TRACE( TRACE_TRX_FLOW, "App: %d ICFB:sub-nbr-idx (%d)\n",
+	   xct_id, icfbin._s_id);
+    W_DO(_psub_man->sub_nbr_idx_probe(_pssm, prsub, icfbin._sub_nbr));
+    prsub->get_value(0, icfbin._s_id);
 
-	prsub->get_value(0, icfbin._s_id);
-
-
-	// 2. Check if it can successfully insert
-	TRACE( TRACE_TRX_FLOW,
-	       "App: %d ICFB:cf-idx-probe (%d) (%d) (%d)\n",
-	       xct_id, icfbin._s_id, icfbin._sf_type, icfbin._s_time);
-	w_rc_t e = _pcf_man->cf_idx_upd(_pssm, prcf,
-					icfbin._s_id, icfbin._sf_type, icfbin._s_time);
-
-	// idx probes return se_TUPLE_NOT_FOUND
-	if (e.is_error()) {
-	    if (e.err_num() != se_TUPLE_NOT_FOUND)
-		W_DO(e);
-	    
-	    // 3. Insert Call Forwarding record
-	    prcf->set_value(0, icfbin._s_id);
-	    prcf->set_value(1, icfbin._sf_type);
-	    prcf->set_value(2, icfbin._s_time);
-	    prcf->set_value(3, icfbin._e_time);
-	    prcf->set_value(4, icfbin._numberx);
-	    
+    // 2. Check if it can successfully insert
+    TRACE( TRACE_TRX_FLOW, "App: %d ICFB:cf-idx-probe (%d) (%d) (%d)\n",
+	   xct_id, icfbin._s_id, icfbin._sf_type, icfbin._s_time);
+    w_rc_t e = _pcf_man->cf_idx_upd(_pssm, prcf, icfbin._s_id,
+				    icfbin._sf_type, icfbin._s_time);
+    
+    // idx probes return se_TUPLE_NOT_FOUND
+    if (e.is_error()) {
+	if (e.err_num() != se_TUPLE_NOT_FOUND) {
+	    W_DO(e);	    
+	}
+	// 3. Insert Call Forwarding record
+	prcf->set_value(0, icfbin._s_id);
+	prcf->set_value(1, icfbin._sf_type);
+	prcf->set_value(2, icfbin._s_time);
+	prcf->set_value(3, icfbin._e_time);
+	prcf->set_value(4, icfbin._numberx);	    
 #ifdef CFG_HACK
-	    prcf->set_value(5, "padding"); // PADDING
-#endif
-	    
-	    TRACE (TRACE_TRX_FLOW, "App: %d ICF:ins-cf\n", xct_id);
-	    
-	    W_DO(_pcf_man->add_tuple(_pssm, prcf));
-	}
-	else { // 3. Delete Call Forwarding record if tuple found
-	    
-// 	    e = _pcf_man->cf_idx_upd(_pssm, prcf,
-// 				     icfbin._s_id, icfbin._sf_type, icfbin._s_time);
-// 	    if (e.is_error()) { goto done; }
-	    TRACE (TRACE_TRX_FLOW, "App: %d DCF:del-cf\n", xct_id);
-	    W_DO(_pcf_man->delete_tuple(_pssm, prcf));
-	}
-	
-    } // goto
+	prcf->set_value(5, "padding"); // PADDING
+#endif	    
+	TRACE( TRACE_TRX_FLOW, "App: %d ICF:ins-cf\n", xct_id);	    
+	W_DO(_pcf_man->add_tuple(_pssm, prcf));
+    } else { // 3. Delete Call Forwarding record if tuple found
+	TRACE( TRACE_TRX_FLOW, "App: %d DCF:del-cf\n", xct_id);
+	W_DO(_pcf_man->delete_tuple(_pssm, prcf));
+    }
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction
@@ -1360,6 +1234,7 @@ w_rc_t ShoreTM1Env::xct_del_call_fwd_bench(const int xct_id,
 
     // allocate space for the larger table representation
     areprow.set(_psub_desc->maxsize());
+
     prsub->_rep = &areprow;
     prcf->_rep = &areprow;
 
@@ -1378,55 +1253,41 @@ w_rc_t ShoreTM1Env::xct_del_call_fwd_bench(const int xct_id,
      * plan: index probe on "CF_IDX"
      */
 
-    { // make gotos safe
+    // 1. Retrieve Subscriber (Read-only)
+    TRACE( TRACE_TRX_FLOW, "App: %d DCFB:sub-nbr-idx (%d)\n",
+	   xct_id, dcfbin._s_id);	
+    W_DO(_psub_man->sub_nbr_idx_probe(_pssm, prsub, dcfbin._sub_nbr));
+    prsub->get_value(0, dcfbin._s_id);
 	
-	/* 1. Retrieve Subscriber (Read-only) */
-	TRACE( TRACE_TRX_FLOW,
-	       "App: %d DCFB:sub-nbr-idx (%d)\n",
-		   xct_id, dcfbin._s_id);
-	
-	W_DO(_psub_man->sub_nbr_idx_probe(_pssm, prsub,
-					  dcfbin._sub_nbr));
+    // 2. Delete CallForwarding record
+    TRACE( TRACE_TRX_FLOW, "App: %d DCFB:cf-idx-upd (%d) (%d) (%d)\n",
+	   xct_id, dcfbin._s_id, dcfbin._sf_type, dcfbin._s_time);    
+    w_rc_t e = _pcf_man->cf_idx_upd(_pssm, prcf, dcfbin._s_id,
+				    dcfbin._sf_type, dcfbin._s_time);
 
-	prsub->get_value(0, dcfbin._s_id);
-	
-
-	/* 2. Delete CallForwarding record */
-	TRACE( TRACE_TRX_FLOW,
-	       "App: %d DCFB:cf-idx-upd (%d) (%d) (%d)\n",
-	       xct_id, dcfbin._s_id, dcfbin._sf_type, dcfbin._s_time);
-
-	w_rc_t e = _pcf_man->cf_idx_upd(_pssm, prcf,
-					dcfbin._s_id, dcfbin._sf_type, dcfbin._s_time);
-
-	if (e.is_error()) { // If record not found
-	    if (e.err_num() != se_TUPLE_NOT_FOUND)
-		W_DO(e);
-	    
-	    // 3. Insert Call Forwarding record
-	    prcf->set_value(0, dcfbin._s_id);
-	    prcf->set_value(1, dcfbin._sf_type);
-	    prcf->set_value(2, dcfbin._s_time);
-
-	    short atime = URand(1,24);
-	    prcf->set_value(3, atime);
-
-	    char numbx[TM1_CF_NUMBERX_SZ];
-	    URandFillStrNumbx(numbx,TM1_CF_NUMBERX_SZ);
-	    prcf->set_value(4, numbx);
-
-#ifdef CFG_HACK
-	    prcf->set_value(5, "padding"); // PADDING
-#endif
-
-	    TRACE (TRACE_TRX_FLOW, "App: %d DCFB:ins-cf\n", xct_id);
-
-	    W_DO(_pcf_man->add_tuple(_pssm, prcf));
-	} else {
-	    TRACE (TRACE_TRX_FLOW, "App: %d DCF:del-cf\n", xct_id);
-	    W_DO(_pcf_man->delete_tuple(_pssm, prcf));
+    // If record not found
+    if (e.is_error()) { 
+	if (e.err_num() != se_TUPLE_NOT_FOUND) {
+	    W_DO(e);
 	}
-    } // goto
+	// 3. Insert Call Forwarding record
+	prcf->set_value(0, dcfbin._s_id);
+	prcf->set_value(1, dcfbin._sf_type);
+	prcf->set_value(2, dcfbin._s_time);
+	short atime = URand(1,24);
+	prcf->set_value(3, atime);
+	char numbx[TM1_CF_NUMBERX_SZ];
+	URandFillStrNumbx(numbx,TM1_CF_NUMBERX_SZ);
+	prcf->set_value(4, numbx);
+#ifdef CFG_HACK
+	prcf->set_value(5, "padding"); // PADDING
+#endif
+	TRACE( TRACE_TRX_FLOW, "App: %d DCFB:ins-cf\n", xct_id);
+	W_DO(_pcf_man->add_tuple(_pssm, prcf));
+    } else {
+	TRACE( TRACE_TRX_FLOW, "App: %d DCF:del-cf\n", xct_id);
+	W_DO(_pcf_man->delete_tuple(_pssm, prcf));
+    }
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction

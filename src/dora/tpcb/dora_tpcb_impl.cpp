@@ -72,51 +72,39 @@ void upd_br_action::calc_keys()
 w_rc_t upd_br_action::trx_exec() 
 {
     assert (_penv);
-    w_rc_t e = RCOK;
 
     // get table tuple from the cache
-    // Subscriber
-    table_row_t* prb = _penv->branch_man()->get_tuple();
-    assert (prb);
-
+    // Branch
+    tuple_guard<branch_man_impl> prb(_penv->branch_man());
     rep_row_t areprow(_penv->branch_man()->ts());
     areprow.set(_penv->branch_desc()->maxsize()); 
     prb->_rep = &areprow;
 
 
-    { // make gotos safe
+    /* UPDATE Branches
+     * SET    b_balance = b_balance + <delta>
+     * WHERE  b_id = <b_id rnd>;
+     *
+     * plan: index probe on "B_IDX"
+     */
+    
+    // 1. Probe Branches
+    TRACE( TRACE_TRX_FLOW, "App: %d UA:b-idx-nl (%d)\n", _tid.get_lo(), _in.b_id);
+    W_DO(_penv->branch_man()->b_idx_nl(_penv->db(), prb, _in.b_id));
 
-        /* UPDATE Branches
-         * SET    b_balance = b_balance + <delta>
-         * WHERE  b_id = <b_id rnd>;
-         *
-         * plan: index probe on "B_IDX"
-         */
-
-        // 1. Probe Branches
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d UA:b-idx-nl (%d)\n", _tid.get_lo(), _in.b_id);
-        e = _penv->branch_man()->b_idx_nl(_penv->db(), prb, _in.b_id);
-        if (e.is_error()) { goto done; }
-
-        double total;
-        prb->get_value(1, total);
-        prb->set_value(1, total + _in.delta);
-
-        // 2. Update tuple
-        e = _penv->branch_man()->update_tuple(_penv->db(), prb, NL);
-
-    } // goto
+    double total;
+    prb->get_value(1, total);
+    prb->set_value(1, total + _in.delta);
+    
+    // 2. Update tuple
+    W_DO(_penv->branch_man()->update_tuple(_penv->db(), prb, NL));
 
 #ifdef PRINT_TRX_RESULTS
     // dumps the status of all the table rows used
     prb->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->branch_man()->give_tuple(prb);
-    return (e);
+    return RCOK;
 }
 
 
@@ -131,51 +119,38 @@ void upd_te_action::calc_keys()
 w_rc_t upd_te_action::trx_exec() 
 {
     assert (_penv);
-    w_rc_t e = RCOK;
 
     // get table tuple from the cache
-    // Subscriber
-    table_row_t* prt = _penv->teller_man()->get_tuple();
-    assert (prt);
-
+    // Teller
+    tuple_guard<teller_man_impl> prt(_penv->teller_man());
     rep_row_t areprow(_penv->teller_man()->ts());
     areprow.set(_penv->teller_desc()->maxsize()); 
     prt->_rep = &areprow;
 
+    /* UPDATE Tellers
+     * SET    t_balance = t_balance + <delta>
+     * WHERE  t_id = <t_id rnd>;
+     *
+     * plan: index probe on "T_IDX"
+     */
+    
+    // 1. Probe Tellers
+    TRACE( TRACE_TRX_FLOW, "App: %d UA:t-idx-nl (%d)\n", _tid.get_lo(), _in.t_id);
+    W_DO(_penv->teller_man()->t_idx_nl(_penv->db(), prt, _in.t_id));
 
-    { // make gotos safe
-
-        /* UPDATE Tellers
-         * SET    t_balance = t_balance + <delta>
-         * WHERE  t_id = <t_id rnd>;
-         *
-         * plan: index probe on "T_IDX"
-         */
-
-        // 1. Probe Tellers
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d UA:t-idx-nl (%d)\n", _tid.get_lo(), _in.t_id);
-        e = _penv->teller_man()->t_idx_nl(_penv->db(), prt, _in.t_id);
-        if (e.is_error()) { goto done; }
-
-        double total;
-        prt->get_value(2, total);
-        prt->set_value(2, total + _in.delta);
-
-        // 2. Update tuple
-        e = _penv->teller_man()->update_tuple(_penv->db(), prt, NL);
-
-    } // goto
+    double total;
+    prt->get_value(2, total);
+    prt->set_value(2, total + _in.delta);
+    
+    // 2. Update tuple
+    W_DO(_penv->teller_man()->update_tuple(_penv->db(), prt, NL));
 
 #ifdef PRINT_TRX_RESULTS
     // dumps the status of all the table rows used
     prt->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->teller_man()->give_tuple(prt);
-    return (e);
+    return RCOK;
 }
 
 
@@ -190,51 +165,38 @@ void upd_ac_action::calc_keys()
 w_rc_t upd_ac_action::trx_exec() 
 {
     assert (_penv);
-    w_rc_t e = RCOK;
 
     // get table tuple from the cache
-    // Subscriber
-    table_row_t* pra = _penv->account_man()->get_tuple();
-    assert (pra);
-
+    // Account
+    tuple_guard<account_man_impl> pra(_penv->account_man());
     rep_row_t areprow(_penv->account_man()->ts());
     areprow.set(_penv->account_desc()->maxsize()); 
     pra->_rep = &areprow;
 
+    /* UPDATE Accounts
+     * SET    a_balance = a_balance + <delta>
+     * WHERE  a_id = <a_id rnd>;
+     *
+     * plan: index probe on "A_IDX"
+     */
 
-    { // make gotos safe
+    // 1. Probe Accounts
+    TRACE( TRACE_TRX_FLOW, "App: %d UA:a-idx-nl (%d)\n", _tid.get_lo(), _in.a_id);
+    W_DO(_penv->account_man()->a_idx_nl(_penv->db(), pra, _in.a_id));
 
-        /* UPDATE Accounts
-         * SET    a_balance = a_balance + <delta>
-         * WHERE  a_id = <a_id rnd>;
-         *
-         * plan: index probe on "A_IDX"
-         */
+    double total;
+    pra->get_value(2, total);
+    pra->set_value(2, total + _in.delta);
 
-        // 1. Probe Accounts
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d UA:a-idx-nl (%d)\n", _tid.get_lo(), _in.a_id);
-        e = _penv->account_man()->a_idx_nl(_penv->db(), pra, _in.a_id);
-        if (e.is_error()) { goto done; }
-
-        double total;
-        pra->get_value(2, total);
-        pra->set_value(2, total + _in.delta);
-
-        // 2. Update tuple
-        e = _penv->account_man()->update_tuple(_penv->db(), pra, NL);
-
-    } // goto
+    // 2. Update tuple
+    W_DO(_penv->account_man()->update_tuple(_penv->db(), pra, NL));
 
 #ifdef PRINT_TRX_RESULTS
     // dumps the status of all the table rows used
     pra->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->account_man()->give_tuple(pra);
-    return (e);
+    return RCOK;
 }
 
 
@@ -249,52 +211,37 @@ void ins_hi_action::calc_keys()
 w_rc_t ins_hi_action::trx_exec() 
 {
     assert (_penv);
-    w_rc_t e = RCOK;
 
     // get table tuple from the cache
-    // Subscriber
-    table_row_t* prh = _penv->history_man()->get_tuple();
-    assert (prh);
-
+    // History
+    tuple_guard<history_man_impl> prh(_penv->history_man());
     rep_row_t areprow(_penv->account_man()->ts());
     areprow.set(_penv->account_desc()->maxsize()); 
     prh->_rep = &areprow;
 
-
-    { // make gotos safe
-
-        /* INSERT INTO History
-         * VALUES (<t_id>, <b_id>, <a_id>, <delta>, <timestamp>)
-         */
-
-        // 1. Insert tuple
-
-	prh->set_value(0, _in.b_id);
-	prh->set_value(1, _in.t_id);
-	prh->set_value(2, _in.a_id);
-	prh->set_value(3, _in.delta);
-	prh->set_value(4, time(NULL));
-
+    /* INSERT INTO History
+     * VALUES (<t_id>, <b_id>, <a_id>, <delta>, <timestamp>)
+     */
+    
+    // 1. Insert tuple
+    prh->set_value(0, _in.b_id);
+    prh->set_value(1, _in.t_id);
+    prh->set_value(2, _in.a_id);
+    prh->set_value(3, _in.delta);
+    prh->set_value(4, time(NULL));
 #ifdef CFG_HACK
-	prh->set_value(5, "padding"); // PADDING
+    prh->set_value(5, "padding"); // PADDING
 #endif
 
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d UA:ins-hi\n", _tid.get_lo());
-        e = _penv->history_man()->add_tuple(_penv->db(), prh, NL);
-        if (e.is_error()) { goto done; }
-
-    } // goto
+    TRACE( TRACE_TRX_FLOW, "App: %d UA:ins-hi\n", _tid.get_lo());
+    W_DO(_penv->history_man()->add_tuple(_penv->db(), prh, NL));
 
 #ifdef PRINT_TRX_RESULTS
     // dumps the status of all the table rows used
     prh->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->history_man()->give_tuple(prh);
-    return (e);
+    return RCOK;
 }
 
 

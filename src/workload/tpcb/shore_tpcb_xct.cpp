@@ -270,11 +270,10 @@ DEFINE_TRX(ShoreTPCBEnv,mbench_mix);
  * TPC-B Acct Update
  *
  ********************************************************************/
+
 w_rc_t ShoreTPCBEnv::xct_acct_update(const int /* xct_id */, 
                                      acct_update_input_t& ppin)
 {
-    w_rc_t e = RCOK;
-
     // ensure a valid environment    
     assert (_pssm);
     assert (_initialized);
@@ -284,17 +283,10 @@ w_rc_t ShoreTPCBEnv::xct_acct_update(const int /* xct_id */,
     // branch, teller, account, and history
 
     // get table tuples from the caches
-    table_row_t* prb = _pbranch_man->get_tuple();
-    assert (prb);
-
-    table_row_t* prt = _pteller_man->get_tuple();
-    assert (prt);
-
-    table_row_t* pracct = _paccount_man->get_tuple();
-    assert (pracct);
-
-    table_row_t* prhist = _phistory_man->get_tuple();
-    assert (prhist);
+    tuple_guard<branch_man_impl> prb(_pbranch_man);
+    tuple_guard<teller_man_impl> prt(_pteller_man);
+    tuple_guard<account_man_impl> pracct(_paccount_man);
+    tuple_guard<history_man_impl> prhist(_phistory_man);
 
     rep_row_t areprow(_paccount_man->ts());
 
@@ -306,56 +298,37 @@ w_rc_t ShoreTPCBEnv::xct_acct_update(const int /* xct_id */,
     pracct->_rep = &areprow;
     prhist->_rep = &areprow;
 
-    { // make gotos safe
-
-	double total;
-
-
-        // 1. Update account
-	e = _paccount_man->a_index_probe_forupdate(_pssm, pracct, ppin.a_id);
-        if (e.is_error()) { goto done; }
-
-	pracct->get_value(2, total);
-	pracct->set_value(2, total + ppin.delta);
-	e = _paccount_man->update_tuple(_pssm, pracct);
-	if (e.is_error()) { goto done; }
-
-
-        // 2. Write to History
-	prhist->set_value(0, ppin.b_id);
-	prhist->set_value(1, ppin.t_id);
-	prhist->set_value(2, ppin.a_id);
-	prhist->set_value(3, ppin.delta);
-	prhist->set_value(4, time(NULL));
-
+    double total;
+    
+    // 1. Update account
+    W_DO(_paccount_man->a_index_probe_forupdate(_pssm, pracct, ppin.a_id));
+    pracct->get_value(2, total);
+    pracct->set_value(2, total + ppin.delta);
+    W_DO(_paccount_man->update_tuple(_pssm, pracct));
+    
+    // 2. Write to History
+    prhist->set_value(0, ppin.b_id);
+    prhist->set_value(1, ppin.t_id);
+    prhist->set_value(2, ppin.a_id);
+    prhist->set_value(3, ppin.delta);
+    prhist->set_value(4, time(NULL));
 #ifdef CFG_HACK
-	prhist->set_value(5, "padding"); // PADDING
+    prhist->set_value(5, "padding"); // PADDING
 #endif
-
-        e = _phistory_man->add_tuple(_pssm, prhist);
-        if (e.is_error()) { goto done; }
-
-	
-        // 3. Update teller
-	e = _pteller_man->t_index_probe_forupdate(_pssm, prt, ppin.t_id);
-        if (e.is_error()) { goto done; }
-
-	prt->get_value(2, total);
-	prt->set_value(2, total + ppin.delta);
-	e = _pteller_man->update_tuple(_pssm, prt);
-	if (e.is_error()) { goto done; }
-
-	
-        // 4. Update branch
-	e = _pbranch_man->b_index_probe_forupdate(_pssm, prb, ppin.b_id);
-        if (e.is_error()) { goto done; }
-
-	prb->get_value(1, total);
-	prb->set_value(1, total + ppin.delta);
-	e = _pbranch_man->update_tuple(_pssm, prb);
-
-    } // goto
-
+    W_DO(_phistory_man->add_tuple(_pssm, prhist));
+    
+    // 3. Update teller
+    W_DO(_pteller_man->t_index_probe_forupdate(_pssm, prt, ppin.t_id));
+    prt->get_value(2, total);
+    prt->set_value(2, total + ppin.delta);
+    W_DO(_pteller_man->update_tuple(_pssm, prt));
+    
+    // 4. Update branch
+    W_DO(_pbranch_man->b_index_probe_forupdate(_pssm, prb, ppin.b_id));
+    prb->get_value(1, total);
+    prb->set_value(1, total + ppin.delta);
+    W_DO(_pbranch_man->update_tuple(_pssm, prb));
+    
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
     // dumps the status of all the table rows used
@@ -364,47 +337,39 @@ w_rc_t ShoreTPCBEnv::xct_acct_update(const int /* xct_id */,
     pracct->print_tuple();
     prhist->print_tuple();
 #endif
-
-done:
-    // return the tuples to the cache
-    _pbranch_man->give_tuple(prb);
-    _pteller_man->give_tuple(prt);
-    _paccount_man->give_tuple(pracct);
-    _phistory_man->give_tuple(prhist);
-    return (e);
+    
+    return RCOK;
 
 } // EOF: ACCT UPDATE
 
 
 
 
+/******************************************************************** 
+ *
+ * TPCB POPULATE_DB
+ *
+ * @brief: When called for the first time,
+ *         populates the BRANCH and TELLER tables.
+ *         Then populates ACCOUNTS.
+ *
+ ********************************************************************/
 
 w_rc_t ShoreTPCBEnv::xct_populate_db(const int /* xct_id */, 
                                      populate_db_input_t& ppin)
 {
-    w_rc_t e = RCOK;
-
     // ensure a valid environment    
     assert (_pssm);
     assert (_initialized);
-    // we probably are *not* loaded!
-    //assert (_loaded);
 
     // account update trx touches 4 tables:
-    // branch, teller, account, and history -- just like TPC-C payment:
-
+    // branch, teller, account, and history
+    
     // get table tuples from the caches
-    table_row_t* prb = _pbranch_man->get_tuple();
-    assert (prb);
-
-    table_row_t* prt = _pteller_man->get_tuple();
-    assert (prt);
-
-    table_row_t* pracct = _paccount_man->get_tuple();
-    assert (pracct);
-
-    table_row_t* prhist = _phistory_man->get_tuple();
-    assert (prhist);
+    tuple_guard<branch_man_impl> prb(_pbranch_man);
+    tuple_guard<teller_man_impl> prt(_pteller_man);
+    tuple_guard<account_man_impl> pracct(_paccount_man);
+    tuple_guard<history_man_impl> prhist(_phistory_man);
 
     rep_row_t areprow(_paccount_man->ts());
     rep_row_t areprow_key(_paccount_man->ts());
@@ -422,69 +387,47 @@ w_rc_t ShoreTPCBEnv::xct_populate_db(const int /* xct_id */,
     pracct->_rep_key = &areprow_key;
     prhist->_rep_key = &areprow_key;
 
-//     /* 0. initiate transaction */
-//     W_DO(_pssm->begin_xct());
- 
-    { // make gotos safe
-
-	if(ppin._first_a_id < 0) {
-	    /*
-	      Populate the branches and tellers
-	    */
-	    for(int i=0; i < ppin._sf; i++) {
-		prb->set_value(0, i);
-		prb->set_value(1, 0.0);
-
+    if(ppin._first_a_id < 0) {
+	// Populate the branches and tellers
+	for(int i=0; i < ppin._sf; i++) {
+	    prb->set_value(0, i);
+	    prb->set_value(1, 0.0);
 #ifdef CFG_HACK
-		prb->set_value(2, "padding"); // PADDING
+	    prb->set_value(2, "padding"); // PADDING
 #endif
-
-		e = _pbranch_man->add_tuple(_pssm, prb);
-		if (e.is_error()) { goto done; }
-	    }
-	    TRACE( TRACE_STATISTICS, "Loaded %d branches\n", 
-                   ppin._sf);
-	    
-	    for(int i=0; i < ppin._sf*TPCB_TELLERS_PER_BRANCH; i++) {
-		prt->set_value(0, i);
-		prt->set_value(1, i/TPCB_TELLERS_PER_BRANCH);
-		prt->set_value(2, 0.0);
-
-#ifdef CFG_HACK
-		prt->set_value(3, "padding"); // PADDING
-#endif
-
-		e = _pteller_man->add_tuple(_pssm, prt);
-		if (e.is_error()) { goto done; }
-	    }
-	    TRACE( TRACE_STATISTICS, "Loaded %d tellers\n", 
-                   ppin._sf*TPCB_TELLERS_PER_BRANCH);
+	    W_DO(_pbranch_man->add_tuple(_pssm, prb));
 	}
-	else {
-	    /*
-	      Populate 10k accounts
-	    */
-	    for(int i=0; i < TPCB_ACCOUNTS_CREATED_PER_POP_XCT; i++) {
-		int a_id = ppin._first_a_id + (TPCB_ACCOUNTS_CREATED_PER_POP_XCT-i-1);
-		pracct->set_value(0, a_id);
-		pracct->set_value(1, a_id/TPCB_ACCOUNTS_PER_BRANCH);
-		pracct->set_value(2, 0.0);
-
+	TRACE( TRACE_STATISTICS, "Loaded %d branches\n", ppin._sf);
+	
+	for(int i=0; i < ppin._sf*TPCB_TELLERS_PER_BRANCH; i++) {
+	    prt->set_value(0, i);
+	    prt->set_value(1, i/TPCB_TELLERS_PER_BRANCH);
+	    prt->set_value(2, 0.0);
 #ifdef CFG_HACK
-		pracct->set_value(3, "padding"); // PADDING
+	    prt->set_value(3, "padding"); // PADDING
 #endif
-
-		e = _paccount_man->add_tuple(_pssm, pracct);
-		if (e.is_error()) { goto done; }
-	    }
+	    W_DO(_pteller_man->add_tuple(_pssm, prt));
 	}
-
-        // The database loader which calls this xct does not use the xct wrapper,
-        // so it should do the commit here
-        e = _pssm->commit_xct();
-
-    } // goto
-
+	TRACE( TRACE_STATISTICS, "Loaded %d tellers\n",
+	       ppin._sf*TPCB_TELLERS_PER_BRANCH);
+    } else {
+	// Populate 10k accounts
+	for(int i=0; i < TPCB_ACCOUNTS_CREATED_PER_POP_XCT; i++) {
+	    int a_id = ppin._first_a_id +
+		(TPCB_ACCOUNTS_CREATED_PER_POP_XCT-i-1);
+	    pracct->set_value(0, a_id);
+	    pracct->set_value(1, a_id/TPCB_ACCOUNTS_PER_BRANCH);
+	    pracct->set_value(2, 0.0);	    
+#ifdef CFG_HACK
+	    pracct->set_value(3, "padding"); // PADDING
+#endif
+	    W_DO(_paccount_man->add_tuple(_pssm, pracct));
+	}
+    }
+    // The database loader which calls this xct does not use the xct wrapper,
+    // so it should do the commit here
+    W_DO(_pssm->commit_xct());
+    
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
     // dumps the status of all the table rows used
@@ -494,16 +437,9 @@ w_rc_t ShoreTPCBEnv::xct_populate_db(const int /* xct_id */,
     prhist->print_tuple();
 #endif
 
+    return RCOK;
 
-done:
-    // return the tuples to the cache
-    _pbranch_man->give_tuple(prb);
-    _pteller_man->give_tuple(prt);
-    _paccount_man->give_tuple(pracct);
-    _phistory_man->give_tuple(prhist);
-    return (e);
-
-} // EOF: ACCT UPDATE
+} // EOF: POPULATE
 
 
 
@@ -513,45 +449,36 @@ done:
  * TPC-B MBench Insert Only
  *
  ********************************************************************/
+
 w_rc_t ShoreTPCBEnv::xct_mbench_insert_only(const int /* xct_id */, 
 					    mbench_insert_only_input_t& mioin)
 {
-    w_rc_t e = RCOK;
-
     // ensure a valid environment    
     assert (_pssm);
     assert (_initialized);
     assert (_loaded);
-
-    // // IP: DEBUG
-    // mioin.print();
-
+    
     // mbench insert only trx touches 1 table:
     // accounts
 
     // get table tuples from the caches
-    table_row_t* pracct = _paccount_man->get_tuple();
-    assert (pracct);
+    tuple_guard<account_man_impl> pracct(_paccount_man);
 
     rep_row_t areprow(_paccount_man->ts());
 
     // allocate space for the biggest of the 4 table representations
     areprow.set(_paccount_desc->maxsize()); 
+
     pracct->_rep = &areprow;
 
-    { // make gotos safe
-
-	// 1. insert a tupple to accounts
-	pracct->set_value(0, mioin.a_id);
-	pracct->set_value(1, mioin.b_id);
-	pracct->set_value(2, mioin.balance);
+    // 1. insert a tupple to accounts
+    pracct->set_value(0, mioin.a_id);
+    pracct->set_value(1, mioin.b_id);
+    pracct->set_value(2, mioin.balance);
 #ifdef CFG_HACK
-	pracct->set_value(3, "padding");
+    pracct->set_value(3, "padding");
 #endif
-	e = _paccount_man->add_tuple(_pssm, pracct);
-	if (e.is_error()) { goto done; }
-
-    } // goto
+    W_DO(_paccount_man->add_tuple(_pssm, pracct));
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -559,10 +486,7 @@ w_rc_t ShoreTPCBEnv::xct_mbench_insert_only(const int /* xct_id */,
     pracct->print_tuple();
 #endif
 
-done:
-    // return the tuples to the cache
-    _paccount_man->give_tuple(pracct);
-    return (e);
+    return RCOK;
 
 } // EOF: MBENCH INSERT ONLY
 
@@ -574,11 +498,10 @@ done:
  * TPC-B MBench Delete Only
  *
  ********************************************************************/
+
 w_rc_t ShoreTPCBEnv::xct_mbench_delete_only(const int /* xct_id */, 
 					    mbench_delete_only_input_t& mdoin)
 {
-    w_rc_t e = RCOK;
-
     // ensure a valid environment    
     assert (_pssm);
     assert (_initialized);
@@ -588,22 +511,18 @@ w_rc_t ShoreTPCBEnv::xct_mbench_delete_only(const int /* xct_id */,
     // accounts
 
     // get table tuples from the caches
-    table_row_t* pracct = _paccount_man->get_tuple();
-    assert (pracct);
+    tuple_guard<account_man_impl> pracct(_paccount_man);
 
     rep_row_t areprow(_paccount_man->ts());
 
     // allocate space for the biggest of the 4 table representations
     areprow.set(_paccount_desc->maxsize()); 
+
     pracct->_rep = &areprow;
 
-    { // make gotos safe
-
-	// 1. delete a tupple from accounts
-	e = _paccount_man->a_delete_by_index(_pssm, pracct, mdoin.a_id, mdoin.b_id, mdoin.balance);
-	if (e.is_error()) { goto done; }
-
-    } // goto
+    // 1. delete a tupple from accounts
+    W_DO(_paccount_man->a_delete_by_index(_pssm, pracct, mdoin.a_id,
+					  mdoin.b_id, mdoin.balance));
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -611,10 +530,7 @@ w_rc_t ShoreTPCBEnv::xct_mbench_delete_only(const int /* xct_id */,
     pracct->print_tuple();
 #endif
 
-done:
-    // return the tuples to the cache
-    _paccount_man->give_tuple(pracct);
-    return (e);
+    return RCOK;
 
 } // EOF: MBENCH DELETE ONLY
 
@@ -626,48 +542,36 @@ done:
  * TPC-B MBench Probe Only
  *
  ********************************************************************/
+
 w_rc_t ShoreTPCBEnv::xct_mbench_probe_only(const int /* xct_id */, 
 					   mbench_probe_only_input_t& mpoin)
 {
-    w_rc_t e = RCOK;
-
     // ensure a valid environment    
     assert (_pssm);
     assert (_initialized);
     assert (_loaded);
 
-    // // IP: DEBUG
-    // mpoin.print();
-
     // mbench insert only trx touches 1 table:
     // accounts
 
     // get table tuples from the caches
-    table_row_t* pracct = _paccount_man->get_tuple();
-    assert (pracct);
+    tuple_guard<account_man_impl> pracct(_paccount_man);
 
     rep_row_t areprow(_paccount_man->ts());
 
     // allocate space for the biggest of the 4 table representations
     areprow.set(_paccount_desc->maxsize()); 
+
     pracct->_rep = &areprow;
 
-    { // make gotos safe
-
-	// 1. retrieve a tupple from accounts
-	e = _paccount_man->a_index_probe(_pssm, pracct, mpoin.a_id, mpoin.b_id, mpoin.balance);
-        if (e.is_error() && (e.err_num() != se_TUPLE_NOT_FOUND)) { 
-            goto done; 
-        }
-        else {
-            e = RCOK;
-        }
-    } // goto
-
-done:
-    // return the tuples to the cache
-    _paccount_man->give_tuple(pracct);
-    return (e);
+    // 1. retrieve a tupple from accounts
+    w_rc_t e = _paccount_man->a_index_probe(_pssm, pracct, mpoin.a_id,
+					    mpoin.b_id, mpoin.balance);
+    if (e.is_error() && (e.err_num() != se_TUPLE_NOT_FOUND)) { 
+	W_DO(e); 
+    }
+    
+    return RCOK;
 
 } // EOF: MBENCH PROBE ONLY
 

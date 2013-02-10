@@ -25,14 +25,14 @@
  *
  *  @brief:  Base class for records (rows) of tables in Shore
  *
- *  @note:   tuple_row_t - row of a table
+ *  @note:   table_row_t - row of a table
  *
  *  @author: Ippokratis Pandis, January 2008
  *
  */
 
 
-/* shore_row.h contains the (abstract) base class (tuple_row_t) for the 
+/* shore_row.h contains the (abstract) base class (table_row_t) for the 
  * tuple representation. 
  *
  *
@@ -287,6 +287,30 @@ struct table_row_t
     }
 
 }; // EOF: table_row_t
+
+
+/******************************************************************
+ * 
+ * class tuple_guard
+ *
+ * @brief: guard object to manage table_row_t operations more easily
+ *         reduces code complexity when using table_row_t in xcts
+ *
+ ******************************************************************/
+template<class M, class T=table_row_t>
+struct tuple_guard {
+    T* ptr;
+    M* manager;
+    tuple_guard(M* m)
+	: ptr(m->get_tuple()), manager(m) { assert(ptr); }
+    ~tuple_guard() { manager->give_tuple(ptr); }
+    T* operator->() { return ptr; }
+    operator T*() { return ptr; }
+private:
+    // no you copy!
+    tuple_guard(tuple_guard&);
+    void operator=(tuple_guard&);
+};
 
 
 /******************************************************************

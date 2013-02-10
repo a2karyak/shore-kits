@@ -229,47 +229,25 @@ void ShoreSSBEnv::print_throughput(const double iQueriedSF,
 
 //Populates one date
 w_rc_t ShoreSSBEnv::_gen_one_date(const int id, 
-                                     rep_row_t& areprow)
+				  rep_row_t& areprow)
 {    
-    w_rc_t e = RCOK;
-    table_row_t*   prda = _pdate_man->get_tuple();
-    assert (prda);
+    tuple_guard<date_man_impl> prda(_pdate_man);
+    
     prda->_rep = &areprow;
-
+    
     dbgenssb::date_t ad;
     mk_date(id, &ad);
-
-    //dbgen struct
-    /*typedef struct
-{
-   long            datekey;
-   char            date[D_DATE_LEN+1];
-   char            dayofweek[D_DAYWEEK_LEN+1] ;
-   char            month[D_MONTH_LEN+1];
-   int             year;
-   int             yearmonthnum;
-   char            yearmonth[D_YEARMONTH_LEN+1];
-   int             daynuminweek;
-   int             daynuminmonth;
-   int             daynuminyear;
-   int             monthnuminyear;
-   int             weeknuminyear;
-   char            sellingseason[D_SEASON_LEN + 1];
-   int             slen;
-   char            lastdayinweekfl[2];
-   char            lastdayinmonthfl[2];
-   char            holidayfl[2];
-   char            weekdayfl[2];
-}      date_t;
-    */
-
+    
 #ifdef DO_PRINT_SSB_RECS
-	   TRACE( TRACE_ALWAYS, "%ld,%s,%s,%s,%d,%d,%s,%d,%d,%d,%d,%d,%s[len:%d],%s,%s,%s,%s\n",
-		  ad.datekey, ad.date, ad.dayofweek, ad.month, ad.year, ad.yearmonthnum, ad.yearmonth, 
-		  ad.daynuminweek, ad.daynuminmonth, ad.daynuminyear, ad.monthnuminyear, ad.weeknuminyear, 
-		  ad.sellingseason, ad.slen, ad.lastdayinweekfl, ad.lastdayinmonthfl, ad.holidayfl, ad.weekdayfl);
+    TRACE( TRACE_ALWAYS,
+	   "%ld,%s,%s,%s,%d,%d,%s,%d,%d,%d,%d,%d,%s[len:%d],%s,%s,%s,%s\n",
+	   ad.datekey, ad.date, ad.dayofweek, ad.month, ad.year,
+	   ad.yearmonthnum, ad.yearmonth, ad.daynuminweek, ad.daynuminmonth,
+	   ad.daynuminyear, ad.monthnuminyear, ad.weeknuminyear,
+	   ad.sellingseason, ad.slen, ad.lastdayinweekfl, ad.lastdayinmonthfl,
+	   ad.holidayfl, ad.weekdayfl);
 #endif
-           
+    
     prda->set_value(0, (int)ad.datekey);
     prda->set_value(1, ad.date);
     prda->set_value(2, ad.dayofweek);
@@ -287,50 +265,32 @@ w_rc_t ShoreSSBEnv::_gen_one_date(const int id,
     prda->set_value(14, ad.lastdayinmonthfl);
     prda->set_value(15, ad.holidayfl);
     prda->set_value(16, ad.weekdayfl);
-        
-    e = _pdate_man->add_tuple(_pssm, prda);
-
-    _pdate_man->give_tuple(prda);
-    return (e);
+    
+    W_DO(_pdate_man->add_tuple(_pssm, prda));
+    
+    return RCOK;
 }
 
 
-
 // Populates one supplier
-w_rc_t ShoreSSBEnv::_gen_one_supplier(const int id, 
-                                       rep_row_t& areprow)
+w_rc_t ShoreSSBEnv::_gen_one_supplier(const int id,
+				      rep_row_t& areprow)
 {    
-    w_rc_t e = RCOK;
-    table_row_t* prsu = _psupplier_man->get_tuple();
-    assert (prsu);
+    tuple_guard<supplier_man_impl> prsu(_psupplier_man);
+    
     prsu->_rep = &areprow;
 
     dbgenssb::supplier_t as;
-     mk_supp(id, &as);
-     /*
-typedef struct
-{
-    long            suppkey;
-    char            name[S_NAME_LEN + 1];
-    char            address[S_ADDR_MAX + 1];
-    int             alen; 
-    char            city[CITY_FIX +1];
-    int             nation_key;
-    char            nation_name[S_NATION_NAME_LEN+1];
-    int             region_key;
-    char            region_name[S_REGION_NAME_LEN+1];
-    char            phone[PHONE_LEN + 1];
-}               supplier_t;
-*/
+    mk_supp(id, &as);
 
 #ifdef DO_PRINT_SSB_RECS
     if (id%100==0) {
         TRACE(TRACE_ALWAYS, "%ld,%s,%s[len:%d],%s,%s,[%d:]%s,%s\n",
-                as.suppkey, as.name, as.address, as.alen, as.city,
-                as.nation_name, as.region_key, as.region_name, as.phone); 
+	      as.suppkey, as.name, as.address, as.alen, as.city,
+	      as.nation_name, as.region_key, as.region_name, as.phone); 
     }
 #endif
-           
+    
     prsu->set_value(0, (int)as.suppkey);
     prsu->set_value(1, as.name);
     prsu->set_value(2, as.address);
@@ -339,52 +299,34 @@ typedef struct
     prsu->set_value(5, as.region_name);
     prsu->set_value(6, as.phone);
 
-    e = _psupplier_man->add_tuple(_pssm, prsu);
+    W_DO(_psupplier_man->add_tuple(_pssm, prsu));
 
-    _psupplier_man->give_tuple(prsu);
-    return (e);
+    return RCOK;
 }
 
 
 // Populates one customer
-w_rc_t ShoreSSBEnv::_gen_one_customer(const int id, 
-                                       rep_row_t& areprow)
+w_rc_t ShoreSSBEnv::_gen_one_customer(const int id,
+				      rep_row_t& areprow)
 {    
-    w_rc_t e = RCOK;
-    table_row_t* prcu = _pcustomer_man->get_tuple();
-    assert (prcu);
+    tuple_guard<customer_man_impl> prcu(_pcustomer_man);
+
     prcu->_rep = &areprow;
 
     dbgenssb::customer_t ac;
-     mk_cust(id, &ac);
-     /*
-typedef struct
-{
-    long            custkey;
-    char            name[C_NAME_LEN + 1];
-    int             nlen;
-    char            address[C_ADDR_MAX + 1];
-    int             alen;
-    char            city[CITY_FIX+1];
-    int             nation_key;
-    char            nation_name[C_NATION_NAME_LEN+1];
-    int             region_key;
-    char            region_name[C_REGION_NAME_LEN+1];
-    char            phone[PHONE_LEN + 1];
-    char            mktsegment[MAXAGG_LEN + 1];
-}               customer_t;
-*/
-
+    mk_cust(id, &ac);
+    
 #ifdef DO_PRINT_SSB_RECS
     if (id%100==0) {
-        TRACE(TRACE_ALWAYS, "%ld,%s[len:%d],%s[len:%d],%s[len:%d],%s(%d),[%d:]%s(%d),%s,%s\n",
-                ac.custkey, ac.name, strlen(ac.name), ac.address, strlen(ac.address), ac.city, strlen(ac.city),
-                ac.nation_name, strlen(ac.nation_name),
-                ac.region_key, ac.region_name, strlen(ac.region_name),
-                ac.phone, ac.mktsegment); 
+        TRACE(TRACE_ALWAYS,
+	      "%ld,%s[len:%d],%s[len:%d],%s[len:%d],%s(%d),[%d:]%s(%d),%s,%s\n",
+	      ac.custkey, ac.name, strlen(ac.name), ac.address,
+	      strlen(ac.address), ac.city, strlen(ac.city), ac.nation_name,
+	      strlen(ac.nation_name), ac.region_key, ac.region_name,
+	      strlen(ac.region_name), ac.phone, ac.mktsegment); 
     }
 #endif
-     
+    
     prcu->set_value(0, (int)ac.custkey);
     prcu->set_value(1, ac.name);
     prcu->set_value(2, ac.address);
@@ -393,52 +335,31 @@ typedef struct
     prcu->set_value(5, ac.region_name);
     prcu->set_value(6, ac.phone);
     prcu->set_value(7, ac.mktsegment);
-        
-    e = _pcustomer_man->add_tuple(_pssm, prcu);
+    
+    W_DO(_pcustomer_man->add_tuple(_pssm, prcu));
 
-    _pcustomer_man->give_tuple(prcu);
-    return (e);
+    return RCOK;
 }
 
 
 // Populates one part 
 w_rc_t ShoreSSBEnv::_gen_one_part(const int id, 
-                                         rep_row_t& areprow)
+				  rep_row_t& areprow)
 {    
-    w_rc_t e = RCOK;
-    table_row_t*     prpa = _ppart_man->get_tuple();
-    assert (prpa);
-    prpa->_rep = &areprow;
+    tuple_guard<part_man_impl> prpa(_ppart_man);
 
+    prpa->_rep = &areprow;
+    
     dbgenssb::part_t ap;
     mk_part(id, &ap);
 
-    /*
-typedef struct
-{
-    long           partkey;
-    char           name[P_NAME_LEN + 1];
-    int            nlen;
-    char           mfgr[P_MFG_LEN + 1];
-    char           category[P_CAT_LEN + 1];
-    char           brand[P_BRND_LEN + 1];
-    char           color[P_COLOR_MAX + 1];
-    int            clen;
-    char           type[P_TYPE_MAX + 1];
-    int            tlen;
-    long            size;
-    char           container[P_CNTR_LEN + 1];
-}               part_t;
-
-*/
-
 #ifdef DO_PRINT_SSB_RECS
     if (id%100==0) {
-        TRACE( TRACE_ALWAYS, "%ld,%s[len:%d],%s,%s,%s,%s[len:%d],%s[len:%d],%ld,%s\n",
+        TRACE( TRACE_ALWAYS,
+	       "%ld,%s[len:%d],%s,%s,%s,%s[len:%d],%s[len:%d],%ld,%s\n",
                ap.partkey,ap.name,ap.nlen,ap.mfgr,ap.category,ap.brand,ap.color,
                ap.clen,ap.type,ap.tlen,ap.size,ap.container); 
     }
-    
 #endif
     
     prpa->set_value(0, (int)ap.partkey);
@@ -451,124 +372,77 @@ typedef struct
     prpa->set_value(7, (int)ap.size);
     prpa->set_value(8, ap.container);
 
-    e = _ppart_man->add_tuple(_pssm, prpa);
+    W_DO(_ppart_man->add_tuple(_pssm, prpa));
 
-    _ppart_man->give_tuple(prpa);
-    return (e);
+    return RCOK;
 }
+
 
 // Populates one lineorder
 w_rc_t ShoreSSBEnv::_gen_one_lineorder(const int id, 
-                                         rep_row_t& areprow)
+				       rep_row_t& areprow)
 {    
-    w_rc_t e = RCOK;
-//    table_row_t*     prlo = _plineorder_man->get_tuple();
-//    assert (prlo);
-//    prlo->_rep = &areprow;
-
     dbgenssb::order_t o;
     
     INIT_HUGE(o.okey);
-    for (int i=0; i < O_LCNT_MAX; i++)
-	{
-	    INIT_HUGE(o.lineorders[i].okey);	
-	}
+    for (int i=0; i < O_LCNT_MAX; i++) {
+	INIT_HUGE(o.lineorders[i].okey);	
+    }
     mk_order(id, &o, 0);
     
-    /*
-typedef struct
-{
-    DSS_HUGE	    *okey;  //for clustering line items
-    int             linenumber; //integer, constrain to max of 7
-    long            custkey;
-    long            partkey;
-    long            suppkey;
-    char            orderdate[DATE_LEN];
-    char            opriority[MAXAGG_LEN + 1];
-    long            ship_priority;
-    long             quantity;
-    long           extended_price;
-    long           order_totalprice;
-    long           discount;
-    long           revenue;
-    long           supp_cost;
-    long           tax;
-    char            commit_date[DATE_LEN] ;
-    char            shipmode[O_SHIP_MODE_LEN + 1];
-}  lineorder_t;
-
-typedef struct
-{
-    DSS_HUGE	    *okey;
-    long            custkey;
-    int             totalprice;
-    char            odate[DATE_LEN];
-    char            opriority[MAXAGG_LEN + 1];
-    char            clerk[O_CLRK_LEN + 1];
-    int             spriority;
-    long            lines;
-    lineorder_t     lineorders[O_LCNT_MAX];
-}   order_t;
-*/
-
 #ifdef DO_PRINT_SSB_RECS
-if (id%100==0) 
-    {
-	for(int i=0;i<o.lines;i++)
-	    {
-		TRACE( TRACE_ALWAYS, "%d,%d,%d,%d,%d,%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%s\n",
-		       (int)o.okey[0], (int)o.lineorders[i].linenumber,
-		       (int)o.custkey, (int)o.lineorders[i].partkey,
-		       (int)o.lineorders[i].suppkey, (int)atoi(o.lineorders[i].orderdate),
-		       o.lineorders[i].opriority, (int)o.lineorders[i].ship_priority,
-		       (int)o.lineorders[i].quantity, (int)o.lineorders[i].extended_price,
-		       (int)o.lineorders[i].order_totalprice, (int)o.lineorders[i].discount,
-		       (int)o.lineorders[i].revenue, (int)o.lineorders[i].supp_cost,
-		       (int)o.lineorders[i].tax, (int)atoi(o.lineorders[i].commit_date),
-		       o.lineorders[i].shipmode);
-	    }
-
+    if (id%100==0) {
+	for(int i=0;i<o.lines;i++) {
+	    TRACE( TRACE_ALWAYS,
+		   "%d,%d,%d,%d,%d,%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%s\n",
+		   (int)o.okey[0], (int)o.lineorders[i].linenumber,
+		   (int)o.custkey, (int)o.lineorders[i].partkey,
+		   (int)o.lineorders[i].suppkey,
+		   (int)atoi(o.lineorders[i].orderdate),
+		   o.lineorders[i].opriority,
+		   (int)o.lineorders[i].ship_priority,
+		   (int)o.lineorders[i].quantity,
+		   (int)o.lineorders[i].extended_price,
+		   (int)o.lineorders[i].order_totalprice,
+		   (int)o.lineorders[i].discount,
+		   (int)o.lineorders[i].revenue, (int)o.lineorders[i].supp_cost,
+		   (int)o.lineorders[i].tax,
+		   (int)atoi(o.lineorders[i].commit_date),
+		   o.lineorders[i].shipmode);
+	}
     }
 #endif
     
-    for (int i=0;i<o.lines;i++)
-        {
+    for (int i=0;i<o.lines;i++) {
 
-        table_row_t* prlo = _plineorder_man->get_tuple();
-        assert(prlo);
+	tuple_guard<lineorder_man_impl> prlo(_plineorder_man);
+
         prlo->_rep = &areprow;
         
-            prlo->set_value(0, (int)o.okey[0]);
-            prlo->set_value(1, (int)o.lineorders[i].linenumber);
-            prlo->set_value(2, (int)o.custkey);
-            prlo->set_value(3, (int)o.lineorders[i].partkey);
-            prlo->set_value(4, (int)o.lineorders[i].suppkey);
-            prlo->set_value(5, (int)atoi(o.lineorders[i].orderdate));
-            prlo->set_value(6, o.lineorders[i].opriority);
-            prlo->set_value(7, (int)o.lineorders[i].ship_priority);
-            prlo->set_value(8, (int)o.lineorders[i].quantity);
-            prlo->set_value(9, (int)o.lineorders[i].extended_price);
-            prlo->set_value(10, (int)o.lineorders[i].order_totalprice);
-            prlo->set_value(11, (int)o.lineorders[i].discount);
-            prlo->set_value(12, (int)o.lineorders[i].revenue);
-            prlo->set_value(13, (int)o.lineorders[i].supp_cost);
-            prlo->set_value(14, (int)o.lineorders[i].tax);
-            prlo->set_value(15, (int)atoi(o.lineorders[i].commit_date));
-            prlo->set_value(16, o.lineorders[i].shipmode);
+	prlo->set_value(0, (int)o.okey[0]);
+	prlo->set_value(1, (int)o.lineorders[i].linenumber);
+	prlo->set_value(2, (int)o.custkey);
+	prlo->set_value(3, (int)o.lineorders[i].partkey);
+	prlo->set_value(4, (int)o.lineorders[i].suppkey);
+	prlo->set_value(5, (int)atoi(o.lineorders[i].orderdate));
+	prlo->set_value(6, o.lineorders[i].opriority);
+	prlo->set_value(7, (int)o.lineorders[i].ship_priority);
+	prlo->set_value(8, (int)o.lineorders[i].quantity);
+	prlo->set_value(9, (int)o.lineorders[i].extended_price);
+	prlo->set_value(10, (int)o.lineorders[i].order_totalprice);
+	prlo->set_value(11, (int)o.lineorders[i].discount);
+	prlo->set_value(12, (int)o.lineorders[i].revenue);
+	prlo->set_value(13, (int)o.lineorders[i].supp_cost);
+	prlo->set_value(14, (int)o.lineorders[i].tax);
+	prlo->set_value(15, (int)atoi(o.lineorders[i].commit_date));
+	prlo->set_value(16, o.lineorders[i].shipmode);
             
-        e = _plineorder_man->add_tuple(_pssm, prlo);
+        W_DO(_plineorder_man->add_tuple(_pssm, prlo));
+    }
 
-        _plineorder_man->give_tuple(prlo);
-            
-        }
-
-    return (e);
+    return RCOK;
 }
 
-
-
-/////////////////////////////
-/////////////////////////////
 
 
 
@@ -588,66 +462,62 @@ w_rc_t ShoreSSBEnv::xct_populate_baseline(const int /* xct_id */,
     // The LINEORDER is the biggest (147) of all the tables
     rep_row_t areprow(_pcustomer_man->ts());
     areprow.set(_pcustomer_desc->maxsize());
-    //    rep_row_t areprow(_plineorder_man->ts());
+    //rep_row_t areprow(_plineorder_man->ts());
     //areprow.set(_plineorder_desc->maxsize());
     TRACE( TRACE_ALWAYS, "LO MAX SIZE:%d \n",_plineorder_desc->maxsize());
     TRACE( TRACE_ALWAYS, "PA MAX SIZE:%d \n",_ppart_desc->maxsize());
     TRACE( TRACE_ALWAYS, "CU MAX SIZE:%d \n",_pcustomer_desc->maxsize());
     TRACE( TRACE_ALWAYS, "SU MAX SIZE:%d \n",_psupplier_desc->maxsize());
     TRACE( TRACE_ALWAYS, "DA MAX SIZE:%d \n",_pdate_desc->maxsize());
-    
-
-    w_rc_t e = RCOK;
 
     // 2. Build the small tables
     TRACE( TRACE_ALWAYS, "Building DATE !!!\n");
     for(int i=1; i<=NO_DATE; ++i) {
-        e = _gen_one_date(i, areprow);
+        W_DO(_gen_one_date(i, areprow));
     }
-    if(e.is_error()) { return (e); }
 
-    TRACE( TRACE_ALWAYS, "Building SUPPLIER SF=%d*%d=%d!!!\n",(int)in._sf,(int)SUPPLIER_PER_SF,(int)(in._sf*SUPPLIER_PER_SF));
+    TRACE( TRACE_ALWAYS, "Building SUPPLIER SF=%d*%d=%d!!!\n",
+	   (int)in._sf, (int)SUPPLIER_PER_SF, (int)(in._sf*SUPPLIER_PER_SF));
     for (int i=1; i<=in._sf*SUPPLIER_PER_SF; ++i) {
-        e = _gen_one_supplier(i, areprow);
+        W_DO(_gen_one_supplier(i, areprow));
     }
-    if(e.is_error()) { return (e); }
 
-    TRACE( TRACE_ALWAYS, "Starting CUSTOMER SF=%d*%d=%d!!!\n",(int)in._sf,(int)CUSTOMER_PER_SF,(int)(in._sf*CUSTOMER_PER_SF));
+    TRACE( TRACE_ALWAYS, "Starting CUSTOMER SF=%d*%d=%d!!!\n",
+	   (int)in._sf, (int)CUSTOMER_PER_SF, (int)(in._sf*CUSTOMER_PER_SF));
     for (int i=1; i<=in._sf*CUSTOMER_PER_SF; ++i) {
-        e = _gen_one_customer(i, areprow);
+        W_DO(_gen_one_customer(i, areprow));
     }
-    if(e.is_error()) { return (e); }
 
-    TRACE( TRACE_ALWAYS, "Starting PART 1+log2(SF)=1+log2(%d)=%d*%d=%d!!!\n",(int)in._sf,(int)(1+log2(in._sf)),(int)PART_PER_SF,(int)((1+log2(in._sf))*PART_PER_SF));
+    TRACE( TRACE_ALWAYS, "Starting PART 1+log2(SF)=1+log2(%d)=%d*%d=%d!!!\n",
+	   (int)in._sf, (int)(1+log2(in._sf)), (int)PART_PER_SF,
+	   (int)((1+log2(in._sf))*PART_PER_SF));
     for (int i=1; i<=(1+log2(in._sf))*PART_PER_SF; ++i) {
-        e = _gen_one_part(i, areprow);
+        W_DO( _gen_one_part(i, areprow));
     }
-    if(e.is_error()) { return (e); }
 
     // 3. Insert first rows of lineorder
-    TRACE( TRACE_ALWAYS, "Starting LINEORDERS SF=%d*%d=%d!!!\n",(int)in._sf,(int)LINEORDER_PER_SF,(int)(in._sf*LINEORDER_PER_SF));
+    TRACE( TRACE_ALWAYS, "Starting LINEORDERS SF=%d*%d=%d!!!\n",
+	   (int)in._sf, (int)LINEORDER_PER_SF, (int)(in._sf*LINEORDER_PER_SF));
     
     for (int i=0; i < in._loader_count; ++i) {
         long start = i * in._lineorder_per_thread + 1;
         long end = start + in._divisor - 1;
         TRACE( TRACE_ALWAYS, "Lineorder %d .. %d\n", start, end);
-            
+        
         for (int j=start; j<end; ++j) {
-            e = _gen_one_lineorder(j,areprow);
-            if(e.is_error()) { return (e); }
+            W_DO(e = _gen_one_lineorder(j,areprow));
         }    
     }
-    
 
-
-    e = _pssm->commit_xct();
-    return (e);
+    W_DO(_pssm->commit_xct());
+    return RCOK;
 }
+
 
 // We pass on the parameter (xct_id) the number of parts to be populated
 // and on the parameter (in) the starting id
 w_rc_t ShoreSSBEnv::xct_populate_some_lineorders(const int xct_id, 
-                                             populate_some_lineorders_input_t& in)
+						 populate_some_lineorders_input_t& in)
 {
     // ensure a valid environment
     assert (_pssm);
@@ -656,17 +526,15 @@ w_rc_t ShoreSSBEnv::xct_populate_some_lineorders(const int xct_id,
     rep_row_t areprow(_plineorder_man->ts());
     areprow.set(_plineorder_desc->maxsize());
 
-    w_rc_t e = RCOK;
     int id = in._orderid;
 
     // Generate (xct_id) parts
     for (id=in._orderid; id<in._orderid+xct_id; id++) {
-        e = _gen_one_lineorder(id, areprow);
-        if(e.is_error()) { return (e); }
+        W_DO(_gen_one_lineorder(id, areprow));
     }
 
-    e = _pssm->commit_xct();
-    return (e);
+    W_DO(_pssm->commit_xct());
+    return RCOK;
 }
 
 

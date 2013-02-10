@@ -53,24 +53,18 @@ ENTER_NAMESPACE(tpce);
  *
  ********************************************************************/
 
-
-w_rc_t ShoreTPCEEnv::xct_trade_cleanup(const int xct_id, trade_cleanup_input_t& ptcin)
+w_rc_t ShoreTPCEEnv::xct_trade_cleanup(const int xct_id,
+				       trade_cleanup_input_t& ptcin)
 {
     // ensure a valid environment
     assert (_pssm);
     assert (_initialized);
     assert (_loaded);
 
-    table_row_t* prtrade = _ptrade_man->get_tuple();
-    assert (prtrade);
+    tuple_guard<trade_man_impl> prtrade(_ptrade_man);
+    tuple_guard<trade_history_man_impl> prtradehist(_ptrade_history_man);
+    tuple_guard<trade_request_man_impl> prtradereq(_ptrade_request_man);
 
-    table_row_t* prtradehist = _ptrade_history_man->get_tuple();
-    assert (prtradehist);
-
-    table_row_t* prtradereq = _ptrade_request_man->get_tuple();
-    assert (prtradereq);
-
-    w_rc_t e = RCOK;
     rep_row_t areprow(_ptrade_man->ts());
     areprow.set(_ptrade_desc->maxsize());
 
@@ -85,125 +79,171 @@ w_rc_t ShoreTPCEEnv::xct_trade_cleanup(const int xct_id, trade_cleanup_input_t& 
     lowrep.set(_ptrade_desc->maxsize());
     highrep.set(_ptrade_desc->maxsize());
 
+    TIdent	t_id;
+    TIdent 	tr_t_id;
+    myTime 	now_dts;
+    
+    /**
+       select
+       TR_T_ID
+       from
+       TRADE_REQUEST
+       order by
+       TR_T_ID
+    */
+    
+    /* PIN: To get rid of the primary index TRADE_REQUEST,
+       since TRADE_CLEANUP is not performance critical and
+       since we have to touch all the TRADE_REQUEST tuples anyway here,
+       I think this won't hurt
+       Also I'm going to do the deleting of TRADE_REQUEST tuples here as well
+    */
+    
+    guard<table_scan_iter_impl<trade_request_t> > tr_iter;
     {
-	TIdent	t_id;
-	TIdent 	tr_t_id;
-	myTime 	now_dts;
+	table_scan_iter_impl<trade_request_t>* tmp_tr_iter;
+	TRACE( TRACE_TRX_FLOW, "App: %d TC:tr-get-table-iter \n", xct_id);
+	W_DO(_ptrade_request_man->get_iter_for_file_scan(_pssm, tmp_tr_iter));
+	tr_iter = tmp_tr_iter;
+    }
+    
+    //ascending order
+    rep_row_t sortrep(_ptrade_man->ts());
+    sortrep.set(_ptrade_desc->maxsize());
+    
+    asc_sort_buffer_t tr_list(1);
+    
+    tr_list.setup(0, SQL_LONG);
+    
+    table_row_t rsb(&tr_list);
+    asc_sort_man_impl tr_sorter(&tr_list, &sortrep);
+	
+    bool eof;
+    W_DO(tr_iter->next(_pssm, eof, *prtradereq));
+    while(!eof){
+	prtradereq->get_value(0, tr_t_id);
+	
+	rsb.set_value(0, tr_t_id);
+	tr_sorter.add_tuple(rsb);
+	
+	TRACE( TRACE_TRX_FLOW, "App: %d TC:tr-delete- \n", xct_id);
+	W_DO(_ptrade_request_man->delete_tuple(_pssm, prtradereq));
+	    	    
+	W_DO(tr_iter->next(_pssm, eof, *prtradereq));
+    }
+    
+    asc_sort_iter_impl tr_list_sort_iter(_pssm, &tr_list, &tr_sorter);
+    
+    TRACE( TRACE_TRX_FLOW, "App: %d TC:tr-sort-iter-next \n", xct_id);
+    W_DO(tr_list_sort_iter.next(_pssm, eof, rsb));
+    while(!eof){
+	rsb.get_value(0, tr_t_id);
+	
+	now_dts = time(NULL);
+	
+	/**
+	   insert into
+	   TRADE_HISTORY (
+	   TH_T_ID, TH_DTS, TH_ST_ID
+	   )
+	   values (
+	   tr_t_id,         // TH_T_ID
+	   now_dts,         // TH_DTS
+	   st_submitted_id  // TH_ST_ID
+	   )
+	*/
+	prtradehist->set_value(0, tr_t_id);
+	prtradehist->set_value(1, now_dts);
+	prtradehist->set_value(2, ptcin._st_submitted_id);
+	
+	TRACE( TRACE_TRX_FLOW, "App: %d TC:th-add-tuple (%ld) (%ld) (%s) \n",
+	       xct_id, tr_t_id, now_dts, ptcin._st_submitted_id);
+	W_DO(_ptrade_history_man->add_tuple(_pssm, prtradehist));
 
 	/**
-	   select
-	   TR_T_ID
-	   from
-	   TRADE_REQUEST
-	   order by
-	   TR_T_ID
-	*/
-
-	/* PIN: To get rid of the primary index TRADE_REQUEST,
-	   since TRADE_CLEANUP is not performance critical and
-	   since we have to touch all the TRADE_REQUEST tuples anyway here,
-	   I think this won't hurt
-	   Also I'm going to do the deleting of TRADE_REQUEST tuples here as well
-	*/
-
-	guard<table_scan_iter_impl<trade_request_t> > tr_iter;
-	{
-	    table_scan_iter_impl<trade_request_t>* tmp_tr_iter;
-	    TRACE( TRACE_TRX_FLOW, "App: %d TC:tr-get-table-iter \n", xct_id);
-	    e = _ptrade_request_man->get_iter_for_file_scan(_pssm, tmp_tr_iter);
-	    if (e.is_error()) {  goto done; }
-	    tr_iter = tmp_tr_iter;
-	}
-
-	//ascending order
-	rep_row_t sortrep(_ptrade_man->ts());
-	sortrep.set(_ptrade_desc->maxsize());
-
-	asc_sort_buffer_t tr_list(1);
+	   update
+	   TRADE
+	   set
+	   T_ST_ID = st_canceled_id,
+	   T_DTS = now_dts
+	   where
+	   T_ID = tr_t_id
+	*/	
+	TRACE( TRACE_TRX_FLOW, "App: %d TC:t-update (%ld) (%ld) (%s) \n",
+	       xct_id, tr_t_id, now_dts, ptcin._st_canceled_id);
+	W_DO(_ptrade_man->t_update_dts_stdid_by_index(_pssm, prtrade, tr_t_id,
+						      now_dts,
+						      ptcin._st_canceled_id));
 	
-	tr_list.setup(0, SQL_LONG);
-
-	table_row_t rsb(&tr_list);
-	asc_sort_man_impl tr_sorter(&tr_list, &sortrep);
-	
-	bool eof;
-	e = tr_iter->next(_pssm, eof, *prtradereq);
-	if (e.is_error()) { goto done; }
-	while(!eof){
-	    prtradereq->get_value(0, tr_t_id);
-
-	    rsb.set_value(0, tr_t_id);
-	    tr_sorter.add_tuple(rsb);
-
-	    TRACE( TRACE_TRX_FLOW, "App: %d TC:tr-delete- \n", xct_id);
-	    e = _ptrade_request_man->delete_tuple(_pssm, prtradereq);
-	    if (e.is_error()) { goto done; }
-	    	    
-	    e = tr_iter->next(_pssm, eof, *prtradereq);
-	    if (e.is_error()) {  goto done; }
-	}
-
-	asc_sort_iter_impl tr_list_sort_iter(_pssm, &tr_list, &tr_sorter);
-
-	/*
-	guard< index_scan_iter_impl<trade_request_t> > tr_iter;
-	{
-	    index_scan_iter_impl<trade_request_t>* tmp_tr_iter;
-	    TRACE( TRACE_TRX_FLOW, "App: %d TC:tr-get-iter-by-idx \n", xct_id);
-	    e = _ptrade_request_man->tr_get_iter_by_index(_pssm, tmp_tr_iter, prtradereq, lowrep, highrep);
-	    if (e.is_error()) { goto done; }
-	    tr_iter = tmp_tr_iter;
-	}
-	//already ordered
-	
-	TRACE( TRACE_TRX_FLOW, "App: %d TC:tr-iter-next \n", xct_id);
-	e = tr_iter->next(_pssm, eof, *prtradereq);
+	/**
+	   insert into
+	   TRADE_HISTORY (
+	   TH_T_ID, TH_DTS, TH_ST_ID
+	   )
+	   values (
+	   tr_t_id,        // TH_T_ID
+	   now_dts,        // TH_DTS
+	   st_canceled_id  // TH_ST_ID
+	   )
 	*/
+	prtradehist->set_value(0, tr_t_id);
+	prtradehist->set_value(1, now_dts);
+	prtradehist->set_value(2, ptcin._st_canceled_id);
+	
+	TRACE( TRACE_TRX_FLOW, "App: %d TC:th-add-tuple (%ld) (%ld) (%s) \n",
+	       xct_id, tr_t_id, now_dts, ptcin._st_canceled_id);
+	W_DO(_ptrade_history_man->add_tuple(_pssm, prtradehist));
 
 	TRACE( TRACE_TRX_FLOW, "App: %d TC:tr-sort-iter-next \n", xct_id);
-	e = tr_list_sort_iter.next(_pssm, eof, rsb);
-	if (e.is_error()) { goto done; }
-	while(!eof){
-	    //prtradereq->get_value(0, tr_t_id); // PIN: read above PIN
-	    rsb.get_value(0, tr_t_id);
-
+	W_DO(tr_list_sort_iter.next(_pssm, eof, rsb));
+    }
+    
+    /** PIN: Read the above PIN
+       delete
+       from
+       TRADE_REQUEST
+    */
+    
+    /**
+       select
+       T_ID
+       from
+       TRADE
+       where
+       T_ID >= trade_id and
+       T_ST_ID = st_submitted_id
+    */
+    guard<index_scan_iter_impl<trade_t> > t_iter;
+    {
+	index_scan_iter_impl<trade_t>* tmp_t_iter;
+	TRACE( TRACE_TRX_FLOW, "App: %d TC:t-iter-by-idx \n", xct_id);
+	W_DO(_ptrade_man->t_get_iter_by_index(_pssm, tmp_t_iter, prtrade, lowrep,
+					      highrep, ptcin._trade_id));
+	t_iter = tmp_t_iter;
+    }
+    
+    TRACE( TRACE_TRX_FLOW, "App: %d TC:t-iter-next \n", xct_id);
+    W_DO(t_iter->next(_pssm, eof, *prtrade));
+    while(!eof){
+	char t_st_id[5]; //4
+	prtrade->get_value(2, t_st_id, 5);
+	
+	if(strcmp(t_st_id, ptcin._st_submitted_id) == 0){
 	    now_dts = time(NULL);
-
-	    /**
-	       insert into
-	       TRADE_HISTORY (
-	       TH_T_ID, TH_DTS, TH_ST_ID
-	       )
-	       values (
-	       tr_t_id,         // TH_T_ID
-	       now_dts,         // TH_DTS
-	       st_submitted_id  // TH_ST_ID
-	       )
+	    /** 
+		update
+		TRADE
+		set
+		T_ST_ID = st_canceled_id
+		T_DTS = now_dts
+		where
+		T_ID = t_id
 	    */
-
-	    prtradehist->set_value(0, tr_t_id);
-	    prtradehist->set_value(1, now_dts);
-	    prtradehist->set_value(2, ptcin._st_submitted_id);
-
-	    TRACE( TRACE_TRX_FLOW, "App: %d TC:th-add-tuple (%ld) (%ld) (%s) \n",
-		   xct_id, tr_t_id, now_dts, ptcin._st_submitted_id);
-	    e = _ptrade_history_man->add_tuple(_pssm, prtradehist);
-	    if (e.is_error()) { goto done; }
-
-	    /**
-	       update
-	       TRADE
-	       set
-	       T_ST_ID = st_canceled_id,
-	       T_DTS = now_dts
-	       where
-	       T_ID = tr_t_id
-	    */
-
 	    TRACE( TRACE_TRX_FLOW, "App: %d TC:t-update (%ld) (%ld) (%s) \n",
-		   xct_id, tr_t_id, now_dts, ptcin._st_canceled_id);
-	    e = _ptrade_man->t_update_dts_stdid_by_index(_pssm, prtrade, tr_t_id, now_dts, ptcin._st_canceled_id);
-	    if (e.is_error()) { goto done; }
+		   xct_id, t_id, now_dts, ptcin._st_canceled_id);
+	    W_DO(_ptrade_man->t_update_dts_stdid_by_index(_pssm, prtrade, t_id,
+							  now_dts,
+							  ptcin._st_canceled_id));
 
 	    /**
 	       insert into
@@ -211,127 +251,21 @@ w_rc_t ShoreTPCEEnv::xct_trade_cleanup(const int xct_id, trade_cleanup_input_t& 
 	       TH_T_ID, TH_DTS, TH_ST_ID
 	       )
 	       values (
-	       tr_t_id,        // TH_T_ID
+	       t_id,           // TH_T_ID
 	       now_dts,        // TH_DTS
 	       st_canceled_id  // TH_ST_ID
 	       )
-	    */
-
-	    prtradehist->set_value(0, tr_t_id);
+	    */	    
+	    prtradehist->set_value(0, t_id);
 	    prtradehist->set_value(1, now_dts);
 	    prtradehist->set_value(2, ptcin._st_canceled_id);
-
+	    
 	    TRACE( TRACE_TRX_FLOW, "App: %d TC:th-add-tuple (%ld) (%ld) (%s) \n",
-		   xct_id, tr_t_id, now_dts, ptcin._st_canceled_id);
-	    e = _ptrade_history_man->add_tuple(_pssm, prtradehist);
-	    if (e.is_error()) { goto done; }
-
-	    /* PIN: read above PIN
-	    TRACE( TRACE_TRX_FLOW, "App: %d TC:tr-iter-next \n", xct_id);
-	    e = tr_iter->next(_pssm, eof, *prtradereq);
-	    */
-	    TRACE( TRACE_TRX_FLOW, "App: %d TC:tr-sort-iter-next \n", xct_id);
-	    e = tr_list_sort_iter.next(_pssm, eof, rsb);
-	    if (e.is_error()) { goto done; }
+		   xct_id, t_id, now_dts, ptcin._st_canceled_id);
+	    W_DO(_ptrade_history_man->add_tuple(_pssm, prtradehist));
 	}
-
-	/**
-	   delete
-	   from
-	   TRADE_REQUEST
-	*/
-
-	/* PIN: read above PIN
-	index_scan_iter_impl<trade_request_t>* tmp_tr_iter;
-	{
-	    TRACE( TRACE_TRX_FLOW, "App: %d TC:tr-get-iter-by-idx \n", xct_id);
-	    e = _ptrade_request_man->tr_get_iter_by_index(_pssm, tmp_tr_iter, prtradereq, lowrep, highrep);
-	    if (e.is_error()) { goto done; }
-	    tr_iter = tmp_tr_iter;
-	}
-	
-	TRACE( TRACE_TRX_FLOW, "App: %d TC:tr-iter-next \n", xct_id);
-	e = tr_iter->next(_pssm, eof, *prtradereq);
-	if (e.is_error()) { goto done; }
-	while(!eof){
-	    TRACE( TRACE_TRX_FLOW, "App: %d TC:tr-delete- \n", xct_id);
-	    e = _ptrade_request_man->delete_tuple(_pssm, prtradereq);
-	    if (e.is_error()) { goto done; }
-
-	    TRACE( TRACE_TRX_FLOW, "App: %d TC:tr-iter-next \n", xct_id);
-	    e = tr_iter->next(_pssm, eof, *prtradereq);
-	    if (e.is_error()) { goto done; }
-	}
-	*/
-	
-	/**
-	   select
-	   T_ID
-	   from
-	   TRADE
-	   where
-	   T_ID >= trade_id and
-	   T_ST_ID = st_submitted_id
-	*/
-	guard<index_scan_iter_impl<trade_t> > t_iter;
-	{
-	    index_scan_iter_impl<trade_t>* tmp_t_iter;
-	    TRACE( TRACE_TRX_FLOW, "App: %d TC:t-iter-by-idx \n", xct_id);
-	    e = _ptrade_man->t_get_iter_by_index(_pssm, tmp_t_iter, prtrade, lowrep, highrep, ptcin._trade_id);
-	    if (e.is_error()) { goto done; }
-	    t_iter = tmp_t_iter;
-	}
-
 	TRACE( TRACE_TRX_FLOW, "App: %d TC:t-iter-next \n", xct_id);
-	e = t_iter->next(_pssm, eof, *prtrade);
-	if (e.is_error()) { goto done; }
-	while(!eof){
-	    char t_st_id[5]; //4
-	    prtrade->get_value(2, t_st_id, 5);
-
-	    if(strcmp(t_st_id, ptcin._st_submitted_id) == 0){
-		now_dts = time(NULL);
-		/** 
-		    update
-		    TRADE
-		    set
-		    T_ST_ID = st_canceled_id
-		    T_DTS = now_dts
-		    where
-		    T_ID = t_id
-		*/
-
-		TRACE( TRACE_TRX_FLOW, "App: %d TC:t-update (%ld) (%ld) (%s) \n",
-		       xct_id, t_id, now_dts, ptcin._st_canceled_id);
-		e = _ptrade_man->t_update_dts_stdid_by_index(_pssm, prtrade, t_id, now_dts, ptcin._st_canceled_id);
-		if (e.is_error()) { goto done; }
-
-		/**
-		   insert into
-		   TRADE_HISTORY (
-		   TH_T_ID, TH_DTS, TH_ST_ID
-		   )
-		   values (
-		   t_id,           // TH_T_ID
-		   now_dts,        // TH_DTS
-		   st_canceled_id  // TH_ST_ID
-		   )
-		*/
-
-		prtradehist->set_value(0, t_id);
-		prtradehist->set_value(1, now_dts);
-		prtradehist->set_value(2, ptcin._st_canceled_id);
-
-		TRACE( TRACE_TRX_FLOW, "App: %d TC:th-add-tuple (%ld) (%ld) (%s) \n",
-		       xct_id, t_id, now_dts, ptcin._st_canceled_id);
-		e = _ptrade_history_man->add_tuple(_pssm, prtradehist);
-		if (e.is_error()) { goto done; }
-	    }
-	    TRACE( TRACE_TRX_FLOW, "App: %d TC:t-iter-next \n", xct_id);
-	    e = t_iter->next(_pssm, eof, *prtrade);
-	    if (e.is_error()) { goto done; }			
-
-	}
+	W_DO(t_iter->next(_pssm, eof, *prtrade));
     }
 
 #ifdef PRINT_TRX_RESULTS
@@ -340,16 +274,11 @@ w_rc_t ShoreTPCEEnv::xct_trade_cleanup(const int xct_id, trade_cleanup_input_t& 
     rtradereq.print_tuple();
     rtrade.print_tuple();
     rtradehist.print_tuple();
-
 #endif
 
- done:
-    // return the tuples to the cache
-    _ptrade_request_man->give_tuple(prtradereq);
-    _ptrade_man->give_tuple(prtrade);
-    _ptrade_history_man->give_tuple(prtradehist);
+    return RCOK;
 
-    return (e);
 }
+
 
 EXIT_NAMESPACE(tpce);    

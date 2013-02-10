@@ -190,8 +190,7 @@ w_rc_t del_nord_del_action::trx_exec()
     assert (_ptpccenv);
 
     // get table tuple from the cache
-    table_row_t* prno = _ptpccenv->new_order_man()->get_tuple();
-    assert (prno);
+    tuple_guard<new_order_man_impl> prno(_ptpccenv->new_order_man());
 
     rep_row_t areprow(_ptpccenv->new_order_man()->ts());
     areprow.set(_ptpccenv->new_order_desc()->maxsize()); 
@@ -205,78 +204,61 @@ w_rc_t del_nord_del_action::trx_exec()
     lowrep.set(_ptpccenv->new_order_desc()->maxsize()); 
     highrep.set(_ptpccenv->new_order_desc()->maxsize()); 
 
-    w_rc_t e = RCOK;
+    // 1. Get the new_order of the district, with the min value
 
-    { // make gotos safe
+    /* SELECT MIN(no_o_id) INTO :no_o_id:no_o_id_i
+     * FROM new_order
+     * WHERE no_d_id = :d_id AND no_w_id = :w_id
+     *
+     * plan: index scan on "NO_IDX"
+     */
+    TRACE( TRACE_TRX_FLOW, "App: %d DEL:nord-iter-by-idx-nl (%d) (%d)\n", 
+	   _tid.get_lo(), _din._wh_id, _d_id);
+    
+    guard<index_scan_iter_impl<new_order_t> > no_iter;
+    {
+	index_scan_iter_impl<new_order_t>* tmp_no_iter;
+	W_DO(_ptpccenv->new_order_man()->no_get_iter_by_index_nl(_ptpccenv->db(), 
+								 tmp_no_iter, 
+								 prno, 
+								 lowrep, highrep,
+								 _din._wh_id, 
+								 _d_id));
+	no_iter = tmp_no_iter;
+    }
+    
+    bool eof;
 
-        /* 1. Get the new_order of the district, with the min value */
+    // iterate over all new_orders and load their no_o_ids to the sort buffer
+    W_DO(no_iter->next(_ptpccenv->db(), eof, *prno));
 
-        /* SELECT MIN(no_o_id) INTO :no_o_id:no_o_id_i
-         * FROM new_order
-         * WHERE no_d_id = :d_id AND no_w_id = :w_id
-         *
-         * plan: index scan on "NO_IDX"
-         */
-        TRACE( TRACE_TRX_FLOW, "App: %d DEL:nord-iter-by-idx-nl (%d) (%d)\n", 
-               _tid.get_lo(), _din._wh_id, _d_id);
+    if (eof) { return RCOK; } // skip this district
 
-        guard<index_scan_iter_impl<new_order_t> > no_iter;
-        {
-            index_scan_iter_impl<new_order_t>* tmp_no_iter;
-            e = _ptpccenv->new_order_man()->no_get_iter_by_index_nl(_ptpccenv->db(), 
-                                                                    tmp_no_iter, 
-                                                                    prno, 
-                                                                    lowrep, highrep,
-                                                                    _din._wh_id, 
-                                                                    _d_id);
-            no_iter = tmp_no_iter;
-            if (e.is_error()) { goto done; }
-        }
+    int no_o_id;
+    prno->get_value(0, no_o_id);
+    assert (no_o_id);
+    _pmid1_rvp->set_o_id(no_o_id);
 
-        bool eof;
+    // 2. Delete the retrieved new order
 
-        // iterate over all new_orders and load their no_o_ids to the sort buffer
-        e = no_iter->next(_ptpccenv->db(), eof, *prno);
-        if (e.is_error()) { goto done; }
-
-        if (eof) { goto done; } // skip this district
-
-        int no_o_id;
-        prno->get_value(0, no_o_id);
-        assert (no_o_id);
-        _pmid1_rvp->set_o_id(no_o_id);
-
-
-        /* 2. Delete the retrieved new order */        
-
-        /* DELETE FROM new_order
-         * WHERE no_w_id = :w_id AND no_d_id = :d_id AND no_o_id = :no_o_id
-         *
-         * plan: index scan on "NO_IDX"
-         */
-
-        TRACE( TRACE_TRX_FLOW, "App: %d DEL:nord-delete-by-index-nl (%d) (%d) (%d)\n", 
-               _tid.get_lo(), _din._wh_id, _d_id, no_o_id);
-
-        e = _ptpccenv->new_order_man()->no_delete_by_index_nl(_ptpccenv->db(), 
-                                                              prno, 
-                                                              _din._wh_id, 
-                                                              _d_id, 
-                                                              no_o_id);
-        if (e.is_error()) { goto done; }
-
-    } // goto
-
+    /* DELETE FROM new_order
+     * WHERE no_w_id = :w_id AND no_d_id = :d_id AND no_o_id = :no_o_id
+     *
+     * plan: index scan on "NO_IDX"
+     */
+    TRACE( TRACE_TRX_FLOW, "App: %d DEL:nord-delete-by-index-nl (%d) (%d) (%d)\n",
+	   _tid.get_lo(), _din._wh_id, _d_id, no_o_id);
+    W_DO(_ptpccenv->new_order_man()->no_delete_by_index_nl(_ptpccenv->db(), prno, 
+							   _din._wh_id, _d_id,
+							   no_o_id));
+    
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
     // dumps the status of all the table rows used
     prno->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _ptpccenv->new_order_man()->give_tuple(prno);
-    return (e);
+    return RCOK;
 }
 
 
@@ -286,47 +268,36 @@ w_rc_t upd_ord_del_action::trx_exec()
     assert (_ptpccenv);
 
     // get table tuple from the cache
-    table_row_t* prord = _ptpccenv->order_man()->get_tuple();
-    assert (prord);
+    tuple_guard<order_man_impl> prord(_ptpccenv->order_man());
 
     rep_row_t areprow(_ptpccenv->order_man()->ts());
     areprow.set(_ptpccenv->order_desc()->maxsize()); 
     prord->_rep = &areprow;
 
-    w_rc_t e = RCOK;
-
-    { // make gotos safe
-
-        if (_o_id<0) { goto done; } // empty district
-
-        /* 3a. Update the carrier for the delivered order (in the orders table) */
-        /* 3b. Get the customer id of the updated order */
-
-        /* UPDATE orders SET o_carrier_id = :o_carrier_id
-         * SELECT o_c_id INTO :o_c_id FROM orders
-         * WHERE o_id = :no_o_id AND o_w_id = :w_id AND o_d_id = :d_id;
-         *
-         * plan: index probe on "O_IDX"
-         */
-
-        TRACE( TRACE_TRX_FLOW, "App: %d DEL:ord-idx-probe-upd (%d) (%d) (%d)\n", 
-               _tid.get_lo(), _din._wh_id, _d_id, _o_id);
-        
-        prord->set_value(0, _o_id);
-        prord->set_value(2, _d_id);
-        prord->set_value(3, _din._wh_id);
-
-        e = _ptpccenv->order_man()->ord_update_carrier_by_index_nl(_ptpccenv->db(), 
-                                                                   prord, 
-                                                                   _din._carrier_id);
-        if (e.is_error()) { goto done; }
-
-        int  c_id;
-        prord->get_value(1, c_id);
-
-        _pmid2_rvp->set_c_id(c_id);
-
-    } // goto
+    if (_o_id<0) { return RCOK; } // empty district
+    
+    /* 3a. Update the carrier for the delivered order (in the orders table) */
+    /* 3b. Get the customer id of the updated order */
+    
+    /* UPDATE orders SET o_carrier_id = :o_carrier_id
+     * SELECT o_c_id INTO :o_c_id FROM orders
+     * WHERE o_id = :no_o_id AND o_w_id = :w_id AND o_d_id = :d_id;
+     *
+     * plan: index probe on "O_IDX"
+     */
+    
+    TRACE( TRACE_TRX_FLOW, "App: %d DEL:ord-idx-probe-upd (%d) (%d) (%d)\n", 
+	   _tid.get_lo(), _din._wh_id, _d_id, _o_id);
+    prord->set_value(0, _o_id);
+    prord->set_value(2, _d_id);
+    prord->set_value(3, _din._wh_id);
+    W_DO(_ptpccenv->order_man()->ord_update_carrier_by_index_nl(_ptpccenv->db(), 
+								prord, 
+								_din._carrier_id));
+    
+    int  c_id;
+    prord->get_value(1, c_id);
+    _pmid2_rvp->set_c_id(c_id);
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -334,10 +305,7 @@ w_rc_t upd_ord_del_action::trx_exec()
     prord->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _ptpccenv->order_man()->give_tuple(prord);
-    return (e);
+    return RCOK;
 }
 
 
@@ -347,8 +315,7 @@ w_rc_t upd_oline_del_action::trx_exec()
     assert (_ptpccenv);
 
     // get table tuple from the cache
-    table_row_t* prol = _ptpccenv->order_line_man()->get_tuple();
-    assert (prol);
+    tuple_guard<order_line_man_impl> prol(_ptpccenv->order_line_man());
 
     rep_row_t areprow(_ptpccenv->order_line_man()->ts());
     areprow.set(_ptpccenv->order_line_desc()->maxsize()); 
@@ -364,67 +331,52 @@ w_rc_t upd_oline_del_action::trx_exec()
 
     time_t ts_start = time(NULL);
 
-    w_rc_t e = RCOK;
-
-    { // make gotos safe
-
-        if (_o_id<0) { goto done; } // empty district
+    if (_o_id<0) { return RCOK; } // empty district
         
-        /* 4a. Calculate the total amount of the orders from orderlines */
-        /* 4b. Update all the orderlines with the current timestamp */
-           
-        /* SELECT SUM(ol_amount) INTO :total_amount FROM order_line
-         * UPDATE ORDER_LINE SET ol_delivery_d = :curr_tmstmp
-         * WHERE ol_w_id = :w_id AND ol_d_id = :no_d_id AND ol_o_id = :no_o_id;
-         *
-         * plan: index scan on "OL_IDX"
-         */
+    /* 4a. Calculate the total amount of the orders from orderlines */
+    /* 4b. Update all the orderlines with the current timestamp */
+    
+    /* SELECT SUM(ol_amount) INTO :total_amount FROM order_line
+     * UPDATE ORDER_LINE SET ol_delivery_d = :curr_tmstmp
+     * WHERE ol_w_id = :w_id AND ol_d_id = :no_d_id AND ol_o_id = :no_o_id;
+     *
+     * plan: index scan on "OL_IDX"
+     */
 
-
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d DEL:ol-iter-probe-by-idx-nl (%d) (%d) (%d)\n", 
-               _tid.get_lo(), _din._wh_id, _d_id, _o_id);
-
-        int total_amount = 0;
-
-        guard<index_scan_iter_impl<order_line_t> > ol_iter;
-        {
-            index_scan_iter_impl<order_line_t>* tmp_ol_iter;
-            e = _ptpccenv->order_line_man()->ol_get_probe_iter_by_index_nl(_ptpccenv->db(), 
-                                                                          tmp_ol_iter, 
-                                                                          prol, 
-                                                                          lowrep, 
-                                                                          highrep,
-                                                                          _din._wh_id, 
-                                                                           _d_id, 
-                                                                          _o_id);
-            ol_iter = tmp_ol_iter;
-            if (e.is_error()) { goto done; }
-        }
-        
-        // iterate over all the orderlines for the particular order
-        bool eof;
-        e = ol_iter->next(_ptpccenv->db(), eof, *prol);
-        if (e.is_error()) { goto done; }
-        while (!eof) {
-            // update the total amount
-            int current_amount;
-            prol->get_value(8, current_amount);
-            total_amount += current_amount;
-
-            // update orderline
-            prol->set_value(6, ts_start);
-            e = _ptpccenv->order_line_man()->update_tuple(_ptpccenv->db(), prol, NL);
-            if (e.is_error()) { goto done; }
-
-            // go to the next orderline
-            e = ol_iter->next(_ptpccenv->db(), eof, *prol);
-            if (e.is_error()) { goto done; }
-        }
-
-        _pmid2_rvp->add_amount(total_amount);
-
-    } // goto
+    TRACE( TRACE_TRX_FLOW, "App: %d DEL:ol-iter-probe-by-idx-nl (%d) (%d) (%d)\n",
+	   _tid.get_lo(), _din._wh_id, _d_id, _o_id);
+    
+    int total_amount = 0;
+    
+    guard<index_scan_iter_impl<order_line_t> > ol_iter;
+    {
+	index_scan_iter_impl<order_line_t>* tmp_ol_iter;
+	W_DO(_ptpccenv->order_line_man()->
+	     ol_get_probe_iter_by_index_nl(_ptpccenv->db(), tmp_ol_iter, prol, 
+					   lowrep, highrep, _din._wh_id, _d_id, 
+					   _o_id));
+	ol_iter = tmp_ol_iter;
+    }
+    
+    // iterate over all the orderlines for the particular order
+    bool eof;
+    W_DO(ol_iter->next(_ptpccenv->db(), eof, *prol));
+    while (!eof) {
+	// update the total amount
+	int current_amount;
+	prol->get_value(8, current_amount);
+	total_amount += current_amount;
+	
+	// update orderline
+	prol->set_value(6, ts_start);
+	W_DO(_ptpccenv->order_line_man()->update_tuple(_ptpccenv->db(),
+						       prol, NL));
+	
+	// go to the next orderline
+	W_DO(ol_iter->next(_ptpccenv->db(), eof, *prol));
+    }
+    
+    _pmid2_rvp->add_amount(total_amount);
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -432,10 +384,7 @@ w_rc_t upd_oline_del_action::trx_exec()
     prol->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _ptpccenv->order_line_man()->give_tuple(prol);
-    return (e);
+    return RCOK;
 }
 
 
@@ -446,46 +395,31 @@ w_rc_t upd_cust_del_action::trx_exec()
     assert (_ptpccenv);
 
     // get table tuple from the cache
-    table_row_t* prcust = _ptpccenv->customer_man()->get_tuple();
-    assert (prcust);
+    tuple_guard<customer_man_impl> prcust(_ptpccenv->customer_man());
 
     rep_row_t areprow(_ptpccenv->customer_man()->ts());
     areprow.set(_ptpccenv->customer_desc()->maxsize()); 
     prcust->_rep = &areprow;
 
-    w_rc_t e = RCOK;
+    if (_c_id<0) { return RCOK; } // empty district
 
-    { // make gotos safe
-
-        if (_c_id<0) { goto done; } // empty district
-
-
-        /* 5. Update balance of the customer of the order */
-
-        /* UPDATE customer
-         * SET c_balance = c_balance + :total_amount, c_delivery_cnt = c_delivery_cnt + 1
-         * WHERE c_id = :c_id AND c_w_id = :w_id AND c_d_id = :no_d_id;
-         *
-         * plan: index probe on "C_IDX"
-         */
-
-        TRACE( TRACE_TRX_FLOW, "App: %d DEL:cust-idx-probe-upd-nl (%d) (%d) (%d)\n", 
-               _tid.get_lo(), _din._wh_id, _d_id, _c_id);
-
-        e = _ptpccenv->customer_man()->cust_index_probe_nl(_ptpccenv->db(),
-                                                           prcust, 
-                                                           _din._wh_id, 
-                                                           _d_id, 
-                                                           _c_id);
-        if (e.is_error()) { goto done; }
-
-        double balance;
-        prcust->get_value(16, balance);
-        prcust->set_value(16, balance+_amount);
-
-        e = _ptpccenv->customer_man()->update_tuple(_ptpccenv->db(), prcust, NL);
-
-    } // goto
+    /* 5. Update balance of the customer of the order */
+    
+    /* UPDATE customer
+     * SET c_balance=c_balance + :total_amount, c_delivery_cnt=c_delivery_cnt + 1
+     * WHERE c_id = :c_id AND c_w_id = :w_id AND c_d_id = :no_d_id;
+     *
+     * plan: index probe on "C_IDX"
+     */
+    TRACE( TRACE_TRX_FLOW, "App: %d DEL:cust-idx-probe-upd-nl (%d) (%d) (%d)\n", 
+	   _tid.get_lo(), _din._wh_id, _d_id, _c_id);
+    W_DO(_ptpccenv->customer_man()->cust_index_probe_nl(_ptpccenv->db(), prcust, 
+							_din._wh_id, _d_id,
+							_c_id));
+    double balance;
+    prcust->get_value(16, balance);
+    prcust->set_value(16, balance+_amount);
+    W_DO(_ptpccenv->customer_man()->update_tuple(_ptpccenv->db(), prcust, NL));
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -493,10 +427,7 @@ w_rc_t upd_cust_del_action::trx_exec()
     prcust->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _ptpccenv->customer_man()->give_tuple(prcust);
-    return (e);
+    return RCOK;
 }
 
 

@@ -56,12 +56,13 @@ ENTER_NAMESPACE(tpce);
  ********************************************************************/
 
 
-w_rc_t ShoreTPCEEnv::xct_market_feed(const int xct_id, market_feed_input_t& pmfin)
+w_rc_t ShoreTPCEEnv::xct_market_feed(const int xct_id,
+				     market_feed_input_t& pmfin)
 {
     // check whether it has input
     if(pmfin._type_limit_buy[0] == '\0') {
 	atomic_inc_uint_nv(&_num_invalid_input);
-	return (RCOK);
+	return RCOK;
     }	
 
     // ensure a valid environment
@@ -69,21 +70,13 @@ w_rc_t ShoreTPCEEnv::xct_market_feed(const int xct_id, market_feed_input_t& pmfi
     assert (_initialized);
     assert (_loaded);
 
-    w_rc_t e = RCOK;
-    
-    table_row_t* prlasttrade = _plast_trade_man->get_tuple(); //48
-    assert (prlasttrade);
-
-    table_row_t* prtradereq = _ptrade_request_man->get_tuple();
-    assert (prtradereq);
-
-    table_row_t* prtrade = _ptrade_man->get_tuple(); //149B
-    assert (prtrade);
-
-    table_row_t* prtradehist = _ptrade_history_man->get_tuple();
-    assert (prtradehist);
+    tuple_guard<last_trade_man_impl> prlasttrade(_plast_trade_man);
+    tuple_guard<trade_request_man_impl> prtradereq(_ptrade_request_man);
+    tuple_guard<trade_man_impl> prtrade(_ptrade_man);
+    tuple_guard<trade_history_man_impl> prtradehist(_ptrade_history_man);
 
     rep_row_t areprow(_ptrade_man->ts());
+
     areprow.set(_ptrade_desc->maxsize());
 
     prlasttrade->_rep = &areprow;
@@ -97,170 +90,171 @@ w_rc_t ShoreTPCEEnv::xct_market_feed(const int xct_id, market_feed_input_t& pmfi
     // allocate space for the biggest of the table representations
     lowrep.set(_ptrade_desc->maxsize());
     highrep.set(_ptrade_desc->maxsize());
-    {
-	myTime 		now_dts;
-	double 		req_price_quote;
-	TIdent		req_trade_id;
-	int		req_trade_qty;
-	char		req_trade_type[4]; //3
-	int 		rows_updated;
-	uint            num_deleted;
 
-	now_dts = time(NULL);
+    myTime	now_dts;
+    double	req_price_quote;
+    TIdent	req_trade_id;
+    int		req_trade_qty;
+    char	req_trade_type[4]; //3
+    int		rows_updated;
+    uint        num_deleted;
+
+    now_dts = time(NULL);
+    
+    //the transaction should formally start here!
+    for(rows_updated = 0; rows_updated < max_feed_len; rows_updated++) {
+	num_deleted = 0;
 	
-	//the transaction should formally start here!
-	for(rows_updated = 0; rows_updated < max_feed_len; rows_updated++) {
-	    num_deleted = 0;
-	    
-	    /**
-	       update
-	       LAST_TRADE
-	       set
-	       LT_PRICE = price_quote[i],
-	       LT_VOL = LT_VOL + trade_qty[i],
-	       LT_DTS = now_dts
-	       where
-	       LT_S_SYMB = symbol[i]
-	    */
+	/**
+	   update
+	   LAST_TRADE
+	   set
+	   LT_PRICE = price_quote[i],
+	   LT_VOL = LT_VOL + trade_qty[i],
+	   LT_DTS = now_dts
+	   where
+	   LT_S_SYMB = symbol[i]
+	*/
+	TRACE( TRACE_TRX_FLOW, "App: %d MF:lt-update (%s) (%d) (%d) (%ld) \n",
+	       xct_id, pmfin._symbol[rows_updated],
+	       pmfin._price_quote[rows_updated],
+	       pmfin._trade_qty[rows_updated], now_dts);
+	W_DO(_plast_trade_man->
+	     lt_update_by_index(_pssm, prlasttrade, pmfin._symbol[rows_updated],
+				pmfin._price_quote[rows_updated],
+				pmfin._trade_qty[rows_updated], now_dts));
 
-	    TRACE( TRACE_TRX_FLOW, "App: %d MF:lt-update (%s) (%d) (%d) (%ld) \n",
-		   xct_id, pmfin._symbol[rows_updated], pmfin._price_quote[rows_updated],
-		   pmfin._trade_qty[rows_updated], now_dts);
-	    e = _plast_trade_man->lt_update_by_index(_pssm, prlasttrade,
-						     pmfin._symbol[rows_updated], pmfin._price_quote[rows_updated],
-						     pmfin._trade_qty[rows_updated], now_dts);
-	    if (e.is_error()) {	goto done; }
-
-	    /**
-	       select
-	       TR_T_ID,
-	       TR_BID_PRICE,
-	       TR_TT_ID,
-	       TR_QTY
-	       from
-	       TRADE_REQUEST
-	       where
-	       TR_S_SYMB = symbol[i] and (
-	       (TR_TT_ID = type_stop_loss and
-	       TR_BID_PRICE >= price_quote[i]) or
-	       (TR_TT_ID = type_limit_sell and
-	       TR_BID_PRICE <= price_quote[i]) or
-	       (TR_TT_ID = type_limit_buy and
-	       TR_BID_PRICE >= price_quote[i])
-	       )
-	    */
-
-	    guard< index_scan_iter_impl<trade_request_t> > tr_iter;
-	    {
-		index_scan_iter_impl<trade_request_t>* tmp_tr_iter;
-		TRACE( TRACE_TRX_FLOW, "App: %d MF:tr-get-iter-by-idx4 (%s) \n",
-		       xct_id, pmfin._symbol[rows_updated]);
-		e = _ptrade_request_man->tr_get_iter_by_index4(_pssm, tmp_tr_iter, prtradereq,
-							       lowrep, highrep, pmfin._symbol[rows_updated]);
-		if (e.is_error()) { goto done; }
-		tr_iter = tmp_tr_iter;
+	/**
+	   select
+	   TR_T_ID,
+	   TR_BID_PRICE,
+	   TR_TT_ID,
+	   TR_QTY
+	   from
+	   TRADE_REQUEST
+	   where
+	   TR_S_SYMB = symbol[i] and (
+	   (TR_TT_ID = type_stop_loss and
+	   TR_BID_PRICE >= price_quote[i]) or
+	   (TR_TT_ID = type_limit_sell and
+	   TR_BID_PRICE <= price_quote[i]) or
+	   (TR_TT_ID = type_limit_buy and
+	   TR_BID_PRICE >= price_quote[i])
+	   )
+	*/
+	guard< index_scan_iter_impl<trade_request_t> > tr_iter;
+	{
+	    index_scan_iter_impl<trade_request_t>* tmp_tr_iter;
+	    TRACE( TRACE_TRX_FLOW, "App: %d MF:tr-get-iter-by-idx4 (%s) \n",
+		   xct_id, pmfin._symbol[rows_updated]);
+	    W_DO(_ptrade_request_man->
+		 tr_get_iter_by_index4(_pssm, tmp_tr_iter, prtradereq, lowrep,
+				       highrep, pmfin._symbol[rows_updated]));
+	    tr_iter = tmp_tr_iter;
+	}
+	
+	bool eof;
+	TRACE( TRACE_TRX_FLOW, "App: %d MF:tr-iter-next \n", xct_id);
+	w_rc_t e = tr_iter->next(_pssm, eof, *prtradereq);
+	if (e.is_error()) {
+	    if(e.err_num() == smlevel_0::eBADSLOTNUMBER) {
+		eof = true;
+	    } else {
+		W_DO(e);
 	    }
-
-	    bool eof;
+	}
+	while(!eof) {
+	    prtradereq->get_value(1, req_trade_type, 4);
+	    prtradereq->get_value(4, req_price_quote);
+	    
+	    if((strcmp(req_trade_type, pmfin._type_stop_loss) == 0 &&
+		(req_price_quote >= pmfin._price_quote[rows_updated])) ||
+	       (strcmp(req_trade_type, pmfin._type_limit_sell) == 0 &&
+		(req_price_quote <= pmfin._price_quote[rows_updated])) ||
+	       (strcmp(req_trade_type, pmfin._type_limit_buy)== 0 &&
+		(req_price_quote >= pmfin._price_quote[rows_updated]))
+	       ) {
+		prtradereq->get_value(0, req_trade_id);
+		prtradereq->get_value(3, req_trade_qty);
+				
+		/**
+		   delete
+		   TRADE_REQUEST
+		   where
+		   current of request_list
+		*/
+		// PIN: get the RID and perform the delete after the scan
+		//      to prevent crashes.
+		/*
+		  TRACE( TRACE_TRX_FLOW, "App: %d MF:tr-delete \n", xct_id);
+		  W_DO(_ptrade_request_man->delete_tuple(_pssm, prtradereq));
+		*/
+		pmfin._trade_rid[num_deleted] = prtradereq->rid();
+		num_deleted++;
+		    
+		/**
+		   update
+		   TRADE
+		   set
+		   T_DTS   = now_dts,
+		   T_ST_ID = status_submitted
+		   where
+		   T_ID = req_trade_id
+		*/
+		TRACE( TRACE_TRX_FLOW, "App: %d MF:t-update (%ld) (%ld) (%s) \n",
+		       xct_id, req_trade_id, now_dts, pmfin._status_submitted);
+		W_DO(_ptrade_man->
+		     t_update_dts_stdid_by_index(_pssm, prtrade,
+						 req_trade_id, now_dts,
+						 pmfin._status_submitted));
+		    
+		/**
+		   insert into
+		   TRADE_HISTORY
+		   values (
+		   TH_T_ID = req_trade_id,
+		   TH_DTS = now_dts,
+		   TH_ST_ID = status_submitted)
+		*/
+		prtradehist->set_value(0, req_trade_id);
+		prtradehist->set_value(1, now_dts);
+		prtradehist->set_value(2, pmfin._status_submitted);
+		
+		TRACE(TRACE_TRX_FLOW,"App: %d MF:th-add-tuple (%ld) (%ld) (%s)\n",
+		      xct_id, req_trade_id, now_dts, pmfin._status_submitted);
+		W_DO(_ptrade_history_man->add_tuple(_pssm, prtradehist));
+	    } 
 	    TRACE( TRACE_TRX_FLOW, "App: %d MF:tr-iter-next \n", xct_id);
 	    e = tr_iter->next(_pssm, eof, *prtradereq);
 	    if (e.is_error()) {
 		if(e.err_num() == smlevel_0::eBADSLOTNUMBER) {
 		    eof = true;
-		    e = RCOK;
-		} else { goto done; }
-	    }
-	    while(!eof){
-		prtradereq->get_value(1, req_trade_type, 4);
-		prtradereq->get_value(4, req_price_quote);
-
-		if((strcmp(req_trade_type, pmfin._type_stop_loss) == 0 &&
-		    (req_price_quote >= pmfin._price_quote[rows_updated])) ||
-		   (strcmp(req_trade_type, pmfin._type_limit_sell) == 0 &&
-		    (req_price_quote <= pmfin._price_quote[rows_updated])) ||
-		   (strcmp(req_trade_type, pmfin._type_limit_buy)== 0 &&
-		    (req_price_quote >= pmfin._price_quote[rows_updated]))
-		   ) {
-		    prtradereq->get_value(0, req_trade_id);
-		    prtradereq->get_value(3, req_trade_qty);
-		    
-		    
-		    /**
-		       delete
-		       TRADE_REQUEST
-		       where
-		       current of request_list
-		    */
-		    // PIN: get the RID and perform the delete after the scan
-		    //      to prevent crashes.
-		    /*
-		      TRACE( TRACE_TRX_FLOW, "App: %d MF:tr-delete \n", xct_id);
-		      e = _ptrade_request_man->delete_tuple(_pssm, prtradereq);
-		      if (e.is_error()) { goto done; }
-		    */
-		    pmfin._trade_rid[num_deleted] = prtradereq->rid();
-		    num_deleted++;
-		    
-		    /**
-		       update
-		       TRADE
-		       set
-		       T_DTS   = now_dts,
-		       T_ST_ID = status_submitted
-		       where
-		       T_ID = req_trade_id
-		    */
-		    TRACE( TRACE_TRX_FLOW, "App: %d MF:t-update (%ld) (%ld) (%s) \n",
-			   xct_id, req_trade_id, now_dts, pmfin._status_submitted);
-		    e = _ptrade_man->t_update_dts_stdid_by_index(_pssm, prtrade, req_trade_id,
-								 now_dts, pmfin._status_submitted);
-		    if (e.is_error()) { goto done; }
-		    
-		    /**
-		       insert into
-		       TRADE_HISTORY
-		       values (
-		       TH_T_ID = req_trade_id,
-		       TH_DTS = now_dts,
-		       TH_ST_ID = status_submitted)
-		    */
-		    prtradehist->set_value(0, req_trade_id);
-		    prtradehist->set_value(1, now_dts);
-		    prtradehist->set_value(2, pmfin._status_submitted);
-		    
-		    TRACE( TRACE_TRX_FLOW, "App: %d MF:th-add-tuple (%ld) (%ld) (%s) \n",
-			   xct_id, req_trade_id, now_dts, pmfin._status_submitted);
-		    e = _ptrade_history_man->add_tuple(_pssm, prtradehist);
-		    if (e.is_error()) {	goto done; }
-		} 
-		TRACE( TRACE_TRX_FLOW, "App: %d MF:tr-iter-next \n", xct_id);
-		e = tr_iter->next(_pssm, eof, *prtradereq);
-		if (e.is_error()) {
-		    if(e.err_num() == smlevel_0::eBADSLOTNUMBER) {
-			eof = true;
-			e = RCOK;
-		    } else { goto done; }
+		} else {
+		    W_DO(e);
 		}
 	    }
 	    for(uint i=0; i<num_deleted; i++) {
-		TRACE(TRACE_TRX_FLOW, "%d - MF:tr-delete-tuple - (%d).(%d).(%d).(%d)\n", xct_id,
-		      (pmfin._trade_rid[i]).pid.vol().vol, (pmfin._trade_rid[i]).pid.store(),
-		      (pmfin._trade_rid[i]).pid.page, (pmfin._trade_rid[i]).slot);
-		e = _ptrade_request_man->tr_delete_tuple(_pssm, prtradereq, pmfin._trade_rid[i]);
-		if (e.is_error()) {
-		    if(e.err_num() == smlevel_0::eBADSLOTNUMBER) {
-			e = RCOK;
-		    } else { goto done; }
+		TRACE( TRACE_TRX_FLOW,
+		       "%d - MF:tr-delete-tuple - (%d).(%d).(%d).(%d)\n", xct_id,
+		       (pmfin._trade_rid[i]).pid.vol().vol,
+		       (pmfin._trade_rid[i]).pid.store(),
+		       (pmfin._trade_rid[i]).pid.page,
+		       (pmfin._trade_rid[i]).slot);
+		e = _ptrade_request_man->tr_delete_tuple(_pssm, prtradereq,
+							 pmfin._trade_rid[i]);
+		if (e.is_error() && e.err_num() != smlevel_0::eBADSLOTNUMBER) {
+		    W_DO(e);
 		}
 	    }
 	}
-	assert(rows_updated == max_feed_len); //Harness Control
     }
-
-    /* @note: PIN: the below is not executed because it ends up at an abstract virtual function
-    //send triggered trades to the Market Exchange Emulator
-    //via the SendToMarket interface.
-    //This should be done after the related database changes have committed
+    assert(rows_updated == max_feed_len); //Harness Control
+    
+    /* @note: PIN: the below is not executed because it ends up at an abstract
+       virtual function
+    // send triggered trades to the Market Exchange Emulator
+    // via the SendToMarket interface.
+    // This should be done after the related database changes have committed
     For (j=0; j<rows_sent; j++)
     {
     SendToMarketFromFrame(TradeRequestBuffer[i].symbol,
@@ -280,14 +274,9 @@ w_rc_t ShoreTPCEEnv::xct_market_feed(const int xct_id, market_feed_input_t& pmfi
     rtradehist.print_tuple();
 #endif
 
- done:
-    // return the tuples to the cache
-    _plast_trade_man->give_tuple(prlasttrade);
-    _ptrade_request_man->give_tuple(prtradereq);
-    _ptrade_man->give_tuple(prtrade);
-    _ptrade_history_man->give_tuple(prtradehist);
-
-    return (e);
+    return RCOK;
+    
 }
+
 
 EXIT_NAMESPACE(tpce);    

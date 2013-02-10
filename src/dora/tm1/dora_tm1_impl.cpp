@@ -72,96 +72,80 @@ void r_sub_gsd_action::calc_keys()
 w_rc_t r_sub_gsd_action::trx_exec() 
 {
     assert (_penv);
-    w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // Subscriber
-    table_row_t* prsub = _penv->sub_man()->get_tuple();
-    assert (prsub);
-
+    tuple_guard<sub_man_impl> prsub(_penv->sub_man());
     rep_row_t areprow(_penv->sub_man()->ts());
     areprow.set(_penv->sub_desc()->maxsize()); 
     prsub->_rep = &areprow;
+    
+    /* SELECT s_id, sub_nbr, 
+     *        bit_XX, hex_XX, byte2_XX,
+     *        msc_location, vlr_location
+     * FROM   Subscriber
+     * WHERE  s_id = <s_id>
+     *
+     * plan: index probe on "S_IDX"
+     */
 
+    // 1. retrieve Subscriber (read-only)
+    TRACE( TRACE_TRX_FLOW, "App: %d GSD:sub-idx-nl (%d)\n",
+	   _tid.get_lo(), _in._s_id);
+    W_DO(_penv->sub_man()->sub_idx_nl(_penv->db(), prsub, _in._s_id));
 
-    { // make gotos safe
+    tm1_sub_t asub;
 
-
-        /* SELECT s_id, sub_nbr, 
-         *        bit_XX, hex_XX, byte2_XX,
-         *        msc_location, vlr_location
-         * FROM   Subscriber
-         * WHERE  s_id = <s_id>
-         *
-         * plan: index probe on "S_IDX"
-         */
-
-
-        // 1. retrieve Subscriber (read-only)
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d GSD:sub-idx-nl (%d)\n", _tid.get_lo(), _in._s_id);
-
-        e = _penv->sub_man()->sub_idx_nl(_penv->db(), prsub, _in._s_id);
-        if (e.is_error()) { goto done; }
-
-        tm1_sub_t asub;
-
-        // READ SUBSCRIBER
-
-        prsub->get_value(0,  asub.S_ID);
-        prsub->get_value(1,  asub.SUB_NBR, 17);
-
-        // BIT_XX
-        prsub->get_value(2,  asub.BIT_XX[0]);
-        prsub->get_value(3,  asub.BIT_XX[1]);
-        prsub->get_value(4,  asub.BIT_XX[2]);
-        prsub->get_value(5,  asub.BIT_XX[3]);
-        prsub->get_value(6,  asub.BIT_XX[4]);
-        prsub->get_value(7,  asub.BIT_XX[5]);
-        prsub->get_value(8,  asub.BIT_XX[6]);
-        prsub->get_value(9,  asub.BIT_XX[7]);
-        prsub->get_value(10, asub.BIT_XX[8]);
-        prsub->get_value(11, asub.BIT_XX[9]);
-
-        // HEX_XX
-        prsub->get_value(12, asub.HEX_XX[0]);
-        prsub->get_value(13, asub.HEX_XX[1]);
-        prsub->get_value(14, asub.HEX_XX[2]);
-        prsub->get_value(15, asub.HEX_XX[3]);
-        prsub->get_value(16, asub.HEX_XX[4]);
-        prsub->get_value(17, asub.HEX_XX[5]);
-        prsub->get_value(18, asub.HEX_XX[6]);
-        prsub->get_value(19, asub.HEX_XX[7]);
-        prsub->get_value(20, asub.HEX_XX[8]);
-        prsub->get_value(21, asub.HEX_XX[9]);
-
-        // BYTE2_XX
-        prsub->get_value(22, asub.BYTE2_XX[0]);
-        prsub->get_value(23, asub.BYTE2_XX[1]);
-        prsub->get_value(24, asub.BYTE2_XX[2]);
-        prsub->get_value(25, asub.BYTE2_XX[3]);
-        prsub->get_value(26, asub.BYTE2_XX[4]);
-        prsub->get_value(27, asub.BYTE2_XX[5]);
-        prsub->get_value(28, asub.BYTE2_XX[6]);
-        prsub->get_value(29, asub.BYTE2_XX[7]);
-        prsub->get_value(30, asub.BYTE2_XX[8]);
-        prsub->get_value(31, asub.BYTE2_XX[9]);
-
-        prsub->get_value(32, asub.MSC_LOCATION);
-        prsub->get_value(33, asub.VLR_LOCATION);
-
-
-    } // goto
+    // READ SUBSCRIBER
+    
+    prsub->get_value(0,  asub.S_ID);
+    prsub->get_value(1,  asub.SUB_NBR, 17);
+    
+    // BIT_XX
+    prsub->get_value(2,  asub.BIT_XX[0]);
+    prsub->get_value(3,  asub.BIT_XX[1]);
+    prsub->get_value(4,  asub.BIT_XX[2]);
+    prsub->get_value(5,  asub.BIT_XX[3]);
+    prsub->get_value(6,  asub.BIT_XX[4]);
+    prsub->get_value(7,  asub.BIT_XX[5]);
+    prsub->get_value(8,  asub.BIT_XX[6]);
+    prsub->get_value(9,  asub.BIT_XX[7]);
+    prsub->get_value(10, asub.BIT_XX[8]);
+    prsub->get_value(11, asub.BIT_XX[9]);
+    
+    // HEX_XX
+    prsub->get_value(12, asub.HEX_XX[0]);
+    prsub->get_value(13, asub.HEX_XX[1]);
+    prsub->get_value(14, asub.HEX_XX[2]);
+    prsub->get_value(15, asub.HEX_XX[3]);
+    prsub->get_value(16, asub.HEX_XX[4]);
+    prsub->get_value(17, asub.HEX_XX[5]);
+    prsub->get_value(18, asub.HEX_XX[6]);
+    prsub->get_value(19, asub.HEX_XX[7]);
+    prsub->get_value(20, asub.HEX_XX[8]);
+    prsub->get_value(21, asub.HEX_XX[9]);
+    
+    // BYTE2_XX
+    prsub->get_value(22, asub.BYTE2_XX[0]);
+    prsub->get_value(23, asub.BYTE2_XX[1]);
+    prsub->get_value(24, asub.BYTE2_XX[2]);
+    prsub->get_value(25, asub.BYTE2_XX[3]);
+    prsub->get_value(26, asub.BYTE2_XX[4]);
+    prsub->get_value(27, asub.BYTE2_XX[5]);
+    prsub->get_value(28, asub.BYTE2_XX[6]);
+    prsub->get_value(29, asub.BYTE2_XX[7]);
+    prsub->get_value(30, asub.BYTE2_XX[8]);
+    prsub->get_value(31, asub.BYTE2_XX[9]);
+    
+    prsub->get_value(32, asub.MSC_LOCATION);
+    prsub->get_value(33, asub.VLR_LOCATION);
 
 #ifdef PRINT_TRX_RESULTS
     // dumps the status of all the table rows used
     prsub->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->sub_man()->give_tuple(prsub);
-    return (e);
+    return RCOK;
 }
 
 
@@ -233,53 +217,35 @@ void r_sf_gnd_action::calc_keys()
 w_rc_t r_sf_gnd_action::trx_exec() 
 {
     assert (_penv);
-    w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // SpecialFacility
-    table_row_t* prsf = _penv->sf_man()->get_tuple();
-    assert (prsf);
-
+    tuple_guard<sf_man_impl> prsf(_penv->sf_man());
     rep_row_t areprow(_penv->sf_man()->ts());
     areprow.set(_penv->sf_desc()->maxsize()); 
-    
     prsf->_rep = &areprow;
 
     tm1_sf_t asf;
 
-    { // make gotos safe
-
-        // 1. retrieve SpecialFacility (read-only)
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d GND:sf-idx-nl (%d) (%d)\n", 
-               _tid.get_lo(), _in._s_id, _in._sf_type);
-
+    // 1. retrieve SpecialFacility (read-only)
+    TRACE( TRACE_TRX_FLOW, "App: %d GND:sf-idx-nl (%d) (%d)\n", 
+	   _tid.get_lo(), _in._s_id, _in._sf_type);
 #ifndef TM1GND2
-        if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
+    if (_prvp->isAborted()) { W_DO(RC(de_MIDWAY_ABORT)); }
 #endif
-
-        e = _penv->sf_man()->sf_idx_nl(_penv->db(), prsf, 
-                                       _in._s_id, _in._sf_type);
-        if (e.is_error()) { goto done; }
-
-        prsf->get_value(2, asf.IS_ACTIVE);
-
-        if (!asf.IS_ACTIVE) {
-            // Not active special facility
-            e = RC(se_NO_CURRENT_TUPLE);
-        }
-
-    } // goto
+    W_DO(_penv->sf_man()->sf_idx_nl(_penv->db(), prsf, _in._s_id, _in._sf_type));
+    prsf->get_value(2, asf.IS_ACTIVE);
+    if (!asf.IS_ACTIVE) {
+	// Not active special facility
+	W_DO(RC(se_NO_CURRENT_TUPLE));
+    }
 
 #ifdef PRINT_TRX_RESULTS
     // dumps the status of all the table rows used
     prsf->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->sf_man()->give_tuple(prsf);
-    return (e);
+    return RCOK;
 }
 
 
@@ -300,13 +266,10 @@ void r_cf_gnd_action::calc_keys()
 w_rc_t r_cf_gnd_action::trx_exec() 
 {
     assert (_penv);
-    w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // CallForwarding
-    table_row_t* prcf = _penv->cf_man()->get_tuple();
-    assert (prcf);
-
+    tuple_guard<cf_man_impl> prcf(_penv->cf_man());
     rep_row_t areprow(_penv->cf_man()->ts());
     areprow.set(_penv->cf_desc()->maxsize()); 
     prcf->_rep = &areprow;
@@ -320,63 +283,48 @@ w_rc_t r_cf_gnd_action::trx_exec()
     bool eof;
     bool bFound = false;
 
-    { // make gotos safe
-
 #ifndef TM1GND2
-        if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
+    if (_prvp->isAborted()) { W_DO(RC(de_MIDWAY_ABORT)); }
 #endif
+    
+    // 1. Retrieve the call forwarding destination            
+    guard<index_scan_iter_impl<call_forwarding_t> > cf_iter;
+    {
+	index_scan_iter_impl<call_forwarding_t>* tmp_cf_iter;
+	TRACE( TRACE_TRX_FLOW, "App: %d GND:cf-idx-iter-nl\n", _tid.get_lo());
+	W_DO(_penv->cf_man()->cf_get_idx_iter_nl(_penv->db(), tmp_cf_iter, prcf,
+						 lowrep, highrep, _in._s_id,
+						 _in._sf_type, _in._s_time));
+	cf_iter = tmp_cf_iter;
+    }
+    W_DO(cf_iter->next(_penv->db(), eof, *prcf));
 
-        // 1. Retrieve the call forwarding destination            
-        guard<index_scan_iter_impl<call_forwarding_t> > cf_iter;
-        {
-            index_scan_iter_impl<call_forwarding_t>* tmp_cf_iter;
-            TRACE( TRACE_TRX_FLOW, "App: %d GND:cf-idx-iter-nl\n", _tid.get_lo());
-            e = _penv->cf_man()->cf_get_idx_iter_nl(_penv->db(), tmp_cf_iter, prcf,
-                                                    lowrep, highrep,
-                                                    _in._s_id, _in._sf_type, _in._s_time);
-            cf_iter = tmp_cf_iter;
-            if (e.is_error()) { goto done; }
-        }
-
-        e = cf_iter->next(_penv->db(), eof, *prcf);
-        if (e.is_error()) { goto done; }
-
-        while (!eof) {
-
+    while (!eof) {
 #ifndef TM1GND2
-            if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
+	if (_prvp->isAborted()) { W_DO(RC(de_MIDWAY_ABORT)); }
 #endif
-
-            // check the retrieved CF e_time                
-            prcf->get_value(3, acf.END_TIME);
-            if (acf.END_TIME > _in._e_time) {
-                prcf->get_value(4, acf.NUMBERX, 17);
-                TRACE( TRACE_TRX_FLOW, "App: %d GND: found (%d) (%d) (%s)\n", 
-                       _tid.get_lo(), _in._e_time, acf.END_TIME, acf.NUMBERX);
-                bFound = true;
-            }
-            
-            TRACE( TRACE_TRX_FLOW, "App: %d GND:cf-idx-iter-next\n", 
-                   _tid.get_lo());
-            e = cf_iter->next(_penv->db(), eof, *prcf);
-            if (e.is_error()) { goto done; }
-        }
-
-        if (!bFound) { 
-            e = RC(se_NO_CURRENT_TUPLE); 
-        }
-
-    } // goto
+	// check the retrieved CF e_time                
+	prcf->get_value(3, acf.END_TIME);
+	if (acf.END_TIME > _in._e_time) {
+	    prcf->get_value(4, acf.NUMBERX, 17);
+	    TRACE( TRACE_TRX_FLOW, "App: %d GND: found (%d) (%d) (%s)\n", 
+		   _tid.get_lo(), _in._e_time, acf.END_TIME, acf.NUMBERX);
+	    bFound = true;
+	}
+	TRACE( TRACE_TRX_FLOW, "App: %d GND:cf-idx-iter-next\n", _tid.get_lo());
+	W_DO(cf_iter->next(_penv->db(), eof, *prcf));
+    }
+    
+    if (!bFound) { 
+	W_DO(RC(se_NO_CURRENT_TUPLE)); 
+    }
 
 #ifdef PRINT_TRX_RESULTS
     // dumps the status of all the table rows used
     prcf->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->cf_man()->give_tuple(prcf);
-    return (e);
+    return RCOK;
 }
 
 
@@ -413,58 +361,40 @@ void r_ai_gad_action::calc_keys()
 w_rc_t r_ai_gad_action::trx_exec() 
 {
     assert (_penv);
-    w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // AccessInfo
-    table_row_t* prai = _penv->ai_man()->get_tuple();
-    assert (prai);
-
+    tuple_guard<ai_man_impl> prai(_penv->ai_man());
     rep_row_t areprow(_penv->ai_man()->ts());
     areprow.set(_penv->ai_desc()->maxsize()); 
     prai->_rep = &areprow;
 
+    /* SELECT data1, data2, data3, data4
+     * FROM   Access_Info
+     * WHERE  s_id = <s_id rnd>
+     * AND    ai_type = <ai_type rnd>
+     *
+     * plan: index probe on "AI_IDX"
+     */
 
-    { // make gotos safe
-
-        /* SELECT data1, data2, data3, data4
-         * FROM   Access_Info
-         * WHERE  s_id = <s_id rnd>
-         * AND    ai_type = <ai_type rnd>
-         *
-         * plan: index probe on "AI_IDX"
-         */
-
-
-        // 1. retrieve AccessInfo (read-only)
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d GAD:ai-idx-nl (%d) (%d)\n", 
-               _tid.get_lo(), _in._s_id, _in._ai_type);
-
-        e = _penv->ai_man()->ai_idx_nl(_penv->db(), prai, 
-                                       _in._s_id, _in._ai_type);
-        if (e.is_error()) { goto done; }
-
-        tm1_ai_t aai;
-
-        // READ ACCESS-INFO
-
-        prai->get_value(2,  aai.DATA1);
-        prai->get_value(3,  aai.DATA2);
-        prai->get_value(4,  aai.DATA3, 5);
-        prai->get_value(5,  aai.DATA4, 9);
-
-    } // goto
+    // 1. retrieve AccessInfo (read-only)
+    TRACE( TRACE_TRX_FLOW, "App: %d GAD:ai-idx-nl (%d) (%d)\n", 
+	   _tid.get_lo(), _in._s_id, _in._ai_type);
+    W_DO(_penv->ai_man()->ai_idx_nl(_penv->db(), prai, _in._s_id, _in._ai_type));
+    
+    // READ ACCESS-INFO
+    tm1_ai_t aai;
+    prai->get_value(2,  aai.DATA1);
+    prai->get_value(3,  aai.DATA2);
+    prai->get_value(4,  aai.DATA3, 5);
+    prai->get_value(5,  aai.DATA4, 9);
 
 #ifdef PRINT_TRX_RESULTS
     // dumps the status of all the table rows used
     prai->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->ai_man()->give_tuple(prai);
-    return (e);
+    return RCOK;
 }
 
 
@@ -531,57 +461,40 @@ void upd_sub_usd_action::calc_keys()
 w_rc_t upd_sub_usd_action::trx_exec() 
 {
     assert (_penv);
-    w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // Subscriber
-    table_row_t* prsub = _penv->sub_man()->get_tuple();
-    assert (prsub);
-
+    tuple_guard<sub_man_impl> prsub(_penv->sub_man());
     rep_row_t areprow(_penv->sub_man()->ts());
     areprow.set(_penv->sub_desc()->maxsize()); 
     prsub->_rep = &areprow;
 
-    { // make gotos safe
-
-        /* UPDATE Subscriber
-         * SET bit_1 = <bit_rnd>
-         * WHERE s_id = <s_id rnd subid>;
-         *
-         * plan: index probe on "S_IDX"
-         */
-
-        // 1. Update Subscriber
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d USD:sub-idx-nl (%d)\n", _tid.get_lo(), _in._s_id);
-
+    /* UPDATE Subscriber
+     * SET bit_1 = <bit_rnd>
+     * WHERE s_id = <s_id rnd subid>;
+     *
+     * plan: index probe on "S_IDX"
+     */
+    
+    // 1. Update Subscriber
+    TRACE( TRACE_TRX_FLOW,
+	   "App: %d USD:sub-idx-nl (%d)\n", _tid.get_lo(), _in._s_id);    
 #ifndef TM1USD2
-        if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
+    if (_prvp->isAborted()) { W_DO(RC(de_MIDWAY_ABORT)); }
 #endif
-
-        e = _penv->sub_man()->sub_idx_nl(_penv->db(), prsub, _in._s_id);
-        if (e.is_error()) { goto done; }
-
-        prsub->set_value(2, _in._a_bit);
-
+    W_DO(_penv->sub_man()->sub_idx_nl(_penv->db(), prsub, _in._s_id));
+    prsub->set_value(2, _in._a_bit);
 #ifndef TM1USD2
-        if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
+    if (_prvp->isAborted()) { W_DO(RC(de_MIDWAY_ABORT)); }
 #endif
-
-        e = _penv->sub_man()->update_tuple(_penv->db(), prsub, NL);
-        if (e.is_error()) { goto done; }
-
-    } // goto
+    W_DO(_penv->sub_man()->update_tuple(_penv->db(), prsub, NL));
 
 #ifdef PRINT_TRX_RESULTS
     // dumps the status of all the table rows used
     prsub->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->sub_man()->give_tuple(prsub);
-    return (e);
+    return RCOK;
 }
 
 
@@ -597,51 +510,35 @@ void upd_sf_usd_action::calc_keys()
 w_rc_t upd_sf_usd_action::trx_exec() 
 {
     assert (_penv);
-    w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // Subscriber
-    table_row_t* prsf = _penv->sf_man()->get_tuple();
-    assert (prsf);
-
+    tuple_guard<sf_man_impl> prsf(_penv->sf_man());
     rep_row_t areprow(_penv->sf_man()->ts());
     areprow.set(_penv->sf_desc()->maxsize()); 
     prsf->_rep = &areprow;
 
-    { // make gotos safe
-
-        /* UPDATE Special_Facility
-         * SET data_a = <data_a rnd>
-         * WHERE s_id = <s_id value subid>
-         * AND sf_type = <sf_type rnd>;
-         *
-         * plan: index probe on "SF_IDX"
-         */
-
-        // 2. Update SpecialFacility
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d USD:sf-idx-nl (%d) (%d)\n", 
-               _tid.get_lo(), _in._s_id, _in._sf_type);
-
-        e = _penv->sf_man()->sf_idx_nl(_penv->db(), prsf, _in._s_id, _in._sf_type);
-        if (e.is_error()) { goto done; }
-
-        prsf->set_value(4, _in._a_data);
-
-        e = _penv->sf_man()->update_tuple(_penv->db(), prsf, NL);
-        if (e.is_error()) { goto done; }
-
-    } // goto
+    /* UPDATE Special_Facility
+     * SET data_a = <data_a rnd>
+     * WHERE s_id = <s_id value subid>
+     * AND sf_type = <sf_type rnd>;
+     *
+     * plan: index probe on "SF_IDX"
+     */
+    
+    // 2. Update SpecialFacility
+    TRACE( TRACE_TRX_FLOW, "App: %d USD:sf-idx-nl (%d) (%d)\n", 
+	   _tid.get_lo(), _in._s_id, _in._sf_type);
+    W_DO(_penv->sf_man()->sf_idx_nl(_penv->db(), prsf, _in._s_id, _in._sf_type));
+    prsf->set_value(4, _in._a_data);
+    W_DO(_penv->sf_man()->update_tuple(_penv->db(), prsf, NL));
 
 #ifdef PRINT_TRX_RESULTS
     // dumps the status of all the table rows used
     prsf->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->sf_man()->give_tuple(prsf);
-    return (e);
+    return RCOK;
 }
 
 
@@ -702,49 +599,34 @@ void upd_sub_usdmix_action::calc_keys()
 w_rc_t upd_sub_usdmix_action::trx_exec() 
 {
     assert (_penv);
-    w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // Subscriber
-    table_row_t* prsub = _penv->sub_man()->get_tuple();
-    assert (prsub);
-
+    tuple_guard<sub_man_impl> prsub(_penv->sub_man());
     rep_row_t areprow(_penv->sub_man()->ts());
     areprow.set(_penv->sub_desc()->maxsize()); 
     prsub->_rep = &areprow;
 
-    { // make gotos safe
-
-        /* UPDATE Subscriber
-         * SET bit_1 = <bit_rnd>
-         * WHERE s_id = <s_id rnd subid>;
-         *
-         * plan: index probe on "S_IDX"
-         */
-
-        // 1. Update Subscriber
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d USD:sub-idx-nl (%d)\n", _tid.get_lo(), _in._s_id);
-
-        e = _penv->sub_man()->sub_idx_nl(_penv->db(), prsub, _in._s_id);
-        if (e.is_error()) { goto done; }
-
-        prsub->set_value(2, _in._a_bit);
-
-        e = _penv->sub_man()->update_tuple(_penv->db(), prsub, NL);
-        if (e.is_error()) { goto done; }
-
-    } // goto
+    /* UPDATE Subscriber
+     * SET bit_1 = <bit_rnd>
+     * WHERE s_id = <s_id rnd subid>;
+     *
+     * plan: index probe on "S_IDX"
+     */
+    
+    // 1. Update Subscriber
+    TRACE( TRACE_TRX_FLOW,
+	   "App: %d USD:sub-idx-nl (%d)\n", _tid.get_lo(), _in._s_id);
+    W_DO(_penv->sub_man()->sub_idx_nl(_penv->db(), prsub, _in._s_id));
+    prsub->set_value(2, _in._a_bit);
+    W_DO(_penv->sub_man()->update_tuple(_penv->db(), prsub, NL));
 
 #ifdef PRINT_TRX_RESULTS
     // dumps the status of all the table rows used
     prsub->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->sub_man()->give_tuple(prsub);
-    return (e);
+    return RCOK;
 }
 
 
@@ -760,51 +642,35 @@ void upd_sf_usdmix_action::calc_keys()
 w_rc_t upd_sf_usdmix_action::trx_exec() 
 {
     assert (_penv);
-    w_rc_t e = RCOK;
 
     // get table tuple from the cache
-    // Subscriber
-    table_row_t* prsf = _penv->sf_man()->get_tuple();
-    assert (prsf);
-
+    // SpecialFacility
+    tuple_guard<sf_man_impl> prsf(_penv->sf_man());
     rep_row_t areprow(_penv->sf_man()->ts());
     areprow.set(_penv->sf_desc()->maxsize()); 
     prsf->_rep = &areprow;
 
-    { // make gotos safe
-
-        /* UPDATE Special_Facility
-         * SET data_a = <data_a rnd>
-         * WHERE s_id = <s_id value subid>
-         * AND sf_type = <sf_type rnd>;
-         *
-         * plan: index probe on "SF_IDX"
-         */
-
-        // 2. Update SpecialFacility
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d USD:sf-idx-nl (%d) (%d)\n", 
-               _tid.get_lo(), _in._s_id, _in._sf_type);
-
-        e = _penv->sf_man()->sf_idx_nl(_penv->db(), prsf, _in._s_id, _in._sf_type);
-        if (e.is_error()) { goto done; }
-
-        prsf->set_value(4, _in._a_data);
-
-        e = _penv->sf_man()->update_tuple(_penv->db(), prsf, NL);
-        if (e.is_error()) { goto done; }
-
-    } // goto
+    /* UPDATE Special_Facility
+     * SET data_a = <data_a rnd>
+     * WHERE s_id = <s_id value subid>
+     * AND sf_type = <sf_type rnd>;
+     *
+     * plan: index probe on "SF_IDX"
+     */
+    
+    // 2. Update SpecialFacility
+    TRACE( TRACE_TRX_FLOW, "App: %d USD:sf-idx-nl (%d) (%d)\n", 
+	   _tid.get_lo(), _in._s_id, _in._sf_type);
+    W_DO(_penv->sf_man()->sf_idx_nl(_penv->db(), prsf, _in._s_id, _in._sf_type));
+    prsf->set_value(4, _in._a_data);
+    W_DO(_penv->sf_man()->update_tuple(_penv->db(), prsf, NL));
 
 #ifdef PRINT_TRX_RESULTS
     // dumps the status of all the table rows used
     prsf->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->sf_man()->give_tuple(prsf);
-    return (e);
+    return RCOK;
 }
 
 
@@ -835,56 +701,43 @@ void upd_sub_ul_action::calc_keys()
 w_rc_t upd_sub_ul_action::trx_exec() 
 {
     assert (_penv);
-    w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // Subscriber
-    table_row_t* prsub = _penv->sub_man()->get_tuple();
-    assert (prsub);
-
+    tuple_guard<sub_man_impl> prsub(_penv->sub_man());
     rep_row_t areprow(_penv->sub_man()->ts());
     areprow.set(_penv->sub_desc()->maxsize()); 
     prsub->_rep = &areprow;
 
-    { // make gotos safe
-
-        /* UPDATE Subscriber
-         * SET    vlr_location = <vlr_location rnd>
-         * WHERE  sub_id = <sub_id rnd>;
-         *
-         * plan: index probe on "SUB_IDX"
-         */
-
-        // 1. Probe Subscriber through sec index
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d UL:sub-nbr-idx-nl (%d)\n", _tid.get_lo(), _in._s_id);
-        e = _penv->sub_man()->sub_nbr_idx_nl(_penv->db(), prsub, _in._sub_nbr);
-        if (e.is_error()) { goto done; }
-
-        int probed_sid;
-        prsub->get_value(0, probed_sid);
-        if (probed_sid != _in._s_id) {
-            TRACE( TRACE_ALWAYS, "Probed sid not matching sid (%d) (%d) ***\n",
-                   probed_sid, _in._s_id);
-            e = RC(de_WRONG_IDX_DATA); goto done; }
-
-        prsub->set_value(33, _in._vlr_loc);
-
-        // 2. Update tuple
-        e = _penv->sub_man()->update_tuple(_penv->db(), prsub, NL);
-        if (e.is_error()) { goto done; }
-
-    } // goto
+    /* UPDATE Subscriber
+     * SET    vlr_location = <vlr_location rnd>
+     * WHERE  sub_id = <sub_id rnd>;
+     *
+     * plan: index probe on "SUB_IDX"
+     */
+    
+    // 1. Probe Subscriber through sec index
+    TRACE( TRACE_TRX_FLOW, 
+	   "App: %d UL:sub-nbr-idx-nl (%d)\n", _tid.get_lo(), _in._s_id);
+    W_DO(_penv->sub_man()->sub_nbr_idx_nl(_penv->db(), prsub, _in._sub_nbr));
+    int probed_sid;
+    prsub->get_value(0, probed_sid);
+    if (probed_sid != _in._s_id) {
+	TRACE( TRACE_ALWAYS, "Probed sid not matching sid (%d) (%d) ***\n",
+	       probed_sid, _in._s_id);
+	W_DO(RC(de_WRONG_IDX_DATA));
+    }
+    prsub->set_value(33, _in._vlr_loc);
+    
+    // 2. Update tuple
+    W_DO(_penv->sub_man()->update_tuple(_penv->db(), prsub, NL));
 
 #ifdef PRINT_TRX_RESULTS
     // dumps the status of all the table rows used
     prsub->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->sub_man()->give_tuple(prsub);
-    return (e);
+    return RCOK;
 }
 
 
@@ -1032,44 +885,32 @@ void r_sub_icf_action::calc_keys()
 w_rc_t r_sub_icf_action::trx_exec() 
 {
     assert (_penv);
-    w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // Subscriber
-    table_row_t* prsub = _penv->sub_man()->get_tuple();
-    assert (prsub);
-
-    // allocate space for the larger table representation
+    tuple_guard<sub_man_impl> prsub(_penv->sub_man());
     rep_row_t areprow(_penv->sub_man()->ts());
     areprow.set(_penv->sub_desc()->maxsize()); 
     prsub->_rep = &areprow;
 
-    { // make gotos safe
-
-        // 1. Probe Subscriber sec index
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d ICF:sub-nbr-idx-nl (%d)\n", _tid.get_lo(), _in._s_id);
-        e = _penv->sub_man()->sub_nbr_idx_nl(_penv->db(), prsub, _in._sub_nbr);
-        if (e.is_error()) { goto done; }
-
-        int probed_sid;
-        prsub->get_value(0, probed_sid);
-        if (probed_sid != _in._s_id) {
-            TRACE( TRACE_ALWAYS, "Probed sid not matching sid (%d) (%d) ***\n",
-                   probed_sid, _in._s_id);
-            e = RC(de_WRONG_IDX_DATA); goto done; }
-
-    } // goto
+    // 1. Probe Subscriber sec index
+    TRACE( TRACE_TRX_FLOW, 
+	   "App: %d ICF:sub-nbr-idx-nl (%d)\n", _tid.get_lo(), _in._s_id);
+    W_DO(_penv->sub_man()->sub_nbr_idx_nl(_penv->db(), prsub, _in._sub_nbr));
+    int probed_sid;
+    prsub->get_value(0, probed_sid);
+    if (probed_sid != _in._s_id) {
+	TRACE( TRACE_ALWAYS, "Probed sid not matching sid (%d) (%d) ***\n",
+	       probed_sid, _in._s_id);
+	W_DO(RC(de_WRONG_IDX_DATA));
+    }
 
 #ifdef PRINT_TRX_RESULTS
     // dumps the status of all the table rows used
     prsub->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->sub_man()->give_tuple(prsub);
-    return (e);
+    return RCOK;
 }
 
 
@@ -1086,16 +927,12 @@ void r_sf_icf_action::calc_keys()
 w_rc_t r_sf_icf_action::trx_exec() 
 {
     assert (_penv);
-    w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // SpecialFacility
-    table_row_t* prsf = _penv->sf_man()->get_tuple();
-    assert (prsf);
-
+    tuple_guard<sf_man_impl> prsf(_penv->sf_man());
     rep_row_t areprow(_penv->sf_man()->ts());
     areprow.set(_penv->sf_desc()->maxsize()); 
-    
     prsf->_rep = &areprow;
 
     rep_row_t lowrep(_penv->sf_man()->ts());
@@ -1107,69 +944,55 @@ w_rc_t r_sf_icf_action::trx_exec()
     bool bFound = false;
     bool eof;
 
-    { // make gotos safe
-
-        /* SELECT sf_type bind sfid sf_type>
-         * FROM   Special_Facility
-         * WHERE  s_id = <s_id value subid>
-         *
-         * plan: iter index on "SF_IDX"
-         */
-
+    /* SELECT sf_type bind sfid sf_type>
+     * FROM   Special_Facility
+     * WHERE  s_id = <s_id value subid>
+     *
+     * plan: iter index on "SF_IDX"
+     */
 #ifndef TM1ICF2
-        if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
+    if (_prvp->isAborted()) { W_DO(RC(de_MIDWAY_ABORT)); }
 #endif        
 
-        // 1. Retrieve SpecialFacility (Read-only)
-        guard<index_scan_iter_impl<special_facility_t> > sf_iter;
-        {
-            index_scan_iter_impl<special_facility_t>* tmp_sf_iter;
-            TRACE( TRACE_TRX_FLOW, "App: %d ICF:sf-idx-iter-nl\n", _tid.get_lo());
-            e = _penv->sf_man()->sf_get_idx_iter_nl(_penv->db(), tmp_sf_iter, prsf,
-                                                    lowrep, highrep, _in._s_id);
-            sf_iter = tmp_sf_iter;
-            if (e.is_error()) { goto done; }
-        }
+    // 1. Retrieve SpecialFacility (Read-only)
+    guard<index_scan_iter_impl<special_facility_t> > sf_iter;
+    {
+	index_scan_iter_impl<special_facility_t>* tmp_sf_iter;
+	TRACE( TRACE_TRX_FLOW, "App: %d ICF:sf-idx-iter-nl\n", _tid.get_lo());
+	W_DO(_penv->sf_man()->sf_get_idx_iter_nl(_penv->db(), tmp_sf_iter, prsf,
+						 lowrep, highrep, _in._s_id));
+	sf_iter = tmp_sf_iter;
+    }
+    W_DO(sf_iter->next(_penv->db(), eof, *prsf));
 
-        e = sf_iter->next(_penv->db(), eof, *prsf);
-        if (e.is_error()) { goto done; }
-
-        while (!eof) {
-
+    while (!eof) {
 #ifndef TM1ICF2
-        if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
+        if (_prvp->isAborted()) { W_DO(RC(de_MIDWAY_ABORT)); }
 #endif
+	// check the retrieved SF sf_type
+	prsf->get_value(1, asf.SF_TYPE);
 
-            // check the retrieved SF sf_type
-            prsf->get_value(1, asf.SF_TYPE);
-
-            if (asf.SF_TYPE == _in._sf_type) {
-                TRACE( TRACE_TRX_FLOW, "App: %d ICF: found (%d) (%d)\n", 
-                       _tid.get_lo(), _in._s_id, asf.SF_TYPE);
-                bFound = true;
-                break;
-            }
-            
-            TRACE( TRACE_TRX_FLOW, "App: %d ICF:sf-idx-iter-next\n", _tid.get_lo());
-            e = sf_iter->next(_penv->db(), eof, *prsf);
-            if (e.is_error()) { goto done; }
-        }            
-                
-        if (!bFound) { 
-            e = RC(se_NO_CURRENT_TUPLE); 
-        } 
-
-    } // goto
+	if (asf.SF_TYPE == _in._sf_type) {
+	    TRACE( TRACE_TRX_FLOW, "App: %d ICF: found (%d) (%d)\n", 
+		   _tid.get_lo(), _in._s_id, asf.SF_TYPE);
+	    bFound = true;
+	    break;
+	}
+        
+	TRACE( TRACE_TRX_FLOW, "App: %d ICF:sf-idx-iter-next\n", _tid.get_lo());
+	W_DO(sf_iter->next(_penv->db(), eof, *prsf));
+    }            
+    
+    if (!bFound) { 
+	W_DO(RC(se_NO_CURRENT_TUPLE)); 
+    } 
 
 #ifdef PRINT_TRX_RESULTS
     // dumps the status of all the table rows used
     prsf->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->sf_man()->give_tuple(prsf);
-    return (e);
+    return RCOK;
 }
 
 
@@ -1187,74 +1010,54 @@ void ins_cf_icf_action::calc_keys()
 w_rc_t ins_cf_icf_action::trx_exec() 
 {
     assert (_penv);
-    w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // CallForwarding
-    table_row_t* prcf = _penv->cf_man()->get_tuple();
-    assert (prcf);
-
+    tuple_guard<cf_man_impl> prcf(_penv->cf_man());
     rep_row_t areprow(_penv->cf_man()->ts());
     areprow.set(_penv->cf_desc()->maxsize()); 
     prcf->_rep = &areprow;
-
     rep_row_t areprow_key(_penv->cf_man()->ts());
     areprow_key.set(_penv->cf_desc()->maxsize()); 
     prcf->_rep_key = &areprow_key;
 
-    { // make gotos safe
-
-        // 3. Check if it can successfully insert CallForwarding entry
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d ICF:cf-idx-nl (%d) (%d) (%d)\n", 
-               _tid.get_lo(), _in._s_id, _in._sf_type, _in._s_time);
-
+    // 3. Check if it can successfully insert CallForwarding entry
+    w_rc_t e;
+    TRACE( TRACE_TRX_FLOW, "App: %d ICF:cf-idx-nl (%d) (%d) (%d)\n", 
+	   _tid.get_lo(), _in._s_id, _in._sf_type, _in._s_time);
 #ifndef TM1ICF2
-        if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
+    if (_prvp->isAborted()) { W_DO(RC(de_MIDWAY_ABORT)); }
 #endif
-
-        e = _penv->cf_man()->cf_idx_nl(_penv->db(), prcf, 
-                                       _in._s_id, _in._sf_type, _in._s_time);
-            
-        // idx probes return se_TUPLE_NOT_FOUND
-        if (e.err_num() == se_TUPLE_NOT_FOUND) { 
-
-            // 4. Insert
-            prcf->set_value(0, _in._s_id);
-            prcf->set_value(1, _in._sf_type);
-            prcf->set_value(2, _in._s_time);
-            prcf->set_value(3, _in._e_time);
-            prcf->set_value(4, _in._numberx);                
-
+    e = _penv->cf_man()->cf_idx_nl(_penv->db(), prcf, _in._s_id,
+				   _in._sf_type, _in._s_time);
+    
+    // idx probes return se_TUPLE_NOT_FOUND
+    if (e.is_error() && e.err_num() == se_TUPLE_NOT_FOUND) { 
+	// 4. Insert
+	prcf->set_value(0, _in._s_id);
+	prcf->set_value(1, _in._sf_type);
+	prcf->set_value(2, _in._s_time);
+	prcf->set_value(3, _in._e_time);
+	prcf->set_value(4, _in._numberx);                
 #ifdef CFG_HACK
-            prcf->set_value(5, "padding"); // PADDING
+	prcf->set_value(5, "padding"); // PADDING
 #endif
-                
-            TRACE (TRACE_TRX_FLOW, "App: %d ICF:ins-cf\n", _tid.get_lo());
-
+	TRACE (TRACE_TRX_FLOW, "App: %d ICF:ins-cf\n", _tid.get_lo());
 #ifndef TM1ICF2
-        if (_prvp->isAborted()) { e = RC(de_MIDWAY_ABORT); goto done; }
+        if (_prvp->isAborted()) { W_DO(RC(de_MIDWAY_ABORT)); }
 #endif
-
-        e = _penv->cf_man()->add_tuple(_penv->db(), prcf, NL);
-        if (e.is_error()) { goto done; }
-        }             
-        else {
-            // in any other case it should fail
-            e = RC(se_CANNOT_INSERT_TUPLE);
-        }
-
-    } // goto
+	W_DO(_penv->cf_man()->add_tuple(_penv->db(), prcf, NL));
+    } else {
+	// in any other case it should fail
+	W_DO(RC(se_CANNOT_INSERT_TUPLE));
+    }
 
 #ifdef PRINT_TRX_RESULTS
     // dumps the status of all the table rows used
     prcf->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->cf_man()->give_tuple(prcf);
-    return (e);
+    return RCOK;
 }
 
 
@@ -1323,44 +1126,32 @@ void r_sub_dcf_action::calc_keys()
 w_rc_t r_sub_dcf_action::trx_exec() 
 {
     assert (_penv);
-    w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // Subscriber
-    table_row_t* prsub = _penv->sub_man()->get_tuple();
-    assert (prsub);
-
-    // allocate space for the larger table representation
+    tuple_guard<sub_man_impl> prsub(_penv->sub_man());
     rep_row_t areprow(_penv->sub_man()->ts());
     areprow.set(_penv->sub_desc()->maxsize()); 
     prsub->_rep = &areprow;
 
-    { // make gotos safe
-
-        // 1. Probe Subscriber sec index
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d DCF:sub-nbr-idx-nl (%d)\n", _tid.get_lo(), _in._s_id);
-        e = _penv->sub_man()->sub_nbr_idx_nl(_penv->db(), prsub, _in._sub_nbr);
-        if (e.is_error()) { goto done; }
-
-        int probed_sid;
-        prsub->get_value(0, probed_sid);
-        if (probed_sid != _in._s_id) {
-            TRACE( TRACE_ALWAYS, "Probed sid not matching sid (%d) (%d) ***\n",
-                   probed_sid, _in._s_id);
-            e = RC(de_WRONG_IDX_DATA); goto done; }
-
-    } // goto
+    // 1. Probe Subscriber sec index
+    TRACE( TRACE_TRX_FLOW, 
+	   "App: %d DCF:sub-nbr-idx-nl (%d)\n", _tid.get_lo(), _in._s_id);
+    W_DO(_penv->sub_man()->sub_nbr_idx_nl(_penv->db(), prsub, _in._sub_nbr));
+    int probed_sid;
+    prsub->get_value(0, probed_sid);
+    if (probed_sid != _in._s_id) {
+	TRACE( TRACE_ALWAYS, "Probed sid not matching sid (%d) (%d) ***\n",
+	       probed_sid, _in._s_id);
+	W_DO(RC(de_WRONG_IDX_DATA));
+    }
 
 #ifdef PRINT_TRX_RESULTS
     // dumps the status of all the table rows used
     prsub->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->sub_man()->give_tuple(prsub);
-    return (e);
+    return RCOK;
 }
 
 
@@ -1379,53 +1170,36 @@ void del_cf_dcf_action::calc_keys()
 w_rc_t del_cf_dcf_action::trx_exec() 
 {
     assert (_penv);
-    w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // CallForwarding
-    table_row_t* prcf = _penv->cf_man()->get_tuple();
-    assert (prcf);
-
+    tuple_guard<cf_man_impl> prcf(_penv->cf_man());
     rep_row_t areprow(_penv->cf_man()->ts());
     areprow.set(_penv->cf_desc()->maxsize()); 
     prcf->_rep = &areprow;
 
-    { // make gotos safe
-
-        /* DELETE FROM Call_Forwarding
-         * WHERE s_id = <s_id value subid>
-         * AND sf_type = <sf_type rnd>
-         * AND start_time = <start_time rnd>;
-         *
-         * plan: index probe on "CF_IDX"     
-         */
-
-        // 2. Delete CallForwarding record
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d DCF:cf-idx-upd (%d) (%d) (%d)\n", 
-               _tid.get_lo(), _in._s_id, _in._sf_type, _in._s_time);
-
-        e = _penv->cf_man()->cf_idx_nl(_penv->db(), prcf, 
-                                       _in._s_id, _in._sf_type, _in._s_time);
-        if (e.is_error()) { goto done; }
-
-
-        TRACE (TRACE_TRX_FLOW, "App: %d DCF:del-cf\n", _tid.get_lo()); 
-
-        e = _penv->cf_man()->delete_tuple(_penv->db(), prcf, NL);
-        if (e.is_error()) { goto done; }        
-
-    } // goto
+    /* DELETE FROM Call_Forwarding
+     * WHERE s_id = <s_id value subid>
+     * AND sf_type = <sf_type rnd>
+     * AND start_time = <start_time rnd>;
+     *
+     * plan: index probe on "CF_IDX"     
+     */
+    
+    // 2. Delete CallForwarding record
+    TRACE( TRACE_TRX_FLOW, "App: %d DCF:cf-idx-upd (%d) (%d) (%d)\n", 
+	   _tid.get_lo(), _in._s_id, _in._sf_type, _in._s_time);
+    W_DO(_penv->cf_man()->cf_idx_nl(_penv->db(), prcf, 
+				    _in._s_id, _in._sf_type, _in._s_time));
+    TRACE (TRACE_TRX_FLOW, "App: %d DCF:del-cf\n", _tid.get_lo()); 
+    W_DO(_penv->cf_man()->delete_tuple(_penv->db(), prcf, NL));
 
 #ifdef PRINT_TRX_RESULTS
     // dumps the status of all the table rows used
     prcf->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->cf_man()->give_tuple(prcf);
-    return (e);
+    return RCOK;
 }
 
 
@@ -1462,39 +1236,26 @@ void r_sub_icfb_action::calc_keys()
 w_rc_t r_sub_icfb_action::trx_exec() 
 {
     assert (_penv);
-    w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // Subscriber
-    table_row_t* prsub = _penv->sub_man()->get_tuple();
-    assert (prsub);
-
-    // allocate space for the larger table representation
+    tuple_guard<sub_man_impl> prsub(_penv->sub_man());
     rep_row_t areprow(_penv->sub_man()->ts());
     areprow.set(_penv->sub_desc()->maxsize()); 
     prsub->_rep = &areprow;
 
-    { // make gotos safe
-
-        // 1. Probe Subscriber sec index
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d ICF:sub-nbr-idx-nl (%d)\n", _tid.get_lo(), _in._s_id);
-        e = _penv->sub_man()->sub_nbr_idx_nl(_penv->db(), prsub, _in._sub_nbr);
-        if (e.is_error()) { goto done; }
-
-        prsub->get_value(0, _in._s_id);
-
-    } // goto
+    // 1. Probe Subscriber sec index
+    TRACE( TRACE_TRX_FLOW, 
+	   "App: %d ICF:sub-nbr-idx-nl (%d)\n", _tid.get_lo(), _in._s_id);
+    W_DO(_penv->sub_man()->sub_nbr_idx_nl(_penv->db(), prsub, _in._sub_nbr));
+    prsub->get_value(0, _in._s_id);
 
 #ifdef PRINT_TRX_RESULTS
     // dumps the status of all the table rows used
     prsub->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->sub_man()->give_tuple(prsub);
-    return (e);
+    return RCOK;
 }
 
 
@@ -1512,70 +1273,48 @@ void i_cf_icfb_action::calc_keys()
 w_rc_t i_cf_icfb_action::trx_exec() 
 {
     assert (_penv);
-    w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // CallForwarding
-    table_row_t* prcf = _penv->cf_man()->get_tuple();
-    assert (prcf);
-
+    tuple_guard<cf_man_impl> prcf(_penv->cf_man());
     rep_row_t areprow(_penv->cf_man()->ts());
     areprow.set(_penv->cf_desc()->maxsize()); 
     prcf->_rep = &areprow;
-
     rep_row_t areprow_key(_penv->cf_man()->ts());
     areprow_key.set(_penv->cf_desc()->maxsize()); 
     prcf->_rep_key = &areprow_key;
 
-    { // make gotos safe
-
-        // 3. Check if it can successfully insert CallForwarding entry
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d ICFB:cf-idx-nl (%d) (%d) (%d)\n", 
-               _tid.get_lo(), _in._s_id, _in._sf_type, _in._s_time);
-
-        e = _penv->cf_man()->cf_idx_nl(_penv->db(), prcf, 
-                                       _in._s_id, _in._sf_type, _in._s_time);
-            
-        // idx probes return se_TUPLE_NOT_FOUND
-        if (e.err_num() == se_TUPLE_NOT_FOUND) { 
-
-            // 4. Insert
-            prcf->set_value(0, _in._s_id);
-            prcf->set_value(1, _in._sf_type);
-            prcf->set_value(2, _in._s_time);
-            prcf->set_value(3, _in._e_time);
-            prcf->set_value(4, _in._numberx);                
-
+    // 3. Check if it can successfully insert CallForwarding entry
+    w_rc_t e;
+    TRACE( TRACE_TRX_FLOW, "App: %d ICFB:cf-idx-nl (%d) (%d) (%d)\n", 
+	   _tid.get_lo(), _in._s_id, _in._sf_type, _in._s_time);
+    e = _penv->cf_man()->cf_idx_nl(_penv->db(), prcf, 
+				   _in._s_id, _in._sf_type, _in._s_time);
+    // idx probes return se_TUPLE_NOT_FOUND
+    if (e.is_error() && e.err_num() == se_TUPLE_NOT_FOUND) { 
+	// 4. Insert
+	prcf->set_value(0, _in._s_id);
+	prcf->set_value(1, _in._sf_type);
+	prcf->set_value(2, _in._s_time);
+	prcf->set_value(3, _in._e_time);
+	prcf->set_value(4, _in._numberx);                
 #ifdef CFG_HACK
-            prcf->set_value(5, "padding"); // PADDING
+	prcf->set_value(5, "padding"); // PADDING
 #endif
-                
-            TRACE (TRACE_TRX_FLOW, "App: %d ICFB:ins-cf\n", _tid.get_lo());
-
-        e = _penv->cf_man()->add_tuple(_penv->db(), prcf, NL);
-            if (e.is_error()) { goto done; }
-        }             
-        else { // 3. Delete Call Forwarding record if tuple found
-	    
-// 	    e = _penv->cf_man()->cf_idx_nl(_penv->db(), prcf,
-//                                            _in._s_id, _in._sf_type, _in._s_time);
-// 	    if (e.is_error()) { goto done; }
-	    TRACE (TRACE_TRX_FLOW, "App: %d ICFB:del-cf\n", _tid.get_lo());
-	    e = _penv->cf_man()->delete_tuple(_penv->db(), prcf, NL);
-	}
-	
-    } // goto
+	TRACE (TRACE_TRX_FLOW, "App: %d ICFB:ins-cf\n", _tid.get_lo());
+	W_DO(_penv->cf_man()->add_tuple(_penv->db(), prcf, NL));
+    } else { // 3. Delete Call Forwarding record if tuple found
+	if(e.is_error()) { W_DO(e); }
+	TRACE (TRACE_TRX_FLOW, "App: %d ICFB:del-cf\n", _tid.get_lo());
+	W_DO(_penv->cf_man()->delete_tuple(_penv->db(), prcf, NL));
+    }
 
 #ifdef PRINT_TRX_RESULTS
     // dumps the status of all the table rows used
     prcf->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _penv->cf_man()->give_tuple(prcf);
-    return (e);
+    return RCOK;
 }
 
 
@@ -1635,18 +1374,13 @@ void r_sub_gsn_action::calc_keys()
 w_rc_t r_sub_gsn_action::trx_exec() 
 {
     assert (_penv);
-    w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // Subscriber
-    table_row_t* prsub = _penv->sub_man()->get_tuple();
-    assert (prsub);
-
+    tuple_guard<sub_man_impl> prsub(_penv->sub_man());
     rep_row_t areprow(_penv->sub_man()->ts());
     areprow.set(_penv->sub_desc()->maxsize()); 
     prsub->_rep = &areprow;
-
-
     rep_row_t lowrep(_penv->sub_man()->ts());
     rep_row_t highrep(_penv->sub_man()->ts());
     lowrep.set(_penv->sub_desc()->maxsize()); 
@@ -1654,8 +1388,6 @@ w_rc_t r_sub_gsn_action::trx_exec()
 
     bool eof;
     int sid, vlrloc;
-
-
 
     /* SELECT s_id, msc_location
      * FROM   Subscriber
@@ -1665,49 +1397,29 @@ w_rc_t r_sub_gsn_action::trx_exec()
      * plan: index probe on "SUB_NBR_IDX"
      */
 
-    { // make gotos safe
+    // 1. Secondary index access to Subscriber using sub_nbr and range
+    guard<index_scan_iter_impl<subscriber_t> > sub_iter;
+    {
+	index_scan_iter_impl<subscriber_t>* tmp_sub_iter;
+	TRACE( TRACE_TRX_FLOW, "App: %d GSN:sub-nbr-idx-iter (%d) (%d)\n", 
+	       _tid.get_lo(), _in._s_id, _in._range);
+	W_DO(_penv->sub_man()->sub_get_idx_iter(_penv->db(), tmp_sub_iter, prsub, 
+						lowrep,highrep, _in._s_id,
+						_in._range, NL, true));
+	sub_iter = tmp_sub_iter;
+    }
+    
+    // 2. Read all the returned records
+    W_DO(sub_iter->next(_penv->db(), eof, *prsub));
+    while (!eof) {
+	prsub->get_value(0, sid);
+	prsub->get_value(33, vlrloc);
+	TRACE( TRACE_TRX_FLOW, "App: %d GSN: read (%d) (%d)\n",
+	       _tid.get_lo(), sid, vlrloc);
+	W_DO(sub_iter->next(_penv->db(), eof, *prsub));
+    }
 
-        // 1. Secondary index access to Subscriber using sub_nbr and range
-        guard<index_scan_iter_impl<subscriber_t> > sub_iter;
-        {
-            index_scan_iter_impl<subscriber_t>* tmp_sub_iter;
-            TRACE( TRACE_TRX_FLOW, 
-                   "App: %d GSN:sub-nbr-idx-iter (%d) (%d)\n", 
-                   _tid.get_lo(), _in._s_id, _in._range);
-
-            e = _penv->sub_man()->sub_get_idx_iter(_penv->db(), 
-                                                   tmp_sub_iter, 
-                                                   prsub, 
-                                                   lowrep,highrep,
-                                                   _in._s_id,
-                                                   _in._range,
-                                                   NL,
-                                                   true);
-            if (e.is_error()) { goto done; }                   
-            sub_iter = tmp_sub_iter;
-        }
-
-        // 2. Read all the returned records
-        e = sub_iter->next(_penv->db(), eof, *prsub);
-        if (e.is_error()) { goto done; }
-        
-        while (!eof) {
-            prsub->get_value(0, sid);
-            prsub->get_value(33, vlrloc);
-            
-            TRACE( TRACE_TRX_FLOW, "App: %d GSN: read (%d) (%d)\n", 
-                   _tid.get_lo(), sid, vlrloc);
-
-            e = sub_iter->next(_penv->db(), eof, *prsub);
-            if (e.is_error()) { goto done; }            
-        }
-
-    } // goto
-
-done:
-    // give back the tuple
-    _penv->sub_man()->give_tuple(prsub);
-    return (e);
+    return RCOK;
 }
 
 #else
@@ -1733,42 +1445,30 @@ void r_sub_gsn_acc_action::calc_keys()
 w_rc_t r_sub_gsn_acc_action::trx_exec() 
 {
     assert (_penv);
-    w_rc_t e = RCOK;
 
     // get table tuple from the cache
     // Subscriber
-    table_row_t* prsub = _penv->sub_man()->get_tuple();
-    assert (prsub);
-
+    tuple_guard<sub_man_impl> prsub(_penv->sub_man());
     rep_row_t areprow(_penv->sub_man()->ts());
     areprow.set(_penv->sub_desc()->maxsize()); 
     prsub->_rep = &areprow;
     int vlrloc;
 
-    { // make gotos safe
+    typedef vector< pair<int,rid_t> >::iterator pair_iterator;
+    rid_t arid;
+    for (pair_iterator it=_in._pairs.begin(); it!=_in._pairs.end(); it++) {
+	arid = (*it).second;
+	
+	// Access directly the record
+	prsub->set_rid(arid);
+        W_DO(_penv->sub_man()->read_tuple(prsub,NL));
+	prsub->get_value(33, vlrloc);
+	
+	TRACE( TRACE_TRX_FLOW, "App: %d GSN: read (%d) (%d)\n", 
+	       _tid.get_lo(), (*it).first, vlrloc);
+    }
 
-        typedef vector< pair<int,rid_t> >::iterator pair_iterator;
-        rid_t arid;
-        for (pair_iterator it=_in._pairs.begin(); it!=_in._pairs.end(); it++) {
-            arid = (*it).second;
-
-            // Access directly the record
-            prsub->set_rid(arid);
-            e = _penv->sub_man()->read_tuple(prsub,NL);
-            if (e.is_error()) { goto done; }
-
-            prsub->get_value(33, vlrloc);
-            
-            TRACE( TRACE_TRX_FLOW, "App: %d GSN: read (%d) (%d)\n", 
-                   _tid.get_lo(), (*it).first, vlrloc);
-        }
-
-    } // goto
-
-done:
-    // give back the tuple
-    _penv->sub_man()->give_tuple(prsub);
-    return (e);
+    return RCOK;
 }
 
 #endif

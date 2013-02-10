@@ -235,6 +235,11 @@ public:
     DECLARE_TRX(populate_baseline);
     DECLARE_TRX(populate_one_unit);    
 
+    // Helper xcts
+    w_rc_t _xct_delivery_helper(const int xct_id, delivery_input_t& pdin,
+				std::vector<int>& dlist, int& d_id,
+				const bool SPLIT_TRX);
+    
     // Update the partitioning info, if any needed
     virtual w_rc_t update_partitioning();
 

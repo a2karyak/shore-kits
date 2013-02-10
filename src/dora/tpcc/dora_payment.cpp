@@ -129,53 +129,39 @@ w_rc_t upd_wh_pay_action::trx_exec()
     assert (_ptpccenv);
 
     // get table tuple from the cache
-    table_row_t* prwh = _ptpccenv->warehouse_man()->get_tuple();
-    assert (prwh);
+    tuple_guard<warehouse_man_impl> prwh(_ptpccenv->warehouse_man());
     rep_row_t areprow(_ptpccenv->warehouse_man()->ts());
     areprow.set(_ptpccenv->warehouse_desc()->maxsize()); 
     prwh->_rep = &areprow;
 
-    w_rc_t e = RCOK;
+    // 1. retrieve warehouse for update
+    TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-idx-nl (%d)\n",
+	   _tid.get_lo(), _pin._home_wh_id);
+    W_DO(_ptpccenv->warehouse_man()->wh_index_probe_nl(_ptpccenv->db(), prwh, 
+						       _pin._home_wh_id));      
 
-    { // make gotos safe
-
-        // 1. retrieve warehouse for update
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d PAY:wh-idx-nl (%d)\n", 
-               _tid.get_lo(), _pin._home_wh_id);
-
-
-        e = _ptpccenv->warehouse_man()->wh_index_probe_nl(_ptpccenv->db(), prwh, 
-                                                          _pin._home_wh_id);      
-        if (e.is_error()) { goto done; }
-
-        /* UPDATE warehouse SET w_ytd = wytd + :h_amount
-         * WHERE w_id = :w_id
-         *
-         * SELECT w_name, w_street_1, w_street_2, w_city, w_state, w_zip
-         * FROM warehouse
-         * WHERE w_id = :w_id
-         *
-         * plan: index probe on "W_IDX"
-         */
-
-        TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd-nl (%d)\n", 
-               _tid.get_lo(), _pin._home_wh_id);
-
-        e = _ptpccenv->warehouse_man()->wh_update_ytd_nl(_ptpccenv->db(), 
-                                                         prwh, 
-                                                         _pin._h_amount);
-        if (e.is_error()) { goto done; }
-
-        tpcc_warehouse_tuple* awh = _m_rvp->wh();
-        prwh->get_value(1, awh->W_NAME, 11);
-        prwh->get_value(2, awh->W_STREET_1, 21);
-        prwh->get_value(3, awh->W_STREET_2, 21);
-        prwh->get_value(4, awh->W_CITY, 21);
-        prwh->get_value(5, awh->W_STATE, 3);
-        prwh->get_value(6, awh->W_ZIP, 10);
-
-    } // goto
+    /* UPDATE warehouse SET w_ytd = wytd + :h_amount
+     * WHERE w_id = :w_id
+     *
+     * SELECT w_name, w_street_1, w_street_2, w_city, w_state, w_zip
+     * FROM warehouse
+     * WHERE w_id = :w_id
+     *
+     * plan: index probe on "W_IDX"
+     */
+    
+    TRACE( TRACE_TRX_FLOW, "App: %d PAY:wh-update-ytd-nl (%d)\n", 
+	   _tid.get_lo(), _pin._home_wh_id);
+    W_DO(_ptpccenv->warehouse_man()->wh_update_ytd_nl(_ptpccenv->db(), 
+						      prwh, _pin._h_amount));
+    
+    tpcc_warehouse_tuple* awh = _m_rvp->wh();
+    prwh->get_value(1, awh->W_NAME, 11);
+    prwh->get_value(2, awh->W_STREET_1, 21);
+    prwh->get_value(3, awh->W_STREET_2, 21);
+    prwh->get_value(4, awh->W_CITY, 21);
+    prwh->get_value(5, awh->W_STATE, 3);
+    prwh->get_value(6, awh->W_ZIP, 10);
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -183,11 +169,7 @@ w_rc_t upd_wh_pay_action::trx_exec()
     prwh->print_tuple();
 #endif
 
-
-done:
-    // give back the tuple
-    _ptpccenv->warehouse_man()->give_tuple(prwh);
-    return (e);
+    return RCOK;
 }
 
 
@@ -202,61 +184,47 @@ w_rc_t upd_dist_pay_action::trx_exec()
     assert (_ptpccenv);
 
     // get table tuple from the cache
-    table_row_t* prdist = _ptpccenv->district_man()->get_tuple();
-    assert (prdist);
+    tuple_guard<district_man_impl> prdist(_ptpccenv->district_man());
     rep_row_t areprow(_ptpccenv->district_man()->ts());
     areprow.set(_ptpccenv->district_desc()->maxsize()); 
     prdist->_rep = &areprow;
 
-    w_rc_t e = RCOK;
-
-    { // make gotos safe
-
-        // 1. retrieve district for update
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d PAY:dist-idx-nl (%d) (%d)\n", 
-               _tid.get_lo(), _pin._home_wh_id, _pin._home_d_id);
-
-        e = _ptpccenv->district_man()->dist_index_probe_nl(_ptpccenv->db(), prdist,
-                                                           _pin._home_wh_id, _pin._home_d_id);    
-        if (e.is_error()) { goto done; }
-
+    // 1. retrieve district for update
+    TRACE( TRACE_TRX_FLOW, "App: %d PAY:dist-idx-nl (%d) (%d)\n", 
+	   _tid.get_lo(), _pin._home_wh_id, _pin._home_d_id);
+    W_DO(_ptpccenv->district_man()->dist_index_probe_nl(_ptpccenv->db(), prdist,
+							_pin._home_wh_id,
+							_pin._home_d_id));    
 
 #ifdef ACCESS_RECORD_TRACE
-        stringstream st;
-        int di = 10*(_pin._home_wh_id - 1) + _pin._home_d_id;
-        st << di;
-        _ptpccenv->add_rat(st.str());
+    stringstream st;
+    int di = 10*(_pin._home_wh_id - 1) + _pin._home_d_id;
+    st << di;
+    _ptpccenv->add_rat(st.str());
 #endif        
-
-
-        /* UPDATE district SET d_ytd = d_ytd + :h_amount
-         * WHERE d_id = :d_id AND d_w_id = :w_id
-         *
-         * SELECT d_street_1, d_street_2, d_city, d_state, d_zip, d_name
-         * FROM district
-         * WHERE d_id = :d_id AND d_w_id = :w_id
-         *
-         * plan: index probe on "D_IDX"
-         */
-
-        TRACE( TRACE_TRX_FLOW, "App: %d PAY:distr-upd-ytd-nl (%d) (%d)\n", 
-               _tid.get_lo(), _pin._home_wh_id, _pin._home_d_id);
-
-        e = _ptpccenv->district_man()->dist_update_ytd_nl(_ptpccenv->db(), 
-                                                          prdist, 
-                                                          _pin._h_amount);
-        if (e.is_error()) { goto done; }
-
-        tpcc_district_tuple* adistr = _m_rvp->dist();
-        prdist->get_value(2, adistr->D_NAME, 11);
-        prdist->get_value(3, adistr->D_STREET_1, 21);
-        prdist->get_value(4, adistr->D_STREET_2, 21);
-        prdist->get_value(5, adistr->D_CITY, 21);
-        prdist->get_value(6, adistr->D_STATE, 3);
-        prdist->get_value(7, adistr->D_ZIP, 10);
-
-    } // goto
+    
+    /* UPDATE district SET d_ytd = d_ytd + :h_amount
+     * WHERE d_id = :d_id AND d_w_id = :w_id
+     *
+     * SELECT d_street_1, d_street_2, d_city, d_state, d_zip, d_name
+     * FROM district
+     * WHERE d_id = :d_id AND d_w_id = :w_id
+     *
+     * plan: index probe on "D_IDX"
+     */
+    
+    TRACE( TRACE_TRX_FLOW, "App: %d PAY:distr-upd-ytd-nl (%d) (%d)\n", 
+	   _tid.get_lo(), _pin._home_wh_id, _pin._home_d_id);
+    W_DO(_ptpccenv->district_man()->dist_update_ytd_nl(_ptpccenv->db(),
+						       prdist, _pin._h_amount));
+    
+    tpcc_district_tuple* adistr = _m_rvp->dist();
+    prdist->get_value(2, adistr->D_NAME, 11);
+    prdist->get_value(3, adistr->D_STREET_1, 21);
+    prdist->get_value(4, adistr->D_STREET_2, 21);
+    prdist->get_value(5, adistr->D_CITY, 21);
+    prdist->get_value(6, adistr->D_STATE, 3);
+    prdist->get_value(7, adistr->D_ZIP, 10);
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -264,10 +232,7 @@ w_rc_t upd_dist_pay_action::trx_exec()
     prdist->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _ptpccenv->district_man()->give_tuple(prdist);
-    return (e);
+    return RCOK;
 }
 
 
@@ -283,180 +248,149 @@ w_rc_t upd_cust_pay_action::trx_exec()
     assert (_ptpccenv);
 
     // get table tuple from the cache
-    table_row_t* prcust = _ptpccenv->customer_man()->get_tuple();
-    assert (prcust);
+    tuple_guard<customer_man_impl> prcust(_ptpccenv->customer_man());
     rep_row_t areprow(_ptpccenv->customer_man()->ts());
     areprow.set(_ptpccenv->customer_desc()->maxsize()); 
     prcust->_rep = &areprow;
 
-    w_rc_t e = RCOK;
-
     // find the customer wh and d
-    int c_w = (_pin._v_cust_wh_selection>85 ? _pin._home_wh_id : _pin._remote_wh_id);
-    int c_d = (_pin._v_cust_wh_selection>85 ? _pin._home_d_id : _pin._remote_d_id);
+    int c_w = _pin._v_cust_wh_selection>85 ? _pin._home_wh_id : _pin._remote_wh_id;
+    int c_d = _pin._v_cust_wh_selection>85 ? _pin._home_d_id : _pin._remote_d_id;
 
-    { // make gotos safe
+    if (_pin._v_cust_ident_selection <= 60) {
+	// 3a. if no customer selected already use the index on the customer name
+	
+	/* SELECT  c_id, c_first
+	 * FROM customer
+	 * WHERE c_last = :c_last AND c_w_id = :c_w_id AND c_d_id = :c_d_id
+	 * ORDER BY c_first
+	 *
+	 * plan: index only scan on "C_NAME_IDX"
+	 */
+	
+	assert (_pin._v_cust_ident_selection <= 60);
+	assert (_pin._c_id == 0); // (ip) just checks the generator output
+	
+	rep_row_t lowrep(_ptpccenv->customer_man()->ts());
+	rep_row_t highrep(_ptpccenv->customer_man()->ts());
+	
+	TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-get-iter-by-name-index (%s)\n", 
+	       _tid.get_lo(), _pin._c_last);
+	
+	guard<index_scan_iter_impl<customer_t> > c_iter;
+	{
+	    index_scan_iter_impl<customer_t>* tmp_c_iter;
+	    W_DO(_ptpccenv->customer_man()->
+		 cust_get_iter_by_index_nl(_ptpccenv->db(), tmp_c_iter, prcust, 
+					   lowrep, highrep, c_w, c_d,
+					   _pin._c_last));
+	    c_iter = tmp_c_iter;
+	}
+	
+	vector<int> v_c_id;
+	int a_c_id = 0;
+	int count = 0;
+	bool eof;
+	
+	W_DO(c_iter->next(_ptpccenv->db(), eof, *prcust));
+	while (!eof) {
+	    count++;
+	    prcust->get_value(0, a_c_id);
+	    v_c_id.push_back(a_c_id);
 
-        if (_pin._v_cust_ident_selection <= 60) {
+	    TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-iter-next (%d)\n", 
+		   _tid.get_lo(), a_c_id);
+	    W_DO(c_iter->next(_ptpccenv->db(), eof, *prcust));
+	}
+	assert (count);
+	
+	// find the customer id in the middle of the list
+	_pin._c_id = v_c_id[(count+1)/2-1];
+    }
+    assert (_pin._c_id>0);
 
-            // if (ppin->_c_id == 0) {
-
-            /* 3a. if no customer selected already use the index on the customer name */
-
-            /* SELECT  c_id, c_first
-             * FROM customer
-             * WHERE c_last = :c_last AND c_w_id = :c_w_id AND c_d_id = :c_d_id
-             * ORDER BY c_first
-             *
-             * plan: index only scan on "C_NAME_IDX"
-             */
-
-            assert (_pin._v_cust_ident_selection <= 60);
-            assert (_pin._c_id == 0); // (ip) just checks the generator output
-
-            rep_row_t lowrep(_ptpccenv->customer_man()->ts());
-            rep_row_t highrep(_ptpccenv->customer_man()->ts());
-
-            TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-get-iter-by-name-index (%s)\n", 
-                   _tid.get_lo(), _pin._c_last);
-
-            guard<index_scan_iter_impl<customer_t> > c_iter;
-            {
-                index_scan_iter_impl<customer_t>* tmp_c_iter;
-
-
-                e = _ptpccenv->customer_man()->cust_get_iter_by_index_nl(_ptpccenv->db(), 
-                                                                         tmp_c_iter, prcust, 
-                                                                         lowrep, highrep,
-                                                                         c_w, c_d, _pin._c_last);
-                
-                c_iter = tmp_c_iter;
-                if (e.is_error()) { goto done; }
-            }
+    // 3. retrieve customer for update
     
-            vector<int> v_c_id;
-            int a_c_id = 0;
-            int count = 0;
-            bool eof;
-
-            e = c_iter->next(_ptpccenv->db(), eof, *prcust);
-            if (e.is_error()) { goto done; }
-            while (!eof) {
-                count++;
-                prcust->get_value(0, a_c_id);
-                v_c_id.push_back(a_c_id);
-
-                TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-iter-next (%d)\n", 
-                       _tid.get_lo(), a_c_id);
-                e = c_iter->next(_ptpccenv->db(), eof, *prcust);
-                if (e.is_error()) { goto done; }
-            }
-            assert (count);
-
-            // find the customer id in the middle of the list
-            _pin._c_id = v_c_id[(count+1)/2-1];
-        }
-        assert (_pin._c_id>0);
-
-
-        /* 3. retrieve customer for update */
-
-        /* SELECT c_first, c_middle, c_last, c_street_1, c_street_2, c_city, 
-         * c_state, c_zip, c_phone, c_since, c_credit, c_credit_lim, 
-         * c_discount, c_balance, c_ytd_payment, c_payment_cnt 
-         * FROM customer 
-         * WHERE c_id = :c_id AND c_w_id = :c_w_id AND c_d_id = :c_d_id 
-         * FOR UPDATE OF c_balance, c_ytd_payment, c_payment_cnt
-         *
-         * plan: index probe on "C_IDX"
-         */
-
-        TRACE( TRACE_TRX_FLOW, 
-               "App: %d PAY:cust-idx-probe-upd-nl (%d) (%d) (%d)\n", 
-               _tid.get_lo(), c_w, c_d, _pin._c_id);
-
-        e = _ptpccenv->customer_man()->cust_index_probe_nl(_ptpccenv->db(), prcust, 
-                                                           c_w, c_d, _pin._c_id);
-        if (e.is_error()) { goto done; }    
+    /* SELECT c_first, c_middle, c_last, c_street_1, c_street_2, c_city, 
+     * c_state, c_zip, c_phone, c_since, c_credit, c_credit_lim, 
+     * c_discount, c_balance, c_ytd_payment, c_payment_cnt 
+     * FROM customer 
+     * WHERE c_id = :c_id AND c_w_id = :c_w_id AND c_d_id = :c_d_id 
+     * FOR UPDATE OF c_balance, c_ytd_payment, c_payment_cnt
+     *
+     * plan: index probe on "C_IDX"
+     */
     
-        tpcc_customer_tuple acust;
-
-        // retrieve customer
-        prcust->get_value(3,  acust.C_FIRST, 17);
-        prcust->get_value(4,  acust.C_MIDDLE, 3);
-        prcust->get_value(5,  acust.C_LAST, 17);
-        prcust->get_value(6,  acust.C_STREET_1, 21);
-        prcust->get_value(7,  acust.C_STREET_2, 21);
-        prcust->get_value(8,  acust.C_CITY, 21);
-        prcust->get_value(9,  acust.C_STATE, 3);
-        prcust->get_value(10, acust.C_ZIP, 10);
-        prcust->get_value(11, acust.C_PHONE, 17);
-        prcust->get_value(12, acust.C_SINCE);
-        prcust->get_value(13, acust.C_CREDIT, 3);
-        prcust->get_value(14, acust.C_CREDIT_LIM);
-        prcust->get_value(15, acust.C_DISCOUNT);
-        prcust->get_value(16, acust.C_BALANCE);
-        prcust->get_value(17, acust.C_YTD_PAYMENT);
-        prcust->get_value(18, acust.C_LAST_PAYMENT);
-        prcust->get_value(19, acust.C_PAYMENT_CNT);
-        prcust->get_value(20, acust.C_DATA_1, 251);
-        prcust->get_value(21, acust.C_DATA_2, 251);
-
-        // update customer fields
-        acust.C_BALANCE -= _pin._h_amount;
-        acust.C_YTD_PAYMENT += _pin._h_amount;
-        acust.C_PAYMENT_CNT++;
-
-        // if bad customer
-        if (acust.C_CREDIT[0] == 'B' && acust.C_CREDIT[1] == 'C') { 
-            /* 10% of customers */
-
-            /* SELECT c_data
-             * FROM customer 
-             * WHERE c_id = :c_id AND c_w_id = :c_w_id AND c_d_id = :c_d_id
-             * FOR UPDATE OF c_balance, c_ytd_payment, c_payment_cnt, c_data
-             *
-             * plan: index probe on "C_IDX"
-             */
-
-            // update the data
-            char c_new_data_1[251];
-            char c_new_data_2[251];
-            sprintf(c_new_data_1, "%d,%d,%d,%d,%d,%1.2f",
-                    _pin._c_id, c_d, c_w, _pin._home_d_id, 
-                    _pin._home_wh_id, _pin._h_amount);
-
-            int len = strlen(c_new_data_1);
-            strncat(c_new_data_1, acust.C_DATA_1, 250-len);
-            strncpy(c_new_data_2, &acust.C_DATA_1[250-len], len);
-            strncpy(c_new_data_2, acust.C_DATA_2, 250-len);
-
-            TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple-nl\n", 
-                   _tid.get_lo());
-
-            e = _ptpccenv->customer_man()->cust_update_tuple_nl(_ptpccenv->db(), 
-                                                                prcust, 
-                                                                acust, 
-                                                                c_new_data_1, 
-                                                                c_new_data_2);
-            if (e.is_error()) { goto done; }
-        }
-        else { /* good customer */
-            TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple-nl\n", 
-                   _tid.get_lo());
-
-            e = _ptpccenv->customer_man()->cust_update_tuple_nl(_ptpccenv->db(), 
-                                                                prcust, 
-                                                                acust, 
-                                                                NULL, 
-                                                                NULL);
-            if (e.is_error()) { goto done; }
-
-            // 3. Update the RVP
-            _m_rvp->_pin._c_id = _pin._c_id;
-        }
-
-    } // goto
+    TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-idx-probe-upd-nl (%d) (%d) (%d)\n", 
+	   _tid.get_lo(), c_w, c_d, _pin._c_id);
+    W_DO(_ptpccenv->customer_man()->cust_index_probe_nl(_ptpccenv->db(), prcust, 
+							c_w, c_d, _pin._c_id));
+    
+    // retrieve customer
+    tpcc_customer_tuple acust;    
+    prcust->get_value(3,  acust.C_FIRST, 17);
+    prcust->get_value(4,  acust.C_MIDDLE, 3);
+    prcust->get_value(5,  acust.C_LAST, 17);
+    prcust->get_value(6,  acust.C_STREET_1, 21);
+    prcust->get_value(7,  acust.C_STREET_2, 21);
+    prcust->get_value(8,  acust.C_CITY, 21);
+    prcust->get_value(9,  acust.C_STATE, 3);
+    prcust->get_value(10, acust.C_ZIP, 10);
+    prcust->get_value(11, acust.C_PHONE, 17);
+    prcust->get_value(12, acust.C_SINCE);
+    prcust->get_value(13, acust.C_CREDIT, 3);
+    prcust->get_value(14, acust.C_CREDIT_LIM);
+    prcust->get_value(15, acust.C_DISCOUNT);
+    prcust->get_value(16, acust.C_BALANCE);
+    prcust->get_value(17, acust.C_YTD_PAYMENT);
+    prcust->get_value(18, acust.C_LAST_PAYMENT);
+    prcust->get_value(19, acust.C_PAYMENT_CNT);
+    prcust->get_value(20, acust.C_DATA_1, 251);
+    prcust->get_value(21, acust.C_DATA_2, 251);
+    
+    // update customer fields
+    acust.C_BALANCE -= _pin._h_amount;
+    acust.C_YTD_PAYMENT += _pin._h_amount;
+    acust.C_PAYMENT_CNT++;
+    
+    // if bad customer
+    if (acust.C_CREDIT[0] == 'B' && acust.C_CREDIT[1] == 'C') { 
+	// 10% of customers
+	
+	/* SELECT c_data
+	 * FROM customer 
+	 * WHERE c_id = :c_id AND c_w_id = :c_w_id AND c_d_id = :c_d_id
+	 * FOR UPDATE OF c_balance, c_ytd_payment, c_payment_cnt, c_data
+	 *
+	 * plan: index probe on "C_IDX"
+	 */
+	
+	// update the data
+	char c_new_data_1[251];
+	char c_new_data_2[251];
+	sprintf(c_new_data_1, "%d,%d,%d,%d,%d,%1.2f",
+		_pin._c_id, c_d, c_w, _pin._home_d_id, 
+		_pin._home_wh_id, _pin._h_amount);
+	
+	int len = strlen(c_new_data_1);
+	strncat(c_new_data_1, acust.C_DATA_1, 250-len);
+	strncpy(c_new_data_2, &acust.C_DATA_1[250-len], len);
+	strncpy(c_new_data_2, acust.C_DATA_2, 250-len);
+	
+	TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple-nl\n",_tid.get_lo());
+	W_DO(_ptpccenv->customer_man()->cust_update_tuple_nl(_ptpccenv->db(),
+							     prcust, acust, 
+							     c_new_data_1, 
+							     c_new_data_2));
+        } else { /* good customer */
+	TRACE( TRACE_TRX_FLOW, "App: %d PAY:cust-update-tuple-nl\n",_tid.get_lo());
+	W_DO(_ptpccenv->customer_man()->cust_update_tuple_nl(_ptpccenv->db(), 
+							     prcust, acust, NULL, 
+							     NULL));
+	
+	// 3. Update the RVP
+	_m_rvp->_pin._c_id = _pin._c_id;
+    }
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -464,10 +398,7 @@ w_rc_t upd_cust_pay_action::trx_exec()
     prcust->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _ptpccenv->customer_man()->give_tuple(prcust);
-    return (e);
+    return RCOK;
 }
 
 
@@ -482,27 +413,24 @@ w_rc_t ins_hist_pay_action::trx_exec()
     assert (_ptpccenv);
 
     // get table tuple from the cache
-    table_row_t* prhist = _ptpccenv->history_man()->get_tuple();
-    assert (prhist);
+    tuple_guard<history_man_impl> prhist(_ptpccenv->history_man());
     rep_row_t areprow(_ptpccenv->history_man()->ts());
     areprow.set(_ptpccenv->history_desc()->maxsize()); 
     prhist->_rep = &areprow;
 
-    w_rc_t e = RCOK;
-
     // find the customer wh and d
-    int c_w = (_pin._v_cust_wh_selection>85 ? _pin._home_wh_id : _pin._remote_wh_id);
-    int c_d = (_pin._v_cust_wh_selection>85 ? _pin._home_d_id : _pin._remote_d_id);
-
+    int c_w = _pin._v_cust_wh_selection>85 ? _pin._home_wh_id : _pin._remote_wh_id;
+    int c_d = _pin._v_cust_wh_selection>85 ? _pin._home_d_id : _pin._remote_d_id;
+    
     /* INSERT INTO history
      * VALUES (:c_id, :c_d_id, :c_w_id, :d_id, :w_id, 
      *         :curr_tmstmp, :ih_amount, :h_data)
      */
-
+    
     tpcc_history_tuple ahist;
     sprintf(ahist.H_DATA, "%s   %s", _awh.W_NAME, _adist.D_NAME);
     ahist.H_DATE = time(NULL);
-
+    
     prhist->set_value(0, _pin._c_id);
     prhist->set_value(1, c_d);
     prhist->set_value(2, c_w);
@@ -512,15 +440,8 @@ w_rc_t ins_hist_pay_action::trx_exec()
     prhist->set_value(6, _pin._h_amount * 100.0);
     prhist->set_value(7, ahist.H_DATA);
 
-    { // make goto safe 
-
-        TRACE( TRACE_TRX_FLOW, "App: %d PAY:hist-add-tuple\n", 
-               _tid.get_lo());
-
-        e = _ptpccenv->history_man()->add_tuple(_ptpccenv->db(), prhist, NL);
-        if (e.is_error()) { goto done; }
-
-    } // goto 
+    TRACE( TRACE_TRX_FLOW, "App: %d PAY:hist-add-tuple\n", _tid.get_lo());
+    W_DO(_ptpccenv->history_man()->add_tuple(_ptpccenv->db(), prhist, NL));
 
 #ifdef PRINT_TRX_RESULTS
     // at the end of the transaction 
@@ -528,10 +449,7 @@ w_rc_t ins_hist_pay_action::trx_exec()
     prhist->print_tuple();
 #endif
 
-done:
-    // give back the tuple
-    _ptpccenv->history_man()->give_tuple(prhist);
-    return (e);
+    return RCOK;
 }
 
 
