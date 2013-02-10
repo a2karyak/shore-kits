@@ -40,7 +40,7 @@ else
 READLINE_INCLUDE = $(READLINE_HOME)/include
 READLINE_LIBS = $(READLINE_HOME)/lib
 
-PROCSTAT_INCLUDES = -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -I/usr/include/libgtop-2.0
+PROCSTAT_INCLUDES = -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -I/usr/lib64/glib-2.0/include -I/usr/include/libgtop-2.0
 PROCSTAT_LIBS = -lgtop-2.0
 endif
 
