@@ -201,7 +201,7 @@ OPT_FLAGS="-O3 -finline-limit=1200 -fomit-frame-pointer"
 CXXFLAGS="-Wall -Wcast-align -Wextra -Wfloat-equal -Wno-return-type \
 	 -Wno-invalid-offsetof -Wno-conversion -Wno-system-headers -D_REENTRANT"
 
-LDFLAGS="-lnsl -ldl -lm -lpthread -lrt "
+LDFLAGS="-lnsl -ldl -lm -lpthread -lrt -rdynamic"
 
 
 # $target is typically processor-vendor-os
