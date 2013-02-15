@@ -1,122 +1,117 @@
 #!/bin/bash
 
-DATFILE=$1
+#
+# Filtering strategy:
+#
+# Each pass peels off some samples, categorizing them and leaving the
+# rest behind for further passes. This ensures no double-counting is
+# possible.
+#
 
-#NOLIST=_1cHsdesc
-NOLIST=
-
-
-# Latching
-COUNT=0
-WHAT[$COUNT]=Latching
-YES[$COUNT]=__1cHlatch_t
-AND[$COUNT]=
-NO[$COUNT]=
-
-
-# Heap Page Latching
-((COUNT++))
-WHAT[$COUNT]=HeapLatch
-YES[$COUNT]=__1cHlatch_t
-AND[$COUNT]=__1cGfile_p
-NO[$COUNT]=
-
-# BTree Page Latching
-((COUNT++))
-WHAT[$COUNT]=BTreeLatch
-YES[$COUNT]=__1cHlatch_t
-AND[$COUNT]=__1cHbtree_m
-NO[$COUNT]=
-
-# locking
-NOLIST="$NOLIST ${YES[$COUNT]}"
-((COUNT++))
-WHAT[$COUNT]=Locking
-YES[$COUNT]=__1cGlock_m
-AND[$COUNT]=
-NO[$COUNT]=$NOLIST
-
-# logging
-NOLIST="$NOLIST ${YES[$COUNT]}"
-((COUNT++))
-WHAT[$COUNT]=Logging
-YES[$COUNT]="__1cIlog_core __1cFlog_m"
-AND[$COUNT]=
-NO[$COUNT]=$NOLIST
-
-# Xct management
-NOLIST="$NOLIST ${YES[$COUNT]}"
-((COUNT++))
-WHAT[$COUNT]=TxMgt
-YES[$COUNT]=__1cFxct_t
-AND[$COUNT]=
-NO[$COUNT]=$NOLIST
-
-# BPool
-NOLIST="$NOLIST ${YES[$COUNT]}"
-((COUNT++))
-WHAT[$COUNT]=BPool
-YES[$COUNT]=__1cEbf_m
-AND[$COUNT]=
-NO[$COUNT]=$NOLIST
-
-# BTree
-NOLIST="$NOLIST ${YES[$COUNT]}"
-((COUNT++))
-WHAT[$COUNT]=B+Tree
-YES[$COUNT]=__1cHbtree_m
-AND[$COUNT]=
-NO[$COUNT]=$NOLIST
-
-# SM
-NOLIST="$NOLIST ${YES[$COUNT]}"
-((COUNT++))
-WHAT[$COUNT]=SM
-YES[$COUNT]=__1cEss_m
-AND[$COUNT]=
-NO[$COUNT]=$NOLIST
-
-# DORA
-NOLIST="$NOLIST ${YES[$COUNT]}"
-((COUNT++))
-WHAT[$COUNT]=DORA
-YES[$COUNT]=__1cEdora
-AND[$COUNT]=
-NO[$COUNT]=$NOLIST
-
-# Kits - possibly xct logic
-NOLIST="$NOLIST ${YES[$COUNT]}"
-((COUNT++))
-WHAT[$COUNT]=Kits
-YES[$COUNT]=
-AND[$COUNT]=
-NO[$COUNT]=$NOLIST
-
-# Grand total
-NOLIST="$NOLIST ${YES[$COUNT]}"
-((COUNT++))
-WHAT[$COUNT]=TOTAL
-YES[$COUNT]=
-AND[$COUNT]=
-NO[$COUNT]="sdesc"
-
-function filter() {
-    flag=$1
-    shift
-    val=$(echo $* | sed 's; [ ]*;\\|;g')
-    if [ -n "$val" ]; then
-	echo "ggrep $flag ' \($val\)'"
-    else
-	echo cat
-    fi
+DUMP_SPLIT_DAT="$*"
+[ -n "$DUMP_SPLIT_DAT" ] && echo "Dumping .dat file for each category" >&2
+function any() {
+    sep='('
+    while [ "x$1" != "x" ]; do
+	echo -n "$sep$1"
+	sep='|'
+	shift
+    done
+    echo ')'
 }
 
-for ((i=0; i <= COUNT; i++)); do
-    yes=$(filter -e ${YES[$i]})
-    and=$(filter -e ${AND[$i]})
-    no=$(filter -v ${NO[$i]})
-    CMD="cat $DATFILE | grep -v client | $yes| $and | $no | dtopk | head -n1 | awk '{print \$1}'"
-    echo "$CMD" >&2
-    echo -n "${WHAT[$i]} "
-    bash -c "$CMD"
-done
+function blame() {
+    echo -n "{ "
+    [ -n "$DUMP_SPLIT_DAT" ] && echo -n "print \$0 > \"test-$1.dat\"; "
+    echo -n "totals[\"$1\"]+=\$1; next }"
+    echo -n "BEGIN { totals[\"$1\"]=0 }"
+}
+
+gawk -f <(cat <<EOF
+
+# certain classes of sleep time are unimportant
+/ pthread_cond_wait $(any __1cFshoreNbase_client_tIrun_xcts __1cEbf_mK_clean_buf __1cOchkpt_thread_tDrun __1cUpage_writer_thread_tDrun __1cFshoreJsrmwqueue __1cIlog_coreMflush_daemon __1cFshoreTshell_await_clients __1cGcondex)/ $(blame ignore)
+/ pthread_cond_timedwait $(any __1cTsunos_procmonitor_t __1cTbf_cleaner_thread_t)/ $(blame ignore)
+/ ___nanosleep/ $(blame ignore)
+
+# snag CATALOG stuff first because we want to include any
+# latching/locking it causes
+/ __1cFdir_m/ $(blame catalog)
+
+# get tree_latch related stuff before latch to seperate the latching/locking comes from there
+/ __1cKtree_latch/ $(blame latch-smo)
+
+# MRBT/PLP overhead
+#/ $(any __1cIranges_p __1cOkey_ranges_map)/ $(blame mrbt_plp)
+/ $(any __1cIranges_p)/ $(blame mrbt_plp)
+
+# latch contention
+/ $(any __1cKmcs_rwlock __1cImcs_lock atomic).* __1cHlatch_t/ $(blame latch-c)
+
+# latching
+/ __1cHlatch_t/ $(blame latch)
+
+# physical lock contention
+/ $(any __1cKmcs_rwlock __1cImcs_lock atomic).* $(any __1cGlock_m __1cLlock_core_m)/ $(blame lock-pc)
+
+# logical lock contention
+/ $(any __lwp_park __lwp_unpark).* $(any __1cGlock_m __1cLlock_core_m)/ $(blame lock-lc)
+
+# # sli overhead
+# / $sli_.* $(any __1cGlock_m __1cLlock_core_m)/ $(blame lock-sli)
+
+# locking
+/ $(any __1cGlock_m __1cLlock_core_m)/ $(blame lock)
+
+# log contention
+/ $(any __1cKmcs_rwlock __1cImcs_lock atomic).* $(any log_ __1cFlog_m __1cIlog_core  __1cFshoreJflusher_t)/ $(blame log-pc)
+
+# logging
+/ $(any log_ __1cFlog_m __1cIlog_core  __1cFshoreJflusher_t)/ $(blame log)
+
+# bpool contention
+/ $(any __1cKmcs_rwlock __1cImcs_lock atomic).* $(any  __1cEbf_m __1cJbf_core_m __1cUpage_writer_thread_t __1cTbf_cleaner_thread_t)/ $(blame bpool-pc) 
+
+# bpool
+/ $(any __1cEbf_m __1cJbf_core_m __1cUpage_writer_thread_t __1cTbf_cleaner_thread_t)/ $(blame bpool)
+
+# xct mgt contention
+/ $(any __1cKmcs_rwlock __1cImcs_lock atomic).* __1cFxct_t/ $(blame xct-pc) 
+
+# xct mgt
+/ __1cFxct_t/ $(blame xct_mgt)
+
+# btree contention
+/ $(any __1cKmcs_rwlock __1cImcs_lock atomic).* $(any  __1cHbtree_m __1cKbtree_impl)/ $(blame btree-pc) 
+
+# btree
+/ $(any __1cHbtree_m __1cKbtree_impl)/ $(blame btree)
+
+# heap contention
+/ $(any __1cKmcs_rwlock __1cImcs_lock atomic).* $(any __1cGfile_m __1cFpin_i)/ $(blame heap-pc) 
+
+# heap
+/ $(any __1cGfile_m __1cFpin_i)/ $(blame heap)
+
+# other contention -- except lock, log, bpool, xct, btree and heap
+/ $(any __1cKmcs_rwlock __1cImcs_lock atomic)/ $(blame other-pc) 
+
+# SSM
+/ $(any __1cTsunos_procmonitor_t __1cEss_m __1cGpage_pF __1cJw_error_t)/ $(blame ssm)
+
+# Client
+/ $(any __1cFshoreNbase_client_t)/ $(blame client)
+
+# DORA
+/ $(any __1cEdoraKlock_man_t __1cEdoraLpartition_t __1cEdoraOdora_flusher_t __1cEdoraOterminal_rvp_t __1cEdoraPdora_notifier_t)/ $(blame dora)
+
+# kits
+/ __1cFshore/ $(blame kits)
+
+# leftovers
+$(blame misc)
+
+END { for (c in totals) { n=totals[c]; print c,n; total+=n }; print "total",total; print "net-total",total - totals["ignore"]; }
+EOF
+)
+
