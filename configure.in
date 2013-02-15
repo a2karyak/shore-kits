@@ -201,7 +201,16 @@ OPT_FLAGS="-O3 -finline-limit=1200 -fomit-frame-pointer"
 CXXFLAGS="-Wall -Wcast-align -Wextra -Wfloat-equal -Wno-return-type \
 	 -Wno-invalid-offsetof -Wno-conversion -Wno-system-headers -D_REENTRANT"
 
+# Initial set of LDFLAGS
 LDFLAGS="-lnsl -ldl -lm -lpthread -lrt -rdynamic"
+NORDYNAMIC_LDFLAGS="-lnsl -ldl -lm -lpthread -lrt"
+dnl old_LDFLAGS="$LDFLAGS"
+dnl LDFLAGS="$LDFLAGS -rdynamic"
+dnl AC_MSG_CHECKING([If the compiler accepts -rdynamic])
+dnl AC_LINK_IFELSE([int main(){}],
+dnl        [AC_MSG_RESULT([rdynamic: yes])],
+dnl        [LDFLAGS="$old_LDFLAGS" 
+dnl        AC_MSG_RESULT([rdynamic: no])])
 
 
 # $target is typically processor-vendor-os
@@ -265,7 +274,7 @@ case "$target" in
     ARCHOS=SPARC_SUN
     OS=SUN
 
-    LDFLAGS="$LDFLAGS -lsocket -lkstat -L/usr/local/lib/sparcv9 -lmtmalloc"
+    LDFLAGS="$NORDYNAMIC_LDFLAGS -lsocket -lkstat -L/usr/local/lib/sparcv9 -lmtmalloc"
 
     # On Sparc and CC we need to use completely different compilation flags
     CXXFLAGS="" 
