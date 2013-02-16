@@ -173,6 +173,7 @@ public:
             // be careful: if <file_scanner> is scalar, it should NOT be deleted!
             assert (_scan);
             delete (_scan);
+            _scan = NULL;
         }
         _opened = false;
         return (RCOK);

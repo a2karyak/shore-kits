@@ -100,7 +100,7 @@ struct new_order_input_t
     //  then trx called home, else remote 
 
     new_order_input_t() 
-        : _wh_id(0), _d_id(0), _c_id(0), _ol_cnt(0), _rbk(0), _all_local(1), _d_next_o_id(-1)
+        : _wh_id(0), _d_id(0), _c_id(0), _ol_cnt(0), _rbk(0), _tstamp(0), _all_local(1), _d_next_o_id(-1)
     { };    
 
     ~new_order_input_t() { };
