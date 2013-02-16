@@ -81,12 +81,14 @@ table_desc_t::~table_desc_t()
         _indexes = NULL;
     }
 
-    if (_sMinKey) {
-        delete _sMinKey;
+    if (_sMinKey!=NULL) {
+        free(_sMinKey);
+        _sMinKey=NULL;
     }
 
-    if (_sMaxKey) {
-        delete _sMaxKey;
+    if (_sMaxKey!=NULL) {
+        free(_sMaxKey);
+        _sMaxKey=NULL;
     }
 }
 

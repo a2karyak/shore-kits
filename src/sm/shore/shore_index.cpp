@@ -48,6 +48,7 @@ index_desc_t::index_desc_t(const char* name, const int fieldcnt,
                            bool rmapholder)
     : _base(name, fieldcnt, pd),
       _unique(unique), _primary(primary),
+      _rmapholder(rmapholder),
       _next(NULL), _maxkeysize(0),
       _partition_count((partitions > 0)? partitions : 1), _partition_stids(0)
 {
@@ -67,40 +68,47 @@ index_desc_t::index_desc_t(const char* name, const int fieldcnt,
 
     // Update the flags depending on the physical type information
 
-    // Checf if MR (frequently asked)
-    if (pd & (PD_MRBT_NORMAL | PD_MRBT_PART | PD_MRBT_LEAF)) {
-        _mr = true;
-    }
-    else {
-        _mr = false;
-    }
+    // Check if MR (frequently asked)
+    _mr = (pd & (PD_MRBT_NORMAL | PD_MRBT_PART | PD_MRBT_LEAF));
+    // if (pd & (PD_MRBT_NORMAL | PD_MRBT_PART | PD_MRBT_LEAF)) {
+    //     _mr = true;
+    // }
+    // else {
+    //     _mr = false;
+    // }
 
     // Check if NoLock
-    if (pd & PD_NOLOCK) {
-        _nolock = true;
-    }
-    else {
-        _nolock = false;
-    }
+    _nolock = (pd & PD_NOLOCK);
+    // if (pd & PD_NOLOCK) {
+    //     _nolock = true;
+    // }
+    // else {
+    //     _nolock = false;
+    // }
 
     // Check if Latch-less
-    if (pd & PD_NOLATCH) {
-        _latchless = true;
-    }
-    else {
-        _latchless = false;
-    }
+    _latchless = (pd & PD_NOLATCH);
+    // if (pd & PD_NOLATCH) {
+    //     _latchless = true;
+    // }
+    // else {
+    //     _latchless = false;
+    // }
+
+    // If it is a RangeMap holder, then this empty index should be
+    // MRBT-* and not manually partitioned
+    w_assert0( (!_rmapholder) || (_mr && !is_partitioned()));
 
     // Set the flag that it is only a RangeMap holder
-    if (rmapholder) {
-        if (!(_mr) || is_partitioned()) {
-            // This empty index should be MRBT-* and not manually partitioned
-            assert(0);
-        }
-        else {
-            _rmapholder = true;
-        }
-    }           
+    // if (rmapholder) {
+    //     if (!(_mr) || is_partitioned()) {
+    //         // This empty index should be MRBT-* and not manually partitioned
+    //         assert(0);
+    //     }
+    //     else {
+    //         _rmapholder = true;
+    //     }
+    // }           
 }
 
 

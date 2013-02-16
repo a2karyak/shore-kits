@@ -133,7 +133,7 @@ w_rc_t DoraTPCCEnv::dora_new_order(const int xct_id,
 
     
     // IP: for now, cannot handle remote WHs
-    assert (anoin._all_local==1);
+    //assert (anoin._all_local==1);
 
     // 3. Calculate intratrx and total
     int whid     = anoin._wh_id;
