@@ -67,6 +67,8 @@
 #include <ittnotify.h> // VTune API definitions
 #endif
 
+#include <dlfcn.h>
+
 using namespace shore;
 
 using namespace tpcc;
@@ -586,6 +588,8 @@ void usage()
 
 int main(int argc, char* argv[]) 
 {
+    dlopen("foo", 0); // for gdb's sake only...
+    
 #ifdef CFG_VTUNE
     // to pause sampling
     __itt_pause();
