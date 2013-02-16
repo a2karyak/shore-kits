@@ -91,7 +91,7 @@ struct flusher_stats_t
     uint   served;
     uint   flushes;
 
-    long   logsize;
+    long long logsize;
     uint   alreadyFlushed;
     uint   waiting;
 

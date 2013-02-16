@@ -71,7 +71,7 @@ void flusher_stats_t::print() const
     TRACE( TRACE_STATISTICS, "Xcts:        (%d)\t(%.2f)\n", 
            served, (double)served/(double)flushes);
     TRACE( TRACE_STATISTICS, "Logsize MBs: (%ld)\t(%.2f)\n", 
-           logsize/MEGABYTE, (double)logsize/(double)(flushes*MEGABYTE));
+           logsize/MEGABYTE, (long long)logsize/(long long)(flushes*MEGABYTE));
     TRACE( TRACE_STATISTICS, "Already:     (%d)\t(%.2f%%)\n", 
            alreadyFlushed, (double)(100*alreadyFlushed)/(double)served);
     TRACE( TRACE_STATISTICS, "Waiting:     (%d)\t(%.2f)\n", 
