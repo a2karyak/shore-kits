@@ -212,7 +212,7 @@ upd_loc_input_t create_upd_loc_input(int sf,
 	    ulin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
     }
     
-    sprintf(ulin._sub_nbr,"%015d",ulin._s_id);
+    sprintf(ulin._sub_nbr,"%015.15d",ulin._s_id);
     ulin._vlr_loc = URand(0,(2<<16)-1);
     return (ulin);
 }
@@ -251,11 +251,11 @@ ins_call_fwd_input_t create_ins_call_fwd_input(int sf,
 	    icfin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
     }
     
-    sprintf(icfin._sub_nbr,"%015d",icfin._s_id);
+    sprintf(icfin._sub_nbr,"%015.15d",icfin._s_id);
     icfin._sf_type = URand(1,4);
     icfin._s_time = URand(0,2) * 8;
     icfin._e_time = URand(1,24);
-    sprintf(icfin._numberx,"%015d",URand(1,sf*TM1_SUBS_PER_SF));
+    sprintf(icfin._numberx,"%015.15d",URand(1,sf*TM1_SUBS_PER_SF));
     return (icfin);
 }
 
@@ -290,7 +290,7 @@ del_call_fwd_input_t create_del_call_fwd_input(int sf,
 	    dcfin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
     }
     
-    sprintf(dcfin._sub_nbr,"%015d",dcfin._s_id);
+    sprintf(dcfin._sub_nbr,"%015.15d",dcfin._s_id);
     dcfin._sf_type = URand(1,4);
     dcfin._s_time = URand(0,2) * 8;
     return (dcfin);
@@ -366,11 +366,11 @@ ins_call_fwd_bench_input_t create_ins_call_fwd_bench_input(int sf,
     else
         icfbin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
 
-    sprintf(icfbin._sub_nbr,"%015d",icfbin._s_id);
+    sprintf(icfbin._sub_nbr,"%015.15d",icfbin._s_id);
     icfbin._sf_type = URand(1,4);
     icfbin._s_time = URand(0,2) * 8;
     icfbin._e_time = URand(1,24);
-    sprintf(icfbin._numberx,"%015d",URand(1,sf*TM1_SUBS_PER_SF));
+    sprintf(icfbin._numberx,"%015.15d",URand(1,sf*TM1_SUBS_PER_SF));
     return (icfbin);
 }
 
@@ -401,7 +401,7 @@ del_call_fwd_bench_input_t create_del_call_fwd_bench_input(int sf,
     else
         dcfbin._s_id = UZRand(1,sf*TM1_SUBS_PER_SF);
 
-    sprintf(dcfbin._sub_nbr,"%015d",dcfbin._s_id);
+    sprintf(dcfbin._sub_nbr,"%015.15d",dcfbin._s_id);
     dcfbin._sf_type = URand(1,4);
     dcfbin._s_time = URand(0,2) * 8;
     return (dcfbin);

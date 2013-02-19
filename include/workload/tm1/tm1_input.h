@@ -220,7 +220,7 @@ struct upd_loc_input_t
      */
 
     int    _s_id;            /* input: URand(1,SF) */
-    char   _sub_nbr[15];     /* input: string(URand(1,SF)) */
+    char   _sub_nbr[16];     /* input: string(URand(1,SF)) */
     int    _vlr_loc;         /* input: URand(0,MAXINT) */
 
     upd_loc_input_t& operator= (const upd_loc_input_t& rhs);
@@ -251,11 +251,11 @@ struct ins_call_fwd_input_t
      */
 
     int    _s_id;            /* input: URand(1,SF) */
-    char   _sub_nbr[15];     /* input: string(_s_id) */
+    char   _sub_nbr[16];     /* input: string(_s_id) */
     short  _sf_type;         /* input: URand(1,4) */
     short  _s_time;          /* input: URand(0,2)*8 */
     short  _e_time;          /* input: URand(1,2x4) */
-    char   _numberx[15];     /* input: string(URand(1,SF)) */
+    char   _numberx[16];     /* input: string(URand(1,SF)) */
 
     ins_call_fwd_input_t& operator= (const ins_call_fwd_input_t& rhs);
 
@@ -283,7 +283,7 @@ struct del_call_fwd_input_t
      */
 
     int    _s_id;            /* input: URand(1,SF) */
-    char   _sub_nbr[15];     /* input: string(_s_id) */
+    char   _sub_nbr[16];     /* input: string(_s_id) */
     short  _sf_type;         /* input: URand(1,4) */
     short  _s_time;          /* input: URand(0,2)*8 */
 
@@ -345,11 +345,11 @@ struct ins_call_fwd_bench_input_t
      */
 
     int    _s_id;            /* input: URand(1,SF) */
-    char   _sub_nbr[15];     /* input: string(_s_id) */
+    char   _sub_nbr[16];     /* input: string(_s_id) */
     short  _sf_type;         /* input: URand(1,4) */
     short  _s_time;          /* input: URand(0,2)*8 */
     short  _e_time;          /* input: URand(1,2x4) */
-    char   _numberx[15];     /* input: string(URand(1,SF)) */
+    char   _numberx[16];     /* input: string(URand(1,SF)) */
 
     ins_call_fwd_bench_input_t& operator= (const ins_call_fwd_bench_input_t& rhs);
 
@@ -377,7 +377,7 @@ struct del_call_fwd_bench_input_t
      */
 
     int    _s_id;            /* input: URand(1,SF) */
-    char   _sub_nbr[15];     /* input: string(_s_id) */
+    char   _sub_nbr[16];     /* input: string(_s_id) */
     short  _sf_type;         /* input: URand(1,4) */
     short  _s_time;          /* input: URand(0,2)*8 */
 
