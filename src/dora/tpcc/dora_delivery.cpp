@@ -107,6 +107,16 @@ w_rc_t mid1_del_rvp::_run()
 }
 
 
+// IP: Mengmeng Chen <cmm.dylan@gmail.com> identified a potential source
+// of deadlocks between NewOrder and Delivery transactions:
+//
+// NewOrder's TFG: (wh, dist, cust, item) -> rvp1 -> (nord,ord) -> rvp2 -> (ol) -> rvp3 -> (sto)
+//
+// Delivery's TFG: (nord) -> rvp1 -> (ord,ol) -> rvp2 -> (cust)
+// 
+// The CUSTOMER is accessed before Nord, Ord, and Ol in NewOrder, but 
+// after them in Delivery. For performance purposes, we need to fix this 
+// deadlock or let the deadlock detection deal with it. 
 
 /******************************************************************** 
  *
@@ -136,6 +146,8 @@ w_rc_t mid2_del_rvp::_run()
 
         TRACE( TRACE_TRX_FLOW, "Next phase (%d-%d)\n", _tid.get_lo(), _d_id);
         
+#warning IP: Need to move CUST before Nord, Ord, and Ol in Delivery to avoid deadlock with NewOrder
+
         // CUST_PART_CS
         CRITICAL_SECTION(cust_part_cs, my_cust_part->_enqueue_lock);
         if (my_cust_part->enqueue(del_upd_cust,_bWake)) {

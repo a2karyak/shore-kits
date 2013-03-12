@@ -91,31 +91,37 @@ w_rc_t mid1_nord_rvp::_run()
         no_item_nord_input_t anoitin;
         _in.get_no_item_input(anoitin);
 
-        // 2b. Insert (ORD)
-        ins_ord_nord_action* ins_ord_nord = _penv->new_ins_ord_nord_action(_xct,_tid,mid2_rvp,anoitin);
-        irpImpl* my_ord_part = _penv->decide_part(_penv->ord(),whid);
-
-        // 2c. Insert (NORD)
+        // 2b. Insert (NORD)
         ins_nord_nord_action* ins_nord_nord = _penv->new_ins_nord_nord_action(_xct,_tid,mid2_rvp,anoitin);
         irpImpl* my_nord_part = _penv->decide_part(_penv->nor(),whid);
 
 
+        // 2c. Insert (ORD)
+        ins_ord_nord_action* ins_ord_nord = _penv->new_ins_ord_nord_action(_xct,_tid,mid2_rvp,anoitin);
+        irpImpl* my_ord_part = _penv->decide_part(_penv->ord(),whid);
+        
+        // IP: Per Mengmeng's comment, changing the order of enqueueing to reduce 
+        //     the chances of deadlock with Delivery.
+
+        // NORD_PART_CS
+        CRITICAL_SECTION(nord_part_cs, my_nord_part->_enqueue_lock);
+        if (my_nord_part->enqueue(ins_nord_nord,_bWake)) 
+        {
+           TRACE( TRACE_DEBUG, "Problem in enqueueing INS_NORD_NORD\n");
+           assert (0); 
+           return (RC(de_PROBLEM_ENQUEUE));
+        }
+
         // ORD_PART_CS
         CRITICAL_SECTION(ord_part_cs, my_ord_part->_enqueue_lock);
-        if (my_ord_part->enqueue(ins_ord_nord,_bWake)) {
+        nord_part_cs.exit();
+        if (my_ord_part->enqueue(ins_ord_nord,_bWake)) 
+        {
             TRACE( TRACE_DEBUG, "Problem in enqueueing INS_ORD_NORD\n");
             assert (0); 
             return (RC(de_PROBLEM_ENQUEUE));
         }
 
-        // NORD_PART_CS
-        CRITICAL_SECTION(nord_part_cs, my_nord_part->_enqueue_lock);
-        ord_part_cs.exit();
-        if (my_nord_part->enqueue(ins_nord_nord,_bWake)) {
-            TRACE( TRACE_DEBUG, "Problem in enqueueing INS_NORD_NORD\n");
-            assert (0); 
-            return (RC(de_PROBLEM_ENQUEUE));
-        }
     }
     
     return (RCOK);
