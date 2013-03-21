@@ -76,9 +76,8 @@ public:
 
 protected:
 
-    // pointers to primary owner and pool of standby worker threads
+    // pointer to owner worker thread
     Worker*       _owner;        // primary owner
-    Worker*       _standby;      // standby pool
 
     // lock manager for the partition
     guard<LockManager>  _plm;
@@ -117,6 +116,9 @@ protected:
     // pools for actions for the srmwqueues
     guard<Pool>     _actionptr_input_pool;
     guard<Pool>     _actionptr_commit_pool;
+
+    // There is a new type of input queue we want to add which is a queue for
+    // system signals (_sys_queue)
 
 public:
 
@@ -160,8 +162,14 @@ public:
 
     //// Partition Interface ////
 
-    // returns true if action can be enqueued in this partition
-    virtual bool verify(Action& /* action */) { assert(0); /* TODO */ return (true); }
+    // Returns true if action can be enqueued in this partition
+    virtual bool verify(Action& /* action */) 
+    { 
+       // TODO: Make boundaries checking, checking the Action's key
+       //       vs. the range of the partition
+       w_assert1(false);
+       return (true); 
+    }
 
     // input for normal actions
     // enqueues action, 0 on success
@@ -186,8 +194,7 @@ public:
 
 
     // resets/initializes the partition, possibly to a new processor
-    virtual int reset(const processorid_t aprsid = PBIND_NONE,
-                      const uint standby_sz = DF_NUM_OF_STANDBY_THRS);
+    virtual int reset(const processorid_t aprsid = PBIND_NONE);
 
     // Goes over all the actions and aborts them
     virtual int abort_all_enqueued();
@@ -211,8 +218,6 @@ private:
     int _start_owner();
     int _stop_threads();
     int _generate_primary();
-    int _generate_standby_pool(const uint sz, uint& pool_sz,
-                               const processorid_t aprsid = PBIND_NONE);
     Worker* _generate_worker(const processorid_t aprsid, c_str wname, const int use_sli);    
 
 protected:    
@@ -237,7 +242,7 @@ partition_t<DataType>::partition_t(ShoreEnv* env, table_desc_t* ptable,
                                    const processorid_t aprsid,
                                    const uint keyEstimation) 
     : base_partition_t(env,ptable,apartid,aprsid),
-      _owner(NULL), _standby(NULL)
+      _owner(NULL)
 {
     _plm = new LockManager(keyEstimation);
 
@@ -263,11 +268,14 @@ partition_t<DataType>::partition_t(ShoreEnv* env, table_desc_t* ptable,
 template <class DataType>
 int partition_t<DataType>::enqueue(Action* pAction, const bool bWake)
 {
-    //assert(verify(*pAction)); // TODO: Enable this
-//     if (!verify(*pAction)) {
-//         TRACE( TRACE_DEBUG, "Try to enqueue to the wrong partition...\n");
-//         return (de_WRONG_PARTITION);
-//     }
+
+#ifdef 0 // The verify() is not implemented
+    if (!verify(*pAction)) 
+    {
+        TRACE( TRACE_DEBUG, "Try to enqueue to the wrong partition...\n");
+        return (de_WRONG_PARTITION);
+    }
+#endif // EOF: disabled
 
 #ifdef WORKER_VERBOSE_STATS
     pAction->mark_enqueue();
@@ -308,7 +316,7 @@ inline base_action_t* partition_t<DataType>::dequeue()
 template <class DataType>
 int partition_t<DataType>::enqueue_commit(Action* pAction, const bool bWake)
 {
-    assert (pAction->get_partition()==this);
+    w_assert1(pAction->get_partition()==this);
     TRACE( TRACE_TRX_FLOW, "Enq committed (%d) to (%s-%d)\n", 
            pAction->tid().get_lo(), _table->name(), _part_id);
     _committed_queue->push(pAction,bWake);
@@ -328,7 +336,6 @@ int partition_t<DataType>::enqueue_commit(Action* pAction, const bool bWake)
 template <class DataType>
 inline base_action_t* partition_t<DataType>::dequeue_commit()
 {
-    //assert (has_committed());
     return (_committed_queue->pop());
 }
 
@@ -366,7 +373,7 @@ void partition_t<DataType>::stop()
  *
  * @brief:  Resets the partition
  *
- * @param:  (optional) The size of the standby pool
+ * @param:  aprsid - Processor id to bind (optional)
  *
  * @return: Returns 0 on success
  *
@@ -375,11 +382,10 @@ void partition_t<DataType>::stop()
  ******************************************************************/
 
 template <class DataType>
-int partition_t<DataType>::reset(const processorid_t aprsid,
-                                 const uint poolsz)
-{        
-    TRACE( TRACE_DEBUG, "part (%s-%d) - pool (%d) - cpu (%d)\n", 
-           _table->name(), _part_id, poolsz, aprsid);
+int partition_t<DataType>::reset(const processorid_t aprsid)
+{
+    TRACE( TRACE_DEBUG, "part (%s-%d) - cpu (%d)\n", 
+           _table->name(), _part_id, aprsid);
 
     // Stop the worker & standby threads
     _stop_threads();
@@ -392,33 +398,25 @@ int partition_t<DataType>::reset(const processorid_t aprsid,
     _plm->reset();
 
 
-    // Lock the primary and standby pool, and generate workers
+    // Lock the owner and generate worker
     CRITICAL_SECTION(owner_cs, _owner_lock);
-    CRITICAL_SECTION(standby_cs, _standby_lock);
     CRITICAL_SECTION(pat_cs, _pat_count_lock);    
 
     _prs_id = aprsid;
 
     // Generate primary
-    if (_generate_primary()) {
-        TRACE (TRACE_ALWAYS, "part (%s-%d) Failed to generate primary thread\n",
+    if (_generate_primary()) 
+    {
+        TRACE (TRACE_ALWAYS, 
+               "part (%s-%d) Failed to generate primary thread\n",
                _table->name(), _part_id);
-        assert (0); // should not happen
+        w_assert0(false); // should be able to generate a primary
         return (de_GEN_PRIMARY_WORKER);
     }
 
     // Set a single active thread
     _pat_count = 1;
     _pat_state = PATS_SINGLE;
-
-    // Generate standby pool   
-    if (_generate_standby_pool(poolsz, _standby_cnt, aprsid)) {
-        TRACE (TRACE_ALWAYS, "part (%s-%d) Failed to generate pool of (%d) threads\n",
-               _table->name(), _part_id, poolsz);
-        TRACE (TRACE_ALWAYS, "part (%s-%d) Pool of only (%d) threads generated\n", 
-               _table->name(), _part_id, _standby_cnt);
-        return (de_GEN_STANDBY_POOL);
-    }
 
     // Kick-off primary
     _start_owner();
@@ -553,93 +551,11 @@ int partition_t<DataType>::_stop_threads()
     _input_queue->setqueue(WS_UNDEF,NULL,0,0); 
     _committed_queue->setqueue(WS_UNDEF,NULL,0,0); 
 
-
-    // standy
-    CRITICAL_SECTION(standby_cs, _standby_lock);
-    if (_standby) {
-        _standby->stop();
-        _standby->join();
-        delete (_standby);
-        ++i;
-    }
-    _standby = NULL; // join()?
-    _standby_cnt = 0;
-
     // thread stats
     CRITICAL_SECTION(pat_cs, _pat_count_lock);
     _pat_count = 0;
     _pat_state = PATS_UNDEF;
 
-    return (0);
-}
-
-
-/****************************************************************** 
- *
- * @fn:     _generate_standby_pool()
- *
- * @brief:  Generates (sz) standby worker threads, linked together
- *
- * @return: 0 on sucess
- *
- * @note:   Assumes lock on pool head pointer is already acquired
- * @note:   The second param will be set equal with the number of
- *          threads actually generated (_standby_cnt)
- *
- ******************************************************************/
-
-template <class DataType>
-int partition_t<DataType>::_generate_standby_pool(const uint sz, uint& pool_sz,
-                                                  const processorid_t /* aprsid */)
-{
-    assert (_standby==NULL); // prevent losing thread pointer 
-
-    Worker* pworker = NULL;
-    Worker* pprev_worker = NULL;
-    pool_sz=0;
-
-    if (sz>0) {
-
-        // Generate the head of standby pool
-        int use_sli = envVar::instance()->getVarInt("db-worker-sli",0);
-
-        // IP: We can play with the binding of the standby threads
-        pworker = _generate_worker(_prs_id, 
-                                   c_str("%s-P-%d-STBY-%d", _table->name(), _part_id, pool_sz),
-                                   use_sli);
-        if (!pworker) {
-            TRACE( TRACE_ALWAYS, "Problem generating worker thread (%d)\n", pool_sz);
-            return (de_GEN_WORKER);
-        }
-
-        ++pool_sz;
-        _standby = pworker;      // set head of pool
-        pprev_worker = pworker;
-
-        _standby->fork();
-                                   
-        TRACE( TRACE_DEBUG, "Head standby worker thread forked\n");  
-
-        // Generate the rest of the pool
-        for (pool_sz=1; pool_sz<sz; pool_sz++) {
-            // Generate a worker
-            pworker = _generate_worker(_prs_id,
-                                       c_str("%s-P-%d-STBY-%d", _table->name(), _part_id, pool_sz),
-                                       use_sli);
-            if (!pworker) {
-                TRACE( TRACE_ALWAYS, "Problem generating worker thread (%d)\n", pool_sz);
-                return (de_GEN_WORKER);
-            }
-
-            // Add to linked list
-            pprev_worker->set_next(pworker);
-            pprev_worker = pworker;
-
-            _standby->fork();
-
-            TRACE( TRACE_DEBUG, "Standby worker (%d) thread forked\n", pool_sz);
-        }
-    }    
     return (0);
 }
 
@@ -661,7 +577,7 @@ int partition_t<DataType>::_generate_standby_pool(const uint sz, uint& pool_sz,
 template <class DataType>
 int partition_t<DataType>::_generate_primary() 
 {
-    assert (_owner==NULL); // prevent losing thread pointer 
+    w_assert1(_owner==NULL); // prevent losing thread pointer 
 
     envVar* pe = envVar::instance();
 

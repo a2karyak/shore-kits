@@ -136,7 +136,7 @@ w_rc_t part_table_t::reset()
     _next_prs_id = _start_prs_id;
 
     for (BPPMapIt it=_bppmap.begin(); it != _bppmap.end(); it++) {
-        (*it).second->reset(_next_prs_id,-1);
+        (*it).second->reset(_next_prs_id);
         _next_prs_id = next_cpu(_next_prs_id);
     }    
     return (RCOK);

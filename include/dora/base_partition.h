@@ -132,7 +132,7 @@ public:
     virtual base_action_t* dequeue_commit()=0;
 
     // resets/initializes the partition, possibly to a new processor
-    virtual int reset(const processorid_t aprsid, const uint standby_sz)=0;
+    virtual int reset(const processorid_t aprsid)=0;
  
     // Goes over all the actions and aborts them
     virtual int abort_all_enqueued()=0;

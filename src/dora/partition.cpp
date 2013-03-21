@@ -37,11 +37,17 @@
 ENTER_NAMESPACE(dora);
 
 
-struct pretty_printer {
-    ostringstream _out;
-    string _tmp;
-    operator ostream&() { return _out; }
-    operator char const*() { _tmp = _out.str(); _out.str(""); return _tmp.c_str(); }
+struct pretty_printer 
+{
+   ostringstream _out;
+   string _tmp;
+   operator ostream&() { return _out; }
+   operator char const*() 
+   { 
+      _tmp = _out.str(); 
+      _out.str(""); 
+      return _tmp.c_str(); 
+   }
 };
 
 
@@ -52,7 +58,9 @@ static void _print_partition(std::ostream &out, const partition_t<int> &part)
   out << "Commit: " << !part.has_committed() << endl; 
 }
 
-char const* db_pretty_print(const partition_t<int>* part, int /* i=0 */, char const* /* s=0 */) 
+char const* db_pretty_print(const partition_t<int>* part, 
+                            int /* i=0 */, 
+                            char const* /* s=0 */) 
 {
     static pretty_printer pp;
     _print_partition(pp, *part);
