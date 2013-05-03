@@ -68,10 +68,8 @@ protected:
     uint             _part_id;
     ePartitionPolicy _part_policy;
 
-    // protecting primary owner and pool of standby worker threads
+    // protecting primary owner
     tatas_lock    _owner_lock;
-    tatas_lock    _standby_lock;
-    uint          _standby_cnt;
 
     // processor binding
     processorid_t _prs_id;

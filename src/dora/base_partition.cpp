@@ -40,7 +40,6 @@ base_partition_t::base_partition_t(ShoreEnv* env, table_desc_t* ptable,
                                    const processorid_t aprsid) 
     : _env(env), _table(ptable), 
       _part_id(apartid), _part_policy(PP_UNDEF), 
-      _standby_cnt(DF_NUM_OF_STANDBY_THRS),
       _prs_id(aprsid)          
 {
     assert (_env);

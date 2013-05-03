@@ -61,9 +61,6 @@ const uint DF_CPU_STEP_TABLES     = 16;        // next-cpu among different table
 const uint DF_CPU_STEP_PARTITIONS = 2;         // next-cpu among partitions of the same table
 
 const uint DF_NUM_OF_PARTITIONS_PER_TABLE = 1; // number of partitions per table
-const uint DF_NUM_OF_STANDBY_THRS         = 0; // IP: assuming main-memory 
-
-
 
 // ENUMS
 
