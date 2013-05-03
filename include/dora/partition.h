@@ -400,7 +400,6 @@ int partition_t<DataType>::reset(const processorid_t aprsid)
 
     // Lock the owner and generate worker
     CRITICAL_SECTION(owner_cs, _owner_lock);
-    CRITICAL_SECTION(pat_cs, _pat_count_lock);    
 
     _prs_id = aprsid;
 
@@ -413,10 +412,6 @@ int partition_t<DataType>::reset(const processorid_t aprsid)
         w_assert0(false); // should be able to generate a primary
         return (de_GEN_PRIMARY_WORKER);
     }
-
-    // Set a single active thread
-    _pat_count = 1;
-    _pat_state = PATS_SINGLE;
 
     // Kick-off primary
     _start_owner();
@@ -550,11 +545,6 @@ int partition_t<DataType>::_stop_threads()
     // reset queues' worker control pointers
     _input_queue->setqueue(WS_UNDEF,NULL,0,0); 
     _committed_queue->setqueue(WS_UNDEF,NULL,0,0); 
-
-    // thread stats
-    CRITICAL_SECTION(pat_cs, _pat_count_lock);
-    _pat_count = 0;
-    _pat_state = PATS_UNDEF;
 
     return (0);
 }

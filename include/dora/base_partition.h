@@ -49,22 +49,6 @@ using namespace shore;
 ENTER_NAMESPACE(dora);
 
 
-/******************************************************************** 
- *
- * @enum:  ePATState
- *
- * @brief: Working thread status for the partition
- *
- *         - PATS_SINGLE   : only the primary-owner thread is active
- *         - PATS_MULTIPLE : some of the standby threads are active
- *
- ********************************************************************/
-
-enum ePATState { PATS_UNDEF    = 0x1, 
-                 PATS_SINGLE   = 0x2, 
-                 PATS_MULTIPLE = 0x4 
-};
-
 
 /******************************************************************** 
  *
@@ -83,11 +67,6 @@ protected:
 
     uint             _part_id;
     ePartitionPolicy _part_policy;
-
-    // partition active thread state and count
-    ePATState volatile _pat_state; 
-    uint volatile      _pat_count;
-    tatas_lock         _pat_count_lock;
 
     // protecting primary owner and pool of standby worker threads
     tatas_lock    _owner_lock;
@@ -112,11 +91,6 @@ public:
     // partition policy
     ePartitionPolicy get_part_policy();
     void set_part_policy(const ePartitionPolicy aPartPolicy);
-
-    // partition state and active threads
-    ePATState get_pat_state();
-    ePATState dec_active_thr();
-    ePATState inc_active_thr();
 
     // Partition Interface //
 

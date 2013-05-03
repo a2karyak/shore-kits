@@ -40,7 +40,6 @@ base_partition_t::base_partition_t(ShoreEnv* env, table_desc_t* ptable,
                                    const processorid_t aprsid) 
     : _env(env), _table(ptable), 
       _part_id(apartid), _part_policy(PP_UNDEF), 
-      _pat_state(PATS_UNDEF), _pat_count(0),
       _standby_cnt(DF_NUM_OF_STANDBY_THRS),
       _prs_id(aprsid)          
 {
@@ -76,77 +75,8 @@ void base_partition_t::set_part_policy(const ePartitionPolicy aPartPolicy)
 void base_partition_t::dump() 
 {
     TRACE( TRACE_DEBUG, "Policy            (%d)\n", _part_policy);
-    TRACE( TRACE_DEBUG, "Active Thr Status (%d)\n", _pat_state);
-    TRACE( TRACE_DEBUG, "Active Thr Count  (%d)\n", _pat_count);
 }
 
-
-// active threads functions
-
-/****************************************************************** 
- *
- * @fn:    get_pat_state()
- *
- * @brief: Returns the state of the partition 
- *         (single or multiple threads active)
- *
- ******************************************************************/
-
-ePATState base_partition_t::get_pat_state() 
-{ 
-    return (*&_pat_state); 
-}
-
-
-
-/****************************************************************** 
- *
- * @fn:     dec_active_thr()
- *
- * @brief:  Decreases active thread count by 1.
- *          If thread_count is 1, changes state to PATS_SINGLE
- *
- * @return: Retuns the updated state of the partition
- *
- ******************************************************************/
-
-ePATState base_partition_t::dec_active_thr() 
-{
-    assert (_pat_count>1);
-    assert (_pat_state==PATS_MULTIPLE);
-    CRITICAL_SECTION(pat_cs, _pat_count_lock);
-    _pat_count--;
-    if (_pat_count==1) {
-        _pat_state = PATS_SINGLE;
-        return (PATS_SINGLE);
-    }
-    assert (_pat_count>0);
-    return (PATS_MULTIPLE);
-}
-
-
-/****************************************************************** 
- *
- * @fn:     inc_active_thr()
- *
- * @brief:  Increases active thread count by 1.
- *          If thread_count is >1, changes state to PATS_MULTIPLE
- *
- * @return: Retuns the updated state of the partition
- *
- ******************************************************************/
-
-ePATState base_partition_t::inc_active_thr() 
-{
-    CRITICAL_SECTION(pat_cs, _pat_count_lock);
-    _pat_count++;
-    if (_pat_count>1) {
-        _pat_state = PATS_MULTIPLE;
-        return (PATS_MULTIPLE);
-    }
-    assert (_pat_count>0);
-    return (_pat_state);
-}
 
 EXIT_NAMESPACE(dora);
 
