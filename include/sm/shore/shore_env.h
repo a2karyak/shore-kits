@@ -85,7 +85,7 @@ const string SHORE_SYS_SM_OPTIONS[][3]  = {
     { "-sm_logging", "shore-logging", "yes" },
     { "-sm_logisraw", "shore-logisraw", "no" },
     { "-sm_diskrw", "shore-diskrw", "diskrw" },
-    { "-sm_errlog", "shore-errlog", "info" },
+    { "-sm_errlog", "shore-errlog", "shoremt.err.log" },
     { "-sm_num_page_writers", "shore-pagecleaners", "16" },
 };
 
