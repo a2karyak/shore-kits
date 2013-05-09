@@ -1276,6 +1276,7 @@ int ShoreEnv::_stop_flusher()
 
 void ShoreEnv::to_base_flusher(Request* ar)
 {
+// TODO: IP: Add multiple flusher to the baseline as well
     _base_flusher->enqueue_toflush(ar);
 }
 

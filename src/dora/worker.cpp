@@ -131,7 +131,7 @@ int dora_worker_t::_work_ACTIVE_impl()
 
             // 2a. get the first committed
             apa = _partition->dequeue_commit();
-            assert (apa);
+            w_assert0 (apa);
             TRACE( TRACE_TRX_FLOW, "Received committed (%d)\n", apa->tid().get_lo());
 
             

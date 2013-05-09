@@ -120,7 +120,12 @@ int DoraEnv::_statistics(ShoreEnv* /* penv */)
     }
 
 #ifdef CFG_FLUSHER
-    _flusher->statistics();
+    TRACE( TRACE_STATISTICS, "Flushers: (%d)\n", _num_flushers);
+
+    for (uint_t i=0; i<_num_flushers; i++)
+    {
+        _vec_flusher[i]->statistics();
+    }
 #endif
     return (0);
 }
@@ -172,10 +177,24 @@ int DoraEnv::_post_start(ShoreEnv* penv)
 #ifdef CFG_FLUSHER
     // Start the flusher
     TRACE( TRACE_ALWAYS, "Creating dora-flusher...\n");
-    _flusher = new dora_flusher_t(penv, c_str("DFlusher")); 
-    assert(_flusher.get());
-    _flusher->fork();
-    _flusher->start();
+
+    // Determine the number of dora-flushers
+    _num_flushers = determineNumFlushers();
+    _vec_flusher.reserve(_num_flushers);
+
+    // Create flushers, push them into the vector and 
+    // start them
+    for (uint_t i=0; i<_num_flushers; i++)
+    {
+        dora_flusher_t* aFlusher = new dora_flusher_t(penv, c_str("DFlusher-%d",i)); 
+        w_assert0(aFlusher);
+
+        _vec_flusher[i] = aFlusher;
+
+        aFlusher->fork();
+        aFlusher->start();
+    }
+
 #endif
 
     // Reset the tables
@@ -209,10 +228,17 @@ int DoraEnv::_post_stop(ShoreEnv* penv)
     _irptp_vec.clear();
 
 #ifdef CFG_FLUSHER
-    // Stopping the flusher
-    TRACE( TRACE_ALWAYS, "Stopping dora-flusher...\n");
-    _flusher->stop();
-    _flusher->join();
+    // Stopping and deleting the flusher(s)
+    for (uint_t i=0; i<_num_flushers; i++)
+    {
+        TRACE( TRACE_ALWAYS, "Stopping dora-flusher-(%d)...\n",i);
+        
+        _vec_flusher[i]->stop();
+        _vec_flusher[i]->join();
+        
+        delete (_vec_flusher[i]);
+        _vec_flusher[i] = NULL;
+    }
 #endif
 
     penv->set_dbc(DBC_STOPPED);
@@ -314,6 +340,36 @@ processorid_t DoraEnv::_next_cpu(const processorid_t& aprd,
     TRACE( TRACE_DEBUG, "(%d) -> (%d)\n", aprd, nextprs);
     return (nextprs);
 }
+
+
+/****************************************************************** 
+ *
+ * @fn:    determineNumFlushers
+ *
+ * @brief: Deciding about the number of flushers
+ *
+ * @note:  A rule of thumb could be that the number of flushers is
+ *         equal to the number of sockets. For now we read it from
+ *         shore.conf
+ *
+ ******************************************************************/
+
+uint_t DoraEnv::determineNumFlushers()
+{    
+    int numberOfFlushers = envVar::instance()->getVarInt("num-flushers",1);
+    if (numberOfFlushers<=0)
+    {
+        TRACE( TRACE_ALWAYS, 
+               "Wrong number of flushers: (%d)\nSetting to default (1)\n", 
+               numberOfFlushers);
+        numberOfFlushers = 1;
+    }
+    TRACE( TRACE_STATISTICS, "Number of flushers: (%d)\n", numberOfFlushers);
+    return ((uint_t)numberOfFlushers);
+}
+
+
+
 
 
 EXIT_NAMESPACE(dora);

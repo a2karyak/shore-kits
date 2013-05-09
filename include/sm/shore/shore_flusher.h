@@ -171,7 +171,10 @@ public:
               const int use_sli = 0);
     virtual ~flusher_t();
 
-    inline void enqueue_toflush(trx_request_t* areq) { _base_toflush->push(areq,true); }
+    inline void enqueue_toflush(trx_request_t* areq) 
+    { 
+        _base_toflush->push(areq,true); 
+    }
 
     int statistics();  
 

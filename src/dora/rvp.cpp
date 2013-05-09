@@ -236,26 +236,28 @@ w_rc_t terminal_rvp_t::run()
 
 w_rc_t terminal_rvp_t::_run()
 {
-    assert (_db);
-    assert (_denv);
+    w_assert4 (_db);
+    w_assert4 (_denv);
 
     // attach to this xct
-    assert (_xct);
+    w_assert1 (_xct);
     smthread_t::me()->attach_xct(_xct);
 
     // try to commit    
     w_rc_t rcdec;
-    if (_decision == AD_ABORT) {
-
+    if (_decision == AD_ABORT) 
+    {
         // We cannot abort lazily because log rollback works on 
         // disk-resident records
         rcdec = _db->abort_xct();
 
-        if (rcdec.is_error()) {
+        if (rcdec.is_error()) 
+        {
             TRACE( TRACE_ALWAYS, "Xct (%d) abort failed [0x%x]\n",
                    _tid.get_lo(), rcdec.err_num());
         }
-        else {
+        else 
+        {
             TRACE( TRACE_TRX_FLOW, "Xct (%d) aborted\n", _tid.get_lo());
             upd_aborted_stats();
         }

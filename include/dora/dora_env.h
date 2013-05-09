@@ -92,8 +92,11 @@ protected:
     int _cpu_table_step;
     int _cpu_range;
 
-    // The dora-flusher thread
-    guard<dora_flusher_t> _flusher;
+    // The determined number of dora-flushers, typically == #sockets
+    uint_t _num_flushers;
+
+    // A vector of dora-flusher thread(s)
+    std::vector<dora_flusher_t*> _vec_flusher;
 
 public:
     
@@ -119,11 +122,21 @@ public:
     }      
 
 
-    inline void enqueue_toflush(terminal_rvp_t* arvp) {
-        assert (_flusher.get());
-        _flusher->enqueue_toflush(arvp);
+    inline void enqueue_toflush(terminal_rvp_t* arvp) 
+    {
+        w_assert2 (arvp);
+        uint_t flusherIdx = (arvp->xct_id() % _num_flushers);
+        w_assert0 (_vec_flusher[flusherIdx]);
+        _vec_flusher[flusherIdx]->enqueue_toflush(arvp);
     }
 
+    uint_t determineNumFlushers();
+
+    inline uint_t getNumFlushers() 
+    {
+        return (_num_flushers);
+    }
+            
 
 protected:
 

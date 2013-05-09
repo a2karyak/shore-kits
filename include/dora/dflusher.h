@@ -139,7 +139,10 @@ public:
                    const int use_sli = 0);
     virtual ~dora_flusher_t();
 
-    inline void enqueue_toflush(terminal_rvp_t* arvp) { _dora_toflush->push(arvp,true); }
+    inline void enqueue_toflush(terminal_rvp_t* arvp) 
+    { 
+        _dora_toflush->push(arvp,true); 
+    }
 
 }; // EOF: dora_flusher_t
 
