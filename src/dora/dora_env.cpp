@@ -32,6 +32,8 @@
 #include "dora/common.h"
 #include "dora/dora_env.h"
 
+#include "cpu_info.h"
+
 using namespace shore;
 
 ENTER_NAMESPACE(dora);
@@ -220,10 +222,19 @@ int DoraEnv::_post_start(ShoreEnv* penv)
 
 int DoraEnv::_post_stop(ShoreEnv* penv)
 {
-    // Stopping the tables
+    // Stopping/closing the tables
     TRACE( TRACE_ALWAYS, "Stopping...\n");
-    for (uint i=0; i<_irptp_vec.size(); i++) {
-        _irptp_vec[i]->stop();
+
+    for (uint i=0; i<_irptp_vec.size(); i++) 
+    {
+        if (_irptp_vec[i] != NULL)
+        {
+            TRACE( TRACE_ALWAYS, "Stopping table (%s)...\n",
+                   _irptp_vec[i]->table()->name());
+
+            _irptp_vec[i]->stop();
+            _irptp_vec[i] = NULL;
+        }
     }
     _irptp_vec.clear();
 
@@ -231,13 +242,16 @@ int DoraEnv::_post_stop(ShoreEnv* penv)
     // Stopping and deleting the flusher(s)
     for (uint_t i=0; i<_num_flushers; i++)
     {
-        TRACE( TRACE_ALWAYS, "Stopping dora-flusher-(%d)...\n",i);
+        if (_vec_flusher[i] != NULL)
+        {
+            TRACE( TRACE_ALWAYS, "Stopping dora-flusher-(%d)...\n",i);
         
-        _vec_flusher[i]->stop();
-        _vec_flusher[i]->join();
+            _vec_flusher[i]->stop();
+            _vec_flusher[i]->join();
         
-        delete (_vec_flusher[i]);
-        _vec_flusher[i] = NULL;
+            delete (_vec_flusher[i]);
+            _vec_flusher[i] = NULL;
+        }
     }
 #endif
 
@@ -356,15 +370,32 @@ processorid_t DoraEnv::_next_cpu(const processorid_t& aprd,
 
 uint_t DoraEnv::determineNumFlushers()
 {    
-    int numberOfFlushers = envVar::instance()->getVarInt("num-flushers",1);
-    if (numberOfFlushers<=0)
+    int numberOfFlushers = 1;
+
+    // Set number of flusher equal to the number of sockets
+    long socketCount = cpu_info::socket_count();
+    if (socketCount > 0)
     {
-        TRACE( TRACE_ALWAYS, 
-               "Wrong number of flushers: (%d)\nSetting to default (1)\n", 
+        numberOfFlushers = socketCount;
+        TRACE( TRACE_STATISTICS, 
+               "Number of flushers and sockets: (%d)\n", 
                numberOfFlushers);
-        numberOfFlushers = 1;
     }
-    TRACE( TRACE_STATISTICS, "Number of flushers: (%d)\n", numberOfFlushers);
+    else
+    {
+        // If don't know the number of sockets
+        numberOfFlushers = envVar::instance()->getVarInt("num-flushers",1);
+        if (numberOfFlushers<=0)
+        {
+            TRACE( TRACE_ALWAYS, 
+                   "Wrong number of flushers: (%d)\nSetting to default (1)\n", 
+                   numberOfFlushers);
+            numberOfFlushers = 1;
+        }
+        TRACE( TRACE_STATISTICS, 
+               "Number of flushers from conf: (%d)\n", 
+               numberOfFlushers);
+    }    
     return ((uint_t)numberOfFlushers);
 }
 
