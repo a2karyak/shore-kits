@@ -88,7 +88,7 @@ shore_shell_t::~shore_shell_t()
     if (_env) {
         _env->stop();
         close_smt_t* clt = new close_smt_t(_env, c_str("clt"));
-        assert (clt);
+        w_assert0 (clt);
         clt->fork(); // pointer is deleted by clt thread
         clt->join();
         int rv = clt->_rv;

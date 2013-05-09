@@ -527,15 +527,24 @@ int ShoreEnv::stop()
 {
     // Check if initialized
     CRITICAL_SECTION(cs, _init_mutex);
+
+    if (dbc() == DBC_STOPPED)
+    {
+        // Already stopped
+        TRACE( TRACE_ALWAYS, "(%s) already stopped\n", 
+               _sysname.c_str());
+        return (0); 
+    }
+
+    TRACE( TRACE_ALWAYS, "Stopping (%s)\n", _sysname.c_str());
+    info();
+
     if (!_initialized) {
         cerr << "Environment not initialized..." << endl;
         return (1);
     }
 
     // Stop workers
-    TRACE( TRACE_ALWAYS, "Stopping (%s)\n", _sysname.c_str());
-    info();
-
     int i=0;
     for (WorkerIt it = _workers.begin(); it != _workers.end(); ++it) {
         i++;
@@ -552,7 +561,10 @@ int ShoreEnv::stop()
     _stop_flusher();
 #endif
 
-    // If reached this point the Shore environment is closed
+    // Set the stoped flag
+    set_dbc(DBC_STOPPED);
+
+    // If reached this point the Shore environment is stopped
     return (0);
 }
 
@@ -570,32 +582,18 @@ int ShoreEnv::stop()
 
 int ShoreEnv::close() 
 {
-    // Check if initialized
+    TRACE( TRACE_ALWAYS, "Closing (%s)\n", _sysname.c_str());
+
+    // First stop the environment
+    int r = stop();
+    if (r != 0)
+    {
+        // If it returned != 0 then error occured
+        return (r);
+    }
+
+    // Then, close Shore-MT
     CRITICAL_SECTION(cs, _init_mutex);
-    if (!_initialized) {
-        cerr << "Environment not initialized..." << endl;
-        return (1);
-    }
-
-
-    // Stop workers
-    TRACE( TRACE_ALWAYS, "Stopping (%s)\n", _sysname.c_str());
-    //info();
-
-    int i=0;
-    for (WorkerIt it = _workers.begin(); it != _workers.end(); ++it) {
-        i++;
-        TRACE( TRACE_DEBUG, "Stopping worker (%d)\n", i);
-        if (*it) {
-            (*it)->stop();
-            (*it)->join();
-            delete (*it);
-        }
-    }
-    _workers.clear();
-
-
-    // Close Shore-MT
     close_sm();
     _initialized = false;
 

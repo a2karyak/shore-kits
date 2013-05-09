@@ -109,9 +109,9 @@ void db_load_smt_t::work()
 
 void close_smt_t::work() 
 {
-    assert (_env);
     TRACE( TRACE_ALWAYS, "Closing Shore...\n");
-    if (_env) {
+    if (_env != NULL) 
+    {
         _env->close();
         delete (_env);
         _env = NULL;

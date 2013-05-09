@@ -847,7 +847,7 @@ int main(int argc, char* argv[])
     }
 
 
-    assert (kit.get());
+    w_assert0 (kit.get());
 
     // Create and fork the process monitor
 #ifdef __sparcv9
@@ -855,7 +855,7 @@ int main(int argc, char* argv[])
 #else
     _g_mon = new linux_procmonitor_t(NULL); 
 #endif
-    assert (_g_mon);
+    w_assert0 (_g_mon);
 
     // Instanciate and start the Shore environment
     TRACE ( TRACE_ALWAYS, "Starting Shore Environment\n" );

@@ -664,6 +664,7 @@ public:
     int checkpoint();
 
     string sysname() { return (_sysname); }
+
     env_stats_t* get_env_stats() { return (&_env_stats); }
 
     // For temp throughput calculation
