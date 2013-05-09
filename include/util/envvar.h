@@ -94,9 +94,9 @@ private:
     envVar(const string sConfFile=ENVCONFFILE) 
         : _cfname(sConfFile)
     { 
-        assert (!_cfname.empty());
+        w_assert0 (!_cfname.empty());
         _pfparser = new ConfigFile(_cfname);
-        assert (_pfparser);
+        w_assert0 (_pfparser);
     }
     ~envVar() { }
 

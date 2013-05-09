@@ -49,7 +49,8 @@ string envVar::_readConfVar(const string& sParam, const string& sDefValue)
         TRACE( TRACE_ALWAYS, "Invalid Param or Value input\n");
         return ("");
     }
-    assert (_pfparser);
+
+    w_assert2 (_pfparser);
     string tmp;
     // probe config file
     _pfparser->readInto(tmp,sParam,sDefValue); 
@@ -138,6 +139,7 @@ void envVar::checkVar(const string& sParam)
     }
     else {
         // if not found on map, searches the conf file
+        w_assert2 (_pfparser);
         if (_pfparser->keyExists(sParam)) {
             _pfparser->readInto(r,sParam,string("Not found"));
             r = r + " (conf)";
@@ -225,11 +227,11 @@ void envVar::printVars(void)
 // sets as input another conf file
 void envVar::setConfFile(const string& sConfFile)
 {
-    assert (!sConfFile.empty());
+    w_assert0 (!sConfFile.empty());
     CRITICAL_SECTION(evm_cs,_lock);
     _cfname = sConfFile;
     _pfparser = new ConfigFile(_cfname);
-    assert (_pfparser);
+    w_assert0 (_pfparser);
 }
 
 string envVar::getConfFile() const
