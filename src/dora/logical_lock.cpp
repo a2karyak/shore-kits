@@ -168,11 +168,12 @@ int LogicalLock::release(BaseActionPtr anowner,
     bool found = false;    
     tid_t atid = anowner->tid();
     int ipromoted = 0;
+   
 
     // 1. Loop over all Owners
     for (ActionLockReqVecIt it=_owners.begin(); it!=_owners.end(); ++it) {
         tid_t* ownertid = (*it).tid();
-        assert (ownertid);
+        w_assert1 (ownertid);
         TRACE( TRACE_TRX_FLOW, "Checking (%d) - Owner (%d)\n", 
                atid.get_lo(), ownertid->get_lo());
 
@@ -228,8 +229,53 @@ int LogicalLock::release(BaseActionPtr anowner,
         }
     }    
 
-    // 2. Assert if the trx is not in the list of Owners for this LogicalLock
-    if (!found) assert (0);
+    // Special handling if notfound but DL_CC_NOLOCK and there are waiters
+    if ( !found )
+    {
+        if (_dlm == DL_CC_NOLOCK)
+        {
+            TRACE( TRACE_ALWAYS, 
+                   "(%d) not found but also lock in DL_CC_NOLOCK and waiters (%d)\n",
+                   atid.get_lo(), _waiters.size() );
+
+            BaseActionPtr action = NULL;
+            
+            // Promote all the waiters that can be upgraded to owners.
+            // Iterates the list of waiters in a FIFO-fashion
+            while (_head_can_acquire()) 
+            {
+                // If head of waiters can be promoted
+                ActionLockReq head = _waiters.front();
+                action = head.action();
+                
+                // Add head of waiters to the promoted list 
+                //    (which will be returned)
+                TRACE( TRACE_TRX_FLOW, "(%d) promoting (%d)\n", 
+                       atid.get_lo(), action->tid().get_lo());
+                promotedList.push_back(action);
+                
+                // Add head of waiters to the owners list
+                _owners.push_back(head);
+                ++ipromoted;
+                
+                // Remove head from the waiters list
+                _waiters.pop_front();
+
+                // Update the LockMode of the LogicalLock
+                _upd_dlm();
+                TRACE( TRACE_TRX_FLOW,
+                       "(%d) caused: Owners (%d). Promoted (%d). New dlm is (%d)\n",
+                       atid.get_lo(), _owners.size(), ipromoted, _dlm);
+            }
+        }
+        else
+        {
+            // 2. Assert if the trx is not in the list of Owners for this LogicalLock
+            //    and the lock is owned by some other xct
+            w_assert0 (found && (_dlm != DL_CC_NOLOCK) );            
+        }
+    }
+
     return (ipromoted);
 }
 
