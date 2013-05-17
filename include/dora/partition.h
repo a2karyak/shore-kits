@@ -268,8 +268,7 @@ partition_t<DataType>::partition_t(ShoreEnv* env, table_desc_t* ptable,
 template <class DataType>
 int partition_t<DataType>::enqueue(Action* pAction, const bool bWake)
 {
-
-#ifdef 0 // The verify() is not implemented
+#if 0 // The verify() is not implemented
     if (!verify(*pAction)) 
     {
         TRACE( TRACE_DEBUG, "Try to enqueue to the wrong partition...\n");
