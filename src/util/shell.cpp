@@ -313,7 +313,7 @@ int shell_t::process_fileline()
         return (SHELL_NEXT_QUIT);
     }
     getline(_inputfilestream,cmd_read);
-    cout << "FILECMD: " << cmd_read;
+    cout << "FILECMD: " << cmd_read << endl;
 
     // char* cmd = cmd_read.c_str()
 
