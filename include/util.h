@@ -24,6 +24,8 @@
 #ifndef __UTIL_H
 #define __UTIL_H
 
+#include "k_defines.h"
+#include "kits-config.h"
 
 #include "util/namespace.h"
 #include "util/compat.h"
@@ -42,7 +44,6 @@
 #include "util/pool_alloc.h"
 #include "util/file.h"
 #include "util/progress.h"
-#include "util/history.h"
 #include "util/countdown.h"
 #include "util/confparser.h"
 #include "util/envvar.h"
@@ -56,12 +57,14 @@
 #include "util/procstat.h"
 #include "util/skewer.h"
 
-#ifdef __sparcv9
-#include "util/sunos_procstat.h"
-#include "util/prcinfo.h"
-#else
+#ifdef HAVE_CPUMON
+#ifdef HAVE_GLIBTOP
 #include "util/linux_procstat.h"
 #include "util/topinfo.h"
+#elif defined (HAVE_PROCFS)
+#include "util/sunos_procstat.h"
+#include "util/prcinfo.h"
+#endif
 #endif
 
 #include "util/shell.h"

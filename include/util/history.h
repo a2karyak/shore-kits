@@ -27,7 +27,7 @@
 #include "util/config.h"
 
 
-#if USE_READLINE
+#if HAVE_READLINE
 
 bool history_open();
 bool history_close();

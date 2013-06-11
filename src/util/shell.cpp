@@ -29,10 +29,12 @@
  */
 
 
+#include "k_defines.h"
 #include "util/shell.h"
 #include "util/chomp.h"
 #include "util/tcp.h"
 #include "util/envvar.h"
+#include "util/history.h"
 
 
 void sig_handler_fwd(int sig)
@@ -151,9 +153,11 @@ int shell_t::start()
     init_cmds();
 
     // 5. Open saved command history (optional)
+#ifdef HAVE_READLINE
     if (_save_history) {
         _save_history = history_open();
     }
+#endif
         
     // 6. Command loop
     _state = SHELL_NEXT_CONTINUE;
@@ -181,11 +185,13 @@ int shell_t::start()
     }    
         
     // 5. Save command history (optional)
+#ifdef HAVE_READLINE
     if (_save_history) {
         TRACE( TRACE_ALWAYS, "Saving history. (%d) commands...\n",
                _cmd_counter);
         history_close();
     }
+#endif
 
     // 5. Close all commands
     close_cmds();
@@ -214,7 +220,34 @@ int shell_t::process_readline()
     char *cmd = (char*)NULL;
         
     // Get a line from the user.
+#ifdef HAVE_READLINE
     cmd = readline(_cmd_prompt);
+#else
+#define SZ 127
+#define STR(x) _STR(x)
+#define _STR(x) #x
+    int start = 0;
+    int sz = SZ;
+    cmd = (char*) malloc(sz+1);
+    char end;
+ again:
+    int read = fscanf(stdin, "%" STR(SZ) "[^\n]%c", cmd+start, &end);
+    if (read == 2) {
+        if (end != '\n') {
+            cmd[sz] = end;
+            start = sz+1;
+            sz += SZ;
+            cmd = (char*) realloc(cmd, sz);
+            goto again;
+        }
+        else {
+            cmd[sz] = 0;
+        }
+    }
+#undef SZ
+#undef STR
+#undef _STR
+#endif
     if (cmd == NULL) {
         // EOF
         return (SHELL_NEXT_QUIT);
@@ -349,10 +382,12 @@ int shell_t::process_one(const char* acmd)
     }
         
     // 4. History control
+#ifdef HAVE_READLINE
     if (*acmd) {
         // non-empty line...
         add_history(acmd);
     }
+#endif
 
     // 5. Update stats
     ++_cmd_counter;

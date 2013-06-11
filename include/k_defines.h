@@ -37,7 +37,7 @@
 // If we use the x86-ported branch (aka Nancy's branch) then w_defines.h should
 // be included instead of atomic.h
 
-#ifdef CFG_SHORE_6
+#include "kits-config.h"
 
 #include <w_defines.h>
 #include <atomic_templates.h>
@@ -46,12 +46,6 @@
 typedef queue_based_lock_t mcs_lock;
 
 #include "block_alloc.h"
-
-#else // CFG_SHORE_MT
-
-#include <atomic.h>
-
-#endif
 
 
 #ifdef __SUNPRO_CC

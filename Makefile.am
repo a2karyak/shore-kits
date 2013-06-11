@@ -1,16 +1,10 @@
 # -*- makefile -*-
 
 # Shore related 
-SHORE_SRC = $(SHORE_HOME)/src
+SHORE_SRC = @SHORE_HOME@/src
 SHORE_CXXFLAGS = -DSOLARIS2 -DSTHREAD_CORE_PTHREAD -DARCH_LP64 -DNO_FASTNEW -DW_LARGEFILE -D_POSIX_PTHREAD_SEMANTICS -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS -w
 
-SHORE_INCLUDES = -I$(SHORE_SRC)/fc -I$(SHORE_SRC)/sm -I$(SHORE_SRC)/common -I$(SHORE_SRC)/sthread -I$(SHORE_SRC)/../config $(SHORE_CXXFLAGS)
-
-if USE_SHORE_6
-SHORE_INCLUDES += -I$(SHORE_SRC)/atomic_ops
-else
-SHORE_INCLUDES += -I$(SHORE_HOME)/../ppmcs
-endif
+SHORE_INCLUDES = -I$(SHORE_SRC)/fc -I$(SHORE_SRC)/sm -I$(SHORE_SRC)/common -I$(SHORE_SRC)/sthread -I$(SHORE_SRC)/../config $(SHORE_CXXFLAGS) -I$(SHORE_SRC)/atomic_ops
 
 SHORE_LDADD = \
 	$(SHORE_SRC)/sm/libsm.a \
@@ -18,44 +12,33 @@ SHORE_LDADD = \
 	$(SHORE_SRC)/sthread/libsthread.a \
 	$(SHORE_SRC)/fc/libfc.a
 
+
 ### -lmtmalloc <-- which malloc library will be included is responsibility of configure
 
-if USE_SHORE_6
 SHORE_LDADD += $(SHORE_SRC)/atomic_ops/libatomic_ops.a
+
+READLINE_INCLUDES = @READLINE_INCLUDE@
+READLINE_LIBS = @READLINE_LIB@
+
+if HAVE_GLIBTOP
+CPUMON_INCLUDES = @GLIBTOP_INCLUDE@
+CPUMON_LIBS = @GLIBTOP_LIB@
+CPUMON_SRC = $(SU)/linux_procstat.cpp $(SU)/topinfo.cpp
 else
-SHORE_LDADD += $(SHORE_HOME)/../ppmcs/libppmcs.a
+if HAVE_PROCFS
+CPUMON_INCLUDES = @PROCFS_INCLUDE@
+CPUMON_LIBS = @PROCFS_LIB@
+CPUMON_SRC = $(SU)/sunos_procstat.cpp $(SU)/prcinfo.cpp
+endif
 endif
 
-
-if SPARC_MACHINE
-# Readline includes
-READLINE_INCLUDE = $(READLINE_HOME)/include
-READLINE_LIBS = $(READLINE_HOME)/lib/sparcv9
-# READLINE_INCLUDE = /opt/csw/include
-# READLINE_LIBS = /opt/csw/lib/sparcv9
-
-PROCSTAT_INCLUDES = 
-PROCSTAT_LIBS = 
-else
-READLINE_INCLUDE = $(READLINE_HOME)/include
-READLINE_LIBS = $(READLINE_HOME)/lib
-
-PROCSTAT_INCLUDES = -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -I/usr/lib64/glib-2.0/include -I/usr/include/libgtop-2.0
-PROCSTAT_LIBS = -lgtop-2.0
-endif
-
-if USE_VTUNE
-VTUNE_INCLUDES = -I/opt/intel/vtune_amplifier_xe_2011/include
-VTUNE_LIBS = -L/opt/intel/vtune_amplifier_xe_2011/lib64 -littnotify
-else
-VTUNE_INCLUDES =
-VTUNE_LIBS =
-endif
+VTUNE_INCLUDES = @VTUNE_INCLUDES@
+VTUNE_LIBS = @VTUNE_LIBS@
 
 # GLOBAL includes/ld
-INCLUDES = -I$(top_srcdir)/include $(SHORE_INCLUDES) -I/usr/local/include \
-	-I$(READLINE_INCLUDE) $(PROCSTAT_INCLUDES) $(VTUNE_INCLUDES)
-LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) -L$(READLINE_LIBS) -lreadline $(PROCSTAT_LIBS) $(VTUNE_LIBS)
+INCLUDES = -I$(top_srcdir)/include $(SHORE_INCLUDES) \
+	$(READLINE_INCLUDES) $(CPUMON_INCLUDES) $(VTUNE_INCLUDES)
+LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) $(READLINE_LIBS) $(CPUMON_LIBS) $(VTUNE_LIBS)
 
 # List of libraries
 
@@ -110,15 +93,8 @@ UTIL = \
         $(SU)/tcp.cpp \
         $(SU)/w_strlcpy.cpp \
 	$(SU)/procstat.cpp \
-	$(SU)/skewer.cpp
-
-if SPARC_MACHINE
-UTIL +=	$(SU)/sunos_procstat.cpp \
-        $(SU)/prcinfo.cpp
-else
-UTIL +=	$(SU)/linux_procstat.cpp \
-        $(SU)/topinfo.cpp
-endif
+	$(SU)/skewer.cpp \
+        $(CPUMON_SRC)
 
 UTIL_CMD = \
         $(SU)/command/tracer.cpp \

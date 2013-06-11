@@ -92,9 +92,6 @@ int db_init_smt_t::rv()
 void db_log_smt_t::work() 
 {
     assert (_env);
-#ifndef CFG_SHORE_6
-    _env->db()->flushlog();
-#endif
     _rv = 0;
 }
 

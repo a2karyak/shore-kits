@@ -86,13 +86,8 @@
 #define __SHORE_ROW_H
 
 
+#include "k_defines.h"
 #include "util.h"
-
-#ifdef CFG_SHORE_6
-#include "block_alloc.h"
-#else
-#include "atomic_trash_stack.h"
-#endif
 
 #include "shore_field.h"
 
@@ -112,12 +107,8 @@ ENTER_NAMESPACE(shore);
  *
  * --------------------------------------------------------------- */
 
-#ifdef CFG_SHORE_6
 typedef blob_pool ats_char_t;
 typedef intptr_t offset_t;
-#else
-typedef atomic_class_stack<char> ats_char_t;
-#endif
 
 
 /* ---------------------------------------------------------------

@@ -41,8 +41,10 @@
 #include <errno.h>
 
 // For reading from std::in
+#ifdef HAVE_READLINE
 #include <readline/readline.h>
 #include <readline/history.h>
+#endif
 
 // For reading from network
 #include <sys/types.h>  // for socket
@@ -58,6 +60,7 @@
 #include "util/command/tracer.h"
 
 #include "util.h"
+#include "util/config.h"
 
 using namespace std;
 

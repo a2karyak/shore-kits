@@ -753,11 +753,7 @@ w_rc_t ShoreTPCCEnv::_post_init_impl()
 		vec_t dvec(handle->body(), bsize);
 		vec_t pvec(padding, PADDED_SIZE-bsize);
 		W_DO(db->create_rec(wh_fid, hvec, PADDED_SIZE, dvec, new_rid));
-		W_DO(db->append_rec(new_rid, pvec
-#ifndef CFG_SHORE_6
-                                    , false
-#endif
-                                    ));
+		W_DO(db->append_rec(new_rid, pvec));
                 // for small databases, first padded record fits on this page
                 if (not handle->up_to_date())
                     handle->repin();

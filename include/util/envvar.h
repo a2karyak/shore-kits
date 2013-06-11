@@ -37,8 +37,11 @@
 
 #include <map>
 
+#ifdef HAVE_READLINE
 #include <readline/readline.h>
 #include <readline/history.h>
+#endif
+
 #include <assert.h>
 #include <signal.h>
 #include <errno.h>

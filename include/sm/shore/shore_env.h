@@ -438,12 +438,7 @@ public:
     typedef std::map<string,string> ParamMap;
 
     typedef trx_request_t Request;
-#ifdef CFG_SHORE_6
     typedef blob_pool RequestStack;
-#else
-    typedef atomic_class_stack<trx_request_t> RequestStack;
-#endif
-
     typedef trx_worker_t                Worker;
     typedef trx_worker_t*               WorkerPtr;
     typedef std::vector<WorkerPtr>           WorkerPool;

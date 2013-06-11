@@ -24,14 +24,14 @@
 #ifndef __UTIL_SERVER_CONFIG_H
 #define __UTIL_SERVER_CONFIG_H
 
+#include "kits-config.h"
+
 #define SERVER_COMMAND_BUFFER_SIZE 1024
 
 // Configurable values
 #define SCLIENT_VERSION "v2.1"
 #define SCLIENT_PROMPT  "(sparta) "
 
-// Until we get CC to recognize our libreadline install...
-#define USE_READLINE 1
 
 // Default configuration values
 #define SCLIENT_DIRECTORY_NAME ".shorekits"

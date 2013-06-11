@@ -93,7 +93,6 @@ DECLARE_ENV_CMD(skew);
 DECLARE_ENV_CMD(db_print);
 DECLARE_ENV_CMD(db_fetch);
 DECLARE_ENV_CMD(stats_verbose);
-DECLARE_ENV_CMD(fake_logdelay);
 DECLARE_ENV_CMD(log);
 
 
@@ -217,10 +216,6 @@ protected:
     
     guard<log_cmd_t>            _logger;
     guard<asynch_cmd_t>         _asyncher;
-
-#ifndef CFG_SHORE_6
-    guard<fake_logdelay_cmd_t>  _fakelogdelayer;   
-#endif
 
     guard<sli_cmd_t>            _slier;
     guard<elr_cmd_t>            _elrer;

@@ -29,13 +29,7 @@
  */
 
 #include "sm/shore/shore_shell.h"
-
-
-#ifdef CFG_BT
-#ifndef CFG_SHORE_6
-#include "backtrace.h"
-#endif
-#endif
+#include "k_defines.h"
 
 
 ENTER_NAMESPACE(shore);
@@ -306,7 +300,9 @@ void shore_shell_t::pre_process_cmd()
     // make sure any previous abort is cleared
     base_client_t::resume_test();
 
+#ifdef HAVE_CPUMON
     _g_mon->stat_reset();
+#endif
 }
 
 
@@ -775,10 +771,6 @@ int shore_shell_t::register_commands()
     REGISTER_CMD_PARAM(log_cmd_t,_logger,_env);
     REGISTER_CMD_PARAM(asynch_cmd_t,_asyncher,_env);
 
-#ifndef CFG_SHORE_6
-    REGISTER_CMD_PARAM(fake_logdelay_cmd_t,_fakelogdelayer,_env);
-#endif
-	
     REGISTER_CMD_PARAM(sli_cmd_t,_slier,_env);
     REGISTER_CMD_PARAM(elr_cmd_t,_elrer,_env);
 
@@ -1166,6 +1158,7 @@ int stats_verbose_cmd_t::handle(const char* cmd)
     }
     assert (_env);
 
+#ifdef HAVE_CPUMON
     if(0 == strcasecmp("on", s)) {
 	_g_mon->set_print_verbose(true);
 	TRACE( TRACE_ALWAYS, "Verbose statistics will be printed every second during a measurement!\n" );
@@ -1175,6 +1168,9 @@ int stats_verbose_cmd_t::handle(const char* cmd)
     } else {
 	usage();
     }
+#else
+    TRACE (TRACE_ALWAYS, "CPU Monitoring not configured, verbose stats not available\n");
+#endif
 
     return (SHELL_NEXT_CONTINUE);
 }
@@ -1273,84 +1269,6 @@ string db_fetch_cmd_t::desc() const
 { 
     return (string("To fetch  the pages of the current db tables and their indexes into the buffer pool.")); 
 }
-
-
-#ifndef CFG_SHORE_6
-/*********************************************************************
- *
- *  "fake_logdelay" command
- *
- *********************************************************************/
-
-void fake_logdelay_cmd_t::setaliases() 
-{ 
-    _name = string("logdelay"); 
-    _aliases.push_back("logdelay"); 
-}
-
-int fake_logdelay_cmd_t::handle(const char* cmd)
-{
-#ifdef CFG_SHORE_6
-    TRACE( TRACE_ALWAYS, "In Shore-SM doing nothing\n"); 
-    return (SHELL_NEXT_CONTINUE);
-#endif
-
-    char logdelay_tag[SERVER_COMMAND_BUFFER_SIZE];    
-    if ( sscanf(cmd, "%*s %s", logdelay_tag) < 1) {
-        // prints all the pssm
-        usage();
-        return (SHELL_NEXT_CONTINUE);
-    }
-    
-    if(0 == strcasecmp("on", logdelay_tag)) {
-	W_COERCE(ss_m::enable_fake_log_latency());
-    }
-    else if(0 == strcasecmp("off", logdelay_tag)) {
-	W_COERCE(ss_m::disable_fake_log_latency());
-    }
-    else if(0 == strcasecmp("get", logdelay_tag)) {
-	// do nothing...
-    }
-    else {
-	int delay = atoi(logdelay_tag);
-	if(delay < 0 || delay > 1000*1000) {
-	    usage();
-	}
-	else {
-	    W_COERCE(ss_m::set_fake_log_latency(delay));
-	    if (!delay>0) {
-		W_COERCE(ss_m::disable_fake_log_latency());
-		W_COERCE(ss_m::set_fake_log_latency(0));
-	    }
-	    else {
-		W_COERCE(ss_m::set_fake_log_latency(delay));
-		W_COERCE(ss_m::enable_fake_log_latency());
-	    }
-	}
-    }
-
-    int tmp=0;
-    bool enabled = false;
-    W_COERCE(ss_m::get_fake_log_latency(enabled, tmp));
-    TRACE( TRACE_ALWAYS, "LOGDELAY=%d (%s)\n", tmp, enabled? "enabled" : "disabled");
-    return (SHELL_NEXT_CONTINUE);
-}
-
-void fake_logdelay_cmd_t::usage()
-{
-    TRACE( TRACE_ALWAYS, "LOGDELAY Usage:\n\n"                           \
-           "*** logdelay <DELAY>\n"                                      \
-           "\nParameters:\n"                                            \
-           "<DELAY> - the enforced fake io delay, if 0 disables fake io delay\n\n");
-}
-
-string fake_logdelay_cmd_t::desc() const
-{
-    return string("Sets the fake log disk delay");
-}
-
-#endif
-
 
 
 /*********************************************************************
@@ -1546,58 +1464,6 @@ void bt_cmd_t::setaliases()
     _aliases.push_back("bt"); 
 }
 
-#ifndef CFG_SHORE_6
-int bt_cmd_t::handle(const char* cmd)
-{
-#define CMDLEN 10
-#define FNLEN 100
-    char subcmd[CMDLEN+1];
-    char fname[FNLEN+1];
-    int count = sscanf(cmd, "%*s %10s %100s", subcmd, fname);
-    switch(count) {
-    case 0:
-	backtrace_set_enabled(!backtrace_get_enabled());
-	break;
-    case 1:
-	if(0 == strcmp("on", subcmd))
-	    backtrace_set_enabled(true);
-	else if(0 == strcmp("off", subcmd))
-	    backtrace_set_enabled(false);
-	else {
-	    TRACE(TRACE_ALWAYS, "Invalid argument: %s\n", cmd);
-	}
-	break;
-    case 2:
-	if(0 == strcmp("print", subcmd)) {
-	    if(0 < strlen(fname)) {
-		FILE* f = fopen(fname, "w");
-		backtrace_print_all(f);
-		fclose(f);
-	    }
-	    break;
-	}
-	// else fall through
-    default:
-	TRACE(TRACE_ALWAYS, "Invalid argument: %s\n", cmd);
-	break;
-    }
-    TRACE( TRACE_ALWAYS, "BT=%d\n", backtrace_get_enabled());
-    return (SHELL_NEXT_CONTINUE);
-}
-
-void bt_cmd_t::usage()
-{
-    TRACE( TRACE_ALWAYS, "BT Usage:\n\n"        \
-           "*** bt [on|off|print fname]\n\n");
-}
-
-string bt_cmd_t::desc() const 
-{
-    return (string("Enables/disables/prints collection of backtrace information"));
-}
-
-#else
-
 int bt_cmd_t::handle(const char* cmd)
 {
 #define CMDLEN 10
@@ -1629,7 +1495,6 @@ string bt_cmd_t::desc() const
     return (string("Enables/disables PLP tracing at shore-sm-6"));
 }
 
-#endif // CFG_SHORE_6
 #endif // CFG_BT
 
 

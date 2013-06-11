@@ -49,6 +49,8 @@
 #include "workload/tpce/shore_tpce_env.h"
 #include "workload/tpce/shore_tpce_client.h"
 
+#include "k_defines.h"
+
 #ifdef CFG_SIMICS
 #include "util/simics-magic-instruction.h"
 #endif
@@ -244,8 +246,10 @@ int kit_t<Client,DB>::inst_test_env(int argc, char* argv[])
 {    
     // 1. Instanciate the Shore Environment
     _env = _dbinst = new DB();
+#ifdef HAVE_CPUMON
     assert (_g_mon);
     _env->set_max_cpu_count(_g_mon->get_num_of_cpus());
+#endif
 
     // 2. Initialize the Shore Environment
     // the initialization must be executed in a shore context
@@ -336,7 +340,9 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const double iQueriedSF,
         _env->reset_stats();
 
         // reset monitor stats
+#ifdef HAVE_CPUMON
         _g_mon->cntr_reset();
+#endif
 
         // set measurement state to measure - start counting everything
 	TRACE(TRACE_ALWAYS, "begin measurement\n");
@@ -371,14 +377,22 @@ int kit_t<Client,DB>::_cmd_TEST_impl(const double iQueriedSF,
 
 	double delay = timer.time();
         //xct_stats stats = shell_get_xct_stats();
+#ifdef HAVE_CPUMON
         _g_mon->cntr_pause();
         ulong_t miochs = _g_mon->iochars()/MILLION;
+        double usage = _g_mon->get_avg_usage(true);
+#else
+        ulong_t miochs = 0;
+        double usage = 0;
+#endif
 	TRACE(TRACE_ALWAYS, "end measurement\n");
         _env->print_throughput(iQueriedSF,iSpread,iNumOfThreads,delay,
-                               miochs, _g_mon->get_avg_usage(true));
-
+                               miochs, usage);
+        
+#ifdef HAVE_CPUMON
         _g_mon->print_load(delay);
         _g_mon->print_ext_stats();
+#endif
         
         // flush the log before the next iteration
 	_env->set_measure(MST_PAUSE);
@@ -460,8 +474,10 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const double iQueriedSF,
 		   (j+1), iIterations);
 
 	    // reset cpu monitor
+#ifdef HAVE_CPUMON
 	    _g_mon->cntr_reset();
-
+#endif
+            
 	    // set measurement state
 	    TRACE(TRACE_ALWAYS, "begin measurement\n");
 	    _env->set_measure(MST_MEASURE);
@@ -478,15 +494,23 @@ int kit_t<Client,DB>::_cmd_MEASURE_impl(const double iQueriedSF,
 	    continue;
 	}
 	delay += timer.time();
+#ifdef HAVE_CPUMON
         _g_mon->cntr_pause();
-	TRACE(TRACE_ALWAYS, "end measurement\n");
         ulong_t miochs = _g_mon->iochars()/MILLION;
+        double usage = _g_mon->get_avg_usage(true);
+#else
+        ulong_t miochs = 0;
+        double usage = 0;
+#endif
+	TRACE(TRACE_ALWAYS, "end measurement\n");
         _env->print_throughput(iQueriedSF,iSpread,iNumOfThreads,delay,
-                               miochs, _g_mon->get_avg_usage(true));
+                               miochs, usage);
 
+#ifdef HAVE_CPUMON
         _g_mon->print_load(delay);
         _g_mon->print_ext_stats();
-	       
+#endif
+        
         // flush the log before the next iteration
 	_env->set_measure(MST_PAUSE);
         TRACE( TRACE_DEBUG, "db checkpoint - start\n");
@@ -850,12 +874,14 @@ int main(int argc, char* argv[])
     w_assert0 (kit.get());
 
     // Create and fork the process monitor
-#ifdef __sparcv9
+#ifdef HAVE_CPUMON
+#ifdef HAVE_GLIBTOP
+    _g_mon = new linux_procmonitor_t(NULL);
+#elif defined(HAVE_PROCFS)
     _g_mon = new sunos_procmonitor_t(NULL);
-#else
-    _g_mon = new linux_procmonitor_t(NULL); 
 #endif
     w_assert0 (_g_mon);
+#endif
 
     // Instanciate and start the Shore environment
     TRACE ( TRACE_ALWAYS, "Starting Shore Environment\n" );
@@ -880,9 +906,11 @@ int main(int argc, char* argv[])
         return (9);
     }
 
+#ifdef HAVE_CPUMON
     // Start the system monitoring thread
     _g_mon->setEnv(kit->db());
     _g_mon->fork();
+#endif
 
     // Start processing commands
     TRACE ( TRACE_ALWAYS, "Starting processing commands\n" );
@@ -897,10 +925,12 @@ int main(int argc, char* argv[])
     // Dump the statistics before exiting
     kit->db()->statistics();
 
+#ifdef HAVE_CPUMON
     // Stop, join, and delete the cpu monitor
     _g_mon->cntr_stop();
     _g_mon->join();
     delete (_g_mon);
+#endif
 
     // The Shore environment will close at the destructor of the kit
     return (0);

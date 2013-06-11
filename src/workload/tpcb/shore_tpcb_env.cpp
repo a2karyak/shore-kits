@@ -763,11 +763,7 @@ w_rc_t ShoreTPCBEnv::_pad_BRANCHES()
 		vec_t dvec(handle->body(), bsize);
 		vec_t pvec(padding, PADDED_SIZE-bsize);
 		W_DO(db->create_rec(br_fid, hvec, PADDED_SIZE, dvec, new_rid));
-		W_DO(db->append_rec(new_rid, pvec
-#ifndef CFG_SHORE_6
-                                    , false
-#endif
-                                    ));
+		W_DO(db->append_rec(new_rid, pvec));
 
                 // mark the old record for deletion
 		hit_list.push_back(handle->rid());
@@ -911,11 +907,7 @@ w_rc_t ShoreTPCBEnv::_pad_TELLERS()
 		vec_t dvec(handle->body(), bsize);
 		vec_t pvec(padding, PADDED_SIZE-bsize);
 		W_DO(db->create_rec(te_fid, hvec, PADDED_SIZE, dvec, new_rid));
-		W_DO(db->append_rec(new_rid, pvec
-#ifndef CFG_SHORE_6
-                                    , false
-#endif
-                                    ));
+		W_DO(db->append_rec(new_rid, pvec));
 
                 // mark the old record for deletion
 		hit_list.push_back(handle->rid());

@@ -21,18 +21,17 @@
    RESULTING FROM THE USE OF THIS SOFTWARE.
 */
 
-#include "util/history.h"
 #include "util/c_str.h"
 #include "util/trace.h"
 
+#include "k_defines.h"
+#include "util/config.h"
 
 /*
   This whole module is only necessary if we are using readline.
 */
+#ifdef HAVE_READLINE
 
-#if USE_READLINE
-
-#include "k_defines.h"
 
 #include <sys/stat.h>
 #include <sys/types.h>

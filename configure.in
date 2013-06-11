@@ -24,6 +24,7 @@ USERCXXFLAGS="$CXXFLAGS"
 # the autoconf distribution) in our source tree!)
 AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE
+AC_LANG(C++)
 
 AC_PREREQ(2.50)
 AC_PROG_CXX
@@ -125,50 +126,132 @@ fi
 
 
 # ----------- Readline location -------------
-READLINE_HOME_DEFAULT="/usr"
-AC_ARG_VAR(READLINE_HOME, Location of Readline Installation; default is $READLINE_HOME_DEFAULT)
-AC_MSG_CHECKING(Readline location)
-if test -z $READLINE_HOME; then
-    READLINE_HOME=$READLINE_HOME_DEFAULT
-fi
-# check if valid readline target dir
-if ! test -d $READLINE_HOME -a -f $READLINE_HOME/include/readline/readline.h; then
-    AC_ERROR([
-            Not valid readline include directory at $READLINE_HOME/include;
-            Please run ./configure READLINE_HOME=where readline/readline.h is located])
-fi
+AC_ARG_WITH([readline],
+  [AS_HELP_STRING([--with-readline],
+                  [support fancy command line editing @<:@default=check@:>@])],
+  [if test -z "$with_readline"; then with_readline=yes; fi],
+  [with_readline=check])
 
-AC_MSG_RESULT($READLINE_HOME)
-# ----------- EOF Readline location -------------
+if test "x$with_readline" != "xno"; then
+  CPPFLAGS_SAVE="$CPP_FLAGS"
+  LDFLAGS_SAVE="$LDFLAGS"
+  case "$with_readline" in
+    yes | no | check )
+      CPPFLAGS=
+      LDFLAGS=
+      ;;
+    * )
+      READLINE_HOME=$with_readline
+      CPPFLAGS="-I$with_readline/include"
+      LDFLAGS="-L$with_readline/lib -L$with_readline/lib64 -L$with_readline/lib/64"
+      ;;
+  esac
 
+  AC_CHECK_HEADERS([readline/readline.h],
+    [],
+    [if test "$with_readline" == "check"; then
+       with_readline=no
+     else
+       AC_MSG_FAILURE([Readline requested but headers not found])
+     fi])
+     
+  if test "$with_readline" != "no"; then
+    AC_CHECK_LIB([readline], [readline],
+      [],
+      [if test "$with_readline" == "check"; then
+         with_readline=no
+       else
+         AC_MSG_FAILURE([Readline requested but library not found])
+       fi],
+      [])
+  fi
+
+  if test "$with_readline" != "no"; then
+    AC_DEFINE(HAVE_READLINE, [1], [Readline library is available])
+    AC_SUBST([READLINE_INCLUDE], ["$CPPFLAGS"])
+    AC_SUBST([READLINE_LIB], ["$LDFLAGS"])
+  fi
+  
+  CPPFLAGS="$CPPFLAGS_SAVE"
+  LDFLAGS="$LDFLAGS_SAVE"
+fi
+AC_MSG_CHECKING(for readline)
+AC_MSG_RESULT($with_readline)
+
+# ----------- Glibtop location -------------
+AC_ARG_WITH([glibtop],
+  [AS_HELP_STRING([--with-glibtop],
+                  [Use glibtop-2.0 to report CPU utilization @<:@default=check@:>@])],
+  [PKG_CHECK_MODULES([GTOP], [libgtop-2.0])
+   AC_DEFINE(HAVE_GLIBTOP, [1], [Glibtop available])
+   AC_SUBST([GLIBTOP_INCLUDE], ["$GTOP_CFLAGS"])
+   AC_SUBST([GLIBTOP_LIB], ["$GTOP_LIBS"])
+   ], [with_glibtop=no]
+   )
+AC_MSG_CHECKING(for glibtop)
+AC_MSG_RESULT($with_glibtop)
+
+# ----------- Solaris procfs support -------------
+AC_ARG_WITH([procfs],
+  [AS_HELP_STRING([--with-procfs],
+                  [Use Solaris procfs to report CPU utilization @<:@default=check@:>@])],
+  [if test -z "$with_procfs"; then with_procfs=yes; fi],
+  [with_procfs=check])
+
+if test "x$with_procfs" != "xno"; then
+  AC_CHECK_HEADERS([procfs.h],
+    [],
+    [if test "$with_procfs" == "check"; then
+       with_procfs=no
+     else
+       AC_MSG_FAILURE([Procfs requested but headers not found])
+     fi])
+     
+  if test "$with_procfs" != "no"; then
+    AC_DEFINE(HAVE_PROCFS, [1], [Procfs available])
+    AC_SUBST([PROCFS_INCLUDE], [""])
+    AC_SUBST([PROCFS_LIB], [""])
+  fi
+fi
+AC_MSG_CHECKING(for procfs)
+AC_MSG_RESULT($with_procfs)
+
+AC_MSG_CHECKING(for CPU monitoring utility)
+if test "$with_glibtop" != "no"; then
+  if test "$with_procfs" != "no"; then
+    AC_MSG_RESULT([glibtop procfs (using glibtop)])
+  else
+    AC_MSG_RESULT([glibtop])
+  fi
+  AM_CONDITIONAL(HAVE_GLIBTOP, true)
+  AM_CONDITIONAL(HAVE_PROCFS, false)
+  AC_DEFINE(HAVE_CPUMON, [1], [CPU monitoring available])
+elif test "$with_procfs" != "no"; then
+  AC_MSG_RESULT([procfs])
+  AM_CONDITIONAL(HAVE_GLIBTOP, false)
+  AM_CONDITIONAL(HAVE_PROCFS, true)
+  AC_DEFINE(HAVE_CPUMON, [1], [CPU monitoring available])
+else
+  AM_CONDITIONAL(HAVE_GLIBTOP, false)
+  AM_CONDITIONAL(HAVE_PROCFS, false)\
+  AC_MSG_RESULT([none])
+fi
 
 # ----------- Shore-SM target dir -------------
-# $target is typically processor-vendor-os
-SHORE_HOME_DEFAULT="$HOME/apps/shore"
+AC_MSG_CHECKING(for Shore-MT)
+AC_ARG_WITH(shore,
+[AS_HELP_STRING([--with-shore=/path/to/shore],
+[specify prefix directory for Shore-MT (required)])])
 
-# check user input
-AC_ARG_VAR(SHORE_HOME, Location of Shore Installation; default is $SHORE_HOME_DEFAULT)
-
-# if no user param for Shore-SM target dir, then set default
-AC_MSG_CHECKING(Shore directory)
-if test -z $SHORE_HOME; then
-    SHORE_HOME=$SHORE_HOME_DEFAULT
-fi
-
-# check if valid Shore-SM target dir
-if ! test -d $SHORE_HOME -a -f $SHORE_HOME/src/common/sm_vas.h; then
-    if ! test -d $SHORE_HOME -a -f $SHORE_HOME/include/sm_vas.h; then
-    AC_ERROR([
-            Not valid installed Shore directory at $SHORE_HOME;
-            Please run ./configure SHORE_HOME=where shore is located])
-    else
-    AC_ERROR([
-            Not valid Shore directory at $SHORE_HOME;
-            Please run ./configure SHORE_HOME=where shore is located])
-    fi
+if test "x$with_shore" == x -o "x$with_shore" == xno -o "x$with_shore" == xyes; then
+  SHORE_HOME=no
+else
+  SHORE_HOME=$with_shore
 fi
 
 AC_MSG_RESULT($SHORE_HOME)
+AC_SUBST(SHORE_HOME)
+
 # ----------- EOF Shore-SM target dir -------------
 
 
@@ -426,7 +509,6 @@ AM_CONDITIONAL(LINUX_OS, test "$OS" = "LINUX")
 KITS_FEATURES=""
 
 # Supported options:
-# (1)  --enable-shore6      : If compiling against shore-storage-manager-6.X.X (the x86_64 port)
 # (2)  --enable-dora        : includes dora files, (sets USE_DORA=1), defines CFG_DORA
 # (4)  --enable-flusher     : defines CFG_FLUSHER
 # (6)  --enable-qpipe       : includes QPipe files, (sets USE_QPIPE=1), defines CFG_QPIPE
@@ -435,33 +517,6 @@ KITS_FEATURES=""
 # (9)  --enable-hacks       : enables the hacks (e.g., the padding in WH,DI of TPC-C, and the partitioned OL_IDX)
 # (10) --enable-vtune       : to pause/resume vtune within the program, (sets USE_VTUNE=1), defines CFG_VTUNE
 
-
-
-# --- Shore MT or SM-6.X.X ---
-SHORE_TYPE=""
-AC_MSG_CHECKING(whether using Shore-MT or Shore-SM-6.X.X)
-AC_ARG_ENABLE(shore6, 
-[  --enable-shore6         Enable Shore-SM-6.X.X],
-[case "${enableval}" in
-  yes) shore6=true ;;
-  no)  shore6=false ;;
-  *) shore6=false ;;
-esac],[shore6=false])
-AM_CONDITIONAL(USE_SHORE_6, test x$shore6 = xtrue)
-
-if test "$shore6" = true
-then 
-     AC_MSG_RESULT(yes)
-     SHORE_TYPE="Shore-SM-6.X.X"
-     AC_MSG_WARN([Using Shore-SM-6.X.X])
-     AC_DEFINE(CFG_SHORE_6)
-else
-     AC_MSG_RESULT(no)
-     SHORE_TYPE="Shore-MT"
-     AC_MSG_WARN([Using Shore-MT])
-     AC_DEFINE(CFG_SHORE_MT)
-fi
-# --- EOF Shore MT or SM-6.X.X ---
 
 
 # --- DORA ---
@@ -480,7 +535,7 @@ then
      AC_MSG_RESULT(yes)
      KITS_FEATURES="$KITS_FEATURES dora"
      AC_MSG_WARN([Dora enabled. Should check if Shore-SM is Dora-compatible])
-     AC_DEFINE(CFG_DORA)
+     AC_DEFINE(CFG_DORA, [1], [Dora enabled])
 else
      AC_MSG_RESULT(no)
 fi
@@ -504,7 +559,7 @@ then
      AC_MSG_RESULT(yes)
      KITS_FEATURES="$KITS_FEATURES flusher"
      AC_MSG_WARN([FLUSHER enabled.])
-     AC_DEFINE(CFG_FLUSHER)
+     AC_DEFINE(CFG_FLUSHER, [1], [Flusher enabled])
 
      # Special case: warn about FLUSHER without ELR
      if test "$elr" = false
@@ -532,7 +587,7 @@ if test "$caches" = true
 then 
      AC_MSG_RESULT(yes)
      KITS_FEATURES="$KITS_FEATURES caches"
-     AC_DEFINE(CFG_CACHES)
+     AC_DEFINE(CFG_CACHES, 1, [Object caches enabled])
 else
      AC_MSG_RESULT(no)
      AC_MSG_WARN([Used for debugging purposes])
@@ -556,7 +611,7 @@ then
      AC_MSG_RESULT(yes)
      KITS_FEATURES="$KITS_FEATURES simics"
      AC_MSG_WARN([Adding Simics magic instructions])
-     AC_DEFINE(CFG_SIMICS)
+     AC_DEFINE(CFG_SIMICS, 1, [Using Simic magic instructions])
 else
      AC_MSG_RESULT(no)
 fi
@@ -579,7 +634,7 @@ then
      AC_MSG_RESULT(yes)
      KITS_FEATURES="$KITS_FEATURES backtracing"
      AC_MSG_WARN([Enabling backtracing])
-     AC_DEFINE(CFG_BT)
+     AC_DEFINE([CFG_BT], [1], [Backtracing enabled])
 else
      AC_MSG_RESULT(no)
 fi
@@ -603,7 +658,7 @@ then
      AC_MSG_RESULT(yes)
      KITS_FEATURES="$KITS_FEATURES hacks"
      AC_MSG_WARN([Enabling hacks])
-     AC_DEFINE(CFG_HACK)
+     AC_DEFINE(CFG_HACK, 1, [Enabling various performance hacks])
 else
      AC_MSG_RESULT(no)
 fi
@@ -626,7 +681,7 @@ then
      AC_MSG_RESULT(yes)
      KITS_FEATURES="$KITS_FEATURES qpipe"
      AC_MSG_WARN([Enabling QPipe])
-     AC_DEFINE(CFG_QPIPE)
+     AC_DEFINE(CFG_QPIPE, 1, [Enable QPipe])
 else
      AC_MSG_RESULT(no)
 fi
@@ -635,24 +690,21 @@ fi
 
 # --- VTUNE ---
 AC_MSG_CHECKING(whether to enable VTune)
-AC_ARG_ENABLE(vtune, 
-[  --enable-vtune           Enable VTUNE],
-[case "${enableval}" in
-  yes) vtune=true ;;
-  no)  vtune=false ;;
-  *) vtune=true ;;
-esac],[vtune=false])
-AM_CONDITIONAL(USE_VTUNE, test x$vtune = xtrue)
-
-if test "$vtune" = true
-then 
-     AC_MSG_RESULT(yes)
-     KITS_FEATURES="$KITS_FEATURES vtune"
-     AC_MSG_WARN([VTUNE enabled.])
-     AC_DEFINE(CFG_VTUNE)
-else
-     AC_MSG_RESULT(no)
-fi
+AC_ARG_WITH([vtune],
+  [AS_HELP_STRING([--with-vtune],
+    [Specify location vtune install (empty means location is well-known)])],
+  [AC_MSG_RESULT(yes)
+    AC_DEFINE(CFG_VTUNE, 1, [Enabling VTune])
+    KITS_FEATURES="$KITS_FEATURES vtune"
+    if test "x$with_vtune" != "x" -a "x$with_vtune" != "xyes"; then
+      AC_SUBST([VTUNE_INCLUDES], ["-I$with_vtune/include"])
+      AC_SUBST([VTUNE_LIBS], ["-L$with_vtune/lib -L$with_vtune/lib/64 -L$with_vtune/lib64 -littnotify"])
+    else
+      AC_SUBST([VTUNE_LIBS], ["-littnotify"])
+    fi
+  ],
+  [AC_MSG_RESULT(no)])
+  
 # --- EOF VTUNE ---
 
 
@@ -695,6 +747,7 @@ define([MY_AC_CONFIG_EXE_FILES],
   fi
 }])
 #MY_AC_CONFIG_FILES([Makefile src/Makefile])
+AC_CONFIG_HEADERS([include/kits-config.h])
 AC_CONFIG_FILES([ Makefile ])
 
 AC_OUTPUT()
@@ -707,7 +760,6 @@ Shore Kits configuration:
   Home:            KITS_HOME      $KITS_HOME	
   Features:        KITS_FEATURES  $KITS_FEATURES
   Shore SM home:   SHORE_HOME     $SHORE_HOME
-  Shore SM type:   SHORE_TYPE     $SHORE_TYPE
   Readline home:   READLINE_HOME  $READLINE_HOME
   CXX compiler:    CXX            $CXX
   CXX version:     CXX_VERSION    $KITS_CXX_VERSION
