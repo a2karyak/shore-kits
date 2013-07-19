@@ -55,7 +55,6 @@
 #include "util/simics-magic-instruction.h"
 #endif
 
-#ifdef CFG_DORA
 #include "dora.h"
 #include "dora/tpcc/dora_tpcc.h"
 #include "dora/tpcc/dora_tpcc_client.h"
@@ -63,7 +62,6 @@
 #include "dora/tm1/dora_tm1_client.h"
 #include "dora/tpcb/dora_tpcb.h"
 #include "dora/tpcb/dora_tpcb_client.h"
-#endif
 
 #ifdef CFG_VTUNE
 #include <ittnotify.h> // VTune API definitions
@@ -83,10 +81,8 @@ using namespace tpce;
 
 //////////////////////////////
 // Prints out configuration info
-#ifdef CFG_DORA
 #warning Configuration: DORA enabled
 using namespace dora;
-#endif
 
 #ifdef CFG_FLUSHER
 #warning Configuration: FLUSHER/GROUPCOMMIT enabled
@@ -567,11 +563,9 @@ typedef kit_t<baseline_ssb_client_t,ShoreSSBEnv> baselineSSBKit;
 typedef kit_t<baseline_tpce_client_t,ShoreTPCEEnv> baselineTPCEKit;
 
 
-#ifdef CFG_DORA
 typedef kit_t<dora_tpcc_client_t,DoraTPCCEnv> doraTPCCKit;
 typedef kit_t<dora_tm1_client_t,DoraTM1Env> doraTM1Kit;
 typedef kit_t<dora_tpcb_client_t,DoraTPCBEnv> doraTPCBKit;
-#endif
 
 ////////////////////////////////
 
@@ -752,14 +746,12 @@ int main(int argc, char* argv[])
             dbname += "base) ";
             kit = new baselineTPCCKit(dbname.c_str(),netmode,netport,inputfilemode,inputfile);
             break;
-#ifdef CFG_DORA
         case snDORA:
             dbname += "dora) "; nameset=true;
         case snPLP:
             if (!nameset) dbname += "plp) ";
             kit = new doraTPCCKit(dbname.c_str(),netmode,netport,inputfilemode,inputfile);
             break;
-#endif
         default:
             TRACE( TRACE_ALWAYS, "Not supported configuration. Exiting...\n");
             return (3);
@@ -774,14 +766,12 @@ int main(int argc, char* argv[])
             dbname += "base) ";
             kit = new baselineTM1Kit(dbname.c_str(),netmode,netport,inputfilemode,inputfile);
             break;
-#ifdef CFG_DORA
         case snDORA:
             dbname += "dora) "; nameset=true;
         case snPLP:
             if (!nameset) dbname += "plp) ";
             kit = new doraTM1Kit(dbname.c_str(),netmode,netport,inputfilemode,inputfile);
             break;
-#endif
         default:
             TRACE( TRACE_ALWAYS, "Not supported configuration. Exiting...\n");
             return (4);
@@ -796,14 +786,12 @@ int main(int argc, char* argv[])
             dbname += "base) ";
             kit = new baselineTPCBKit(dbname.c_str(),netmode,netport,inputfilemode,inputfile);
             break;
-#ifdef CFG_DORA
         case snDORA:
             dbname += "dora) "; nameset=true;
         case snPLP:
             if (!nameset) dbname += "plp) ";
             kit = new doraTPCBKit(dbname.c_str(),netmode,netport,inputfilemode,inputfile);
             break;
-#endif
         default:
             TRACE( TRACE_ALWAYS, "Not supported configuration. Exiting...\n");
             return (5);
@@ -816,13 +804,11 @@ int main(int argc, char* argv[])
         case snBaseline:
             kit = new baselineTPCHKit("(tpch-base) ",netmode,netport,inputfilemode,inputfile);
             break;
-#ifdef CFG_DORA
         case snDORA:
             dbname += "dora) "; nameset=true;
             assert (0); // TODO
             //kit = new doraTPCHKit("(tpch-dora) ",netmode,netport,inputfilemode,inputfile);
             break;
-#endif
         default:
             TRACE( TRACE_ALWAYS, "Not supported configuration. Exiting...\n");
             return (5);
@@ -836,13 +822,11 @@ int main(int argc, char* argv[])
         case snBaseline:
             kit = new baselineSSBKit("(ssb-base) ",netmode,netport,inputfilemode,inputfile);
             break;
-#ifdef CFG_DORA
         case snDORA:
             dbname += "dora) "; nameset=true;
             assert (0); // TODO
             //kit = new doraSSBKit("(ssb-dora) ",netmode,netport,inputfilemode,inputfile);
             break;
-#endif
         default:
             TRACE( TRACE_ALWAYS, "Not supported configuration. Exiting...\n");
             return (5);
@@ -857,13 +841,11 @@ int main(int argc, char* argv[])
         case snBaseline:
             kit = new baselineTPCEKit("(tpce-base) ",netmode,netport,inputfilemode,inputfile);
             break;
-#ifdef CFG_DORA
         case snDORA:
             dbname += "dora) "; nameset=true;
             assert (0); // TODO
             //kit = new doraTPCEKit("(tpce-dora) ",netmode,netport,inputfilemode,inputfile);
             break;
-#endif
         default:
             TRACE( TRACE_ALWAYS, "Not supported configurations. Exiting...\n");
             return (5);

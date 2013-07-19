@@ -82,7 +82,7 @@
    }
 
    In order to enable this mechanism Shore-kits needs to be configured with:
-   --enable-dora --enable-dflusher
+   --enable-dflusher
 */
 
 #ifndef __DORA_FLUSHER_H

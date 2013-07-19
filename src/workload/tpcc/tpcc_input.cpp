@@ -123,7 +123,6 @@ new_order_input_t::operator= (const new_order_input_t& rhs)
 }
 
 
-#ifdef CFG_DORA
 void 
 new_order_input_t::get_no_item_input(no_item_nord_input_t& anoin)
 {
@@ -194,7 +193,6 @@ with_item_nord_input_t::operator= (const with_item_nord_input_t& rhs)
 
     return (*this);
 }
-#endif
 
 
 /********************************************************************* 

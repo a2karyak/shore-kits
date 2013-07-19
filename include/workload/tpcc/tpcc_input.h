@@ -54,11 +54,9 @@ extern bool _change_load;
  *
  *********************************************************************/
 
-#ifdef CFG_DORA
 // Forward declaration
 struct no_item_nord_input_t;
 struct with_item_nord_input_t;
-#endif
 
 struct ol_item_info 
 {
@@ -108,16 +106,13 @@ struct new_order_input_t
     // Assignment operator
     new_order_input_t& operator= (const new_order_input_t& rhs);
 
-#ifdef CFG_DORA
     // Convertion functions
     void get_no_item_input(no_item_nord_input_t& anoin);
     void get_with_item_input(with_item_nord_input_t& awin, const int idx);
-#endif
 
 }; // EOF: new_order_input_t
 
 
-#ifdef CFG_DORA
 // IP: The following two structs are used by DoraNewOrder
 // Instead of copying the whole NewOrder input the actions that do not use any 
 // item they use no_item_nord_input which contains only the basic fields. 
@@ -163,7 +158,6 @@ struct with_item_nord_input_t
     with_item_nord_input_t& operator= (const with_item_nord_input_t& rhs);
 
 }; // EOF: with_item_nord_input_t
-#endif
 
 
 /*********************************************************************

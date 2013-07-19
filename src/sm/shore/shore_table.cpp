@@ -982,10 +982,8 @@ w_rc_t table_man_t::index_probe(ss_m* db,
                               vec_t(ptuple->_rep->_dest, key_sz),
                               &(ptuple->_rid),
                               len,
-                              found
-#ifdef CFG_DORA
-                              ,bIgnoreLocks
-#endif
+                              found,
+                              bIgnoreLocks
                               ));
     }
 
@@ -1057,10 +1055,8 @@ w_rc_t table_man_t::add_tuple(ss_m* db,
                         vec_t(), 
                         tsz,
                         vec_t(ptuple->_rep->_dest, tsz),
-                        ptuple->_rid
-#ifdef CFG_DORA
-                        ,bIgnoreLocks
-#endif
+                        ptuple->_rid,
+                        bIgnoreLocks
                         ));
 
     // update the indexes
@@ -1090,10 +1086,8 @@ w_rc_t table_man_t::add_tuple(ss_m* db,
         else {
             W_DO(db->create_assoc(index->fid(pnum),
                                   vec_t(ptuple->_rep->_dest, ksz),
-                                  vec_t(&(ptuple->_rid), sizeof(rid_t))
-#ifdef CFG_DORA
-                                  ,bIgnoreLocks
-#endif
+                                  vec_t(&(ptuple->_rid), sizeof(rid_t)),
+                                  bIgnoreLocks
                                   ));
         }
         // move to next index
@@ -1160,10 +1154,8 @@ w_rc_t table_man_t::add_index_entry(ss_m* db,
     else {
 	W_DO(db->create_assoc(pindex->fid(pnum),
 			      vec_t(ptuple->_rep->_dest, ksz),
-			      vec_t(&(ptuple->_rid), sizeof(rid_t))
-#ifdef CFG_DORA
-			      ,bIgnoreLocks
-#endif
+			      vec_t(&(ptuple->_rid), sizeof(rid_t)),
+			      bIgnoreLocks
 			      ));
     }
     
@@ -1379,10 +1371,8 @@ w_rc_t table_man_t::add_plp_tuple(ss_m* db,
         else {
             W_DO(db->create_assoc(index->fid(pnum),
                                   vec_t(ptuple->_rep_key->_dest, ksz),
-                                  vec_t(&(ptuple->_rid), sizeof(rid_t))
-#ifdef CFG_DORA
-                                  ,bIgnoreLocks
-#endif
+                                  vec_t(&(ptuple->_rid), sizeof(rid_t)),
+                                  bIgnoreLocks
                                   ));
         }
         // move to next index
@@ -1447,10 +1437,8 @@ w_rc_t table_man_t::delete_tuple(ss_m* db,
         else {
             W_DO(db->destroy_assoc(pindex->fid(pnum),
                                    vec_t(ptuple->_rep->_dest, key_sz),
-                                   vec_t(&(todelete), sizeof(rid_t))
-#ifdef CFG_DORA
-                                   ,bIgnoreLocks
-#endif
+                                   vec_t(&(todelete), sizeof(rid_t)),
+                                   bIgnoreLocks
                                    ));
         }
 
@@ -1467,11 +1455,7 @@ w_rc_t table_man_t::delete_tuple(ss_m* db,
 
     }
     else {
-        W_DO(db->destroy_rec(todelete
-#ifdef CFG_DORA
-                             ,bIgnoreLocks
-#endif
-                             ));
+        W_DO(db->destroy_rec(todelete, bIgnoreLocks));
     }
 
     // invalidate tuple
@@ -1533,10 +1517,8 @@ w_rc_t table_man_t::delete_index_entry(ss_m* db,
     else {
 	W_DO(db->destroy_assoc(pindex->fid(pnum),
 			       vec_t(ptuple->_rep->_dest, key_sz),
-			       vec_t(&(todelete), sizeof(rid_t))
-#ifdef CFG_DORA
-			       ,bIgnoreLocks
-#endif
+			       vec_t(&(todelete), sizeof(rid_t)),
+			       bIgnoreLocks
 			       ));
     }
 

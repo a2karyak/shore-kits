@@ -16,8 +16,6 @@ echo     ./configure --help
 echo            to see the options
 echo    
 echo Supported configuration options
-echo --enable-shore6  -  If compiling against shore-sm-6.X.X
-echo --enable-dora    -  Includes DORA files, defines CFG_DORA
 echo --enable-flusher -  Defines CFG_FLUSHER
 echo --enable-qpipe   -  Includes QPipe files, defines CFG_QPIPE
 echo --enable-bt      -  Enables backtracing facility. defines CFG_BT

@@ -6,9 +6,6 @@
 /* Object caches enabled */
 #undef CFG_CACHES
 
-/* Dora enabled */
-#undef CFG_DORA
-
 /* Flusher enabled */
 #undef CFG_FLUSHER
 

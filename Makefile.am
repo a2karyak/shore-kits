@@ -42,11 +42,7 @@ LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) $(READLINE_LIBS) $(CPUMON_LIBS) $(VTUNE_
 
 # List of libraries
 
-if USE_DORA
 DORA_LIBS = lib/libdoraworkload.a lib/libdora.a
-else
-DORA_LIBS = 
-endif
 
 if USE_QPIPE
 QPIPE_LIBS = lib/libqpipe.a lib/libqpipeutil.a
@@ -451,7 +447,6 @@ endif
 
 
 ##### USE_DORA ######
-if USE_DORA
 
 ################################################################################
 #
@@ -519,7 +514,6 @@ lib_libdoraworkload_a_SOURCES = \
 lib_libdoraworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/dora $(SHORE_INCLUDES)
 
 
-endif
 ##### EOF USE_DORA ######
 
 

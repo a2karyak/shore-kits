@@ -31,7 +31,7 @@ b. Compiling
 -----------------------
 
 #> ./autogen.sh
-#> ./configure --enable-dora --enable-shore6 --enable-debug(optional) [in SPARC/Solaris: CXX=CC ./configure ...]
+#> ./configure --enable-debug(optional) [in SPARC/Solaris: CXX=CC ./configure ...]
 #> make -j
 
 NOTE: It is also possible to configure shore-kits to use an arbitrary
