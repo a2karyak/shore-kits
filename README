@@ -35,10 +35,10 @@ b. Compiling
 #> make -j
 
 NOTE: It is also possible to configure shore-kits to use an arbitrary
-      copy of shore-mt by configuring SHORE_HOME as an argument to the
+      copy of shore-mt by configuring --with-shore as an argument to the
       configure
 
-#> ./configure SHORE_HOME=<shore-mt-dir> ...
+#> ./configure --with-shore=<shore-mt-dir> ...
 
 
 -----------------------

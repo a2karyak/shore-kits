@@ -10,7 +10,7 @@ automake --add-missing --force
 echo ------------------------------------------------------------
 echo
 echo Run
-echo     ./configure [CONFIGURATIONS] [COMPILATION] SHORE_HOME=shore-dir [READLINE_HOME=readline-dir]
+echo     ./configure [CONFIGURATIONS] [COMPILATION] --with-shore=shore-dir [--with-readline=readline-dir]
 echo
 echo     ./configure --help 
 echo            to see the options
