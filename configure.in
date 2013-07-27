@@ -285,7 +285,7 @@ CXXFLAGS="-Wall -Wcast-align -Wextra -Wfloat-equal -Wno-return-type \
 	 -Wno-invalid-offsetof -Wno-conversion -Wno-system-headers -D_REENTRANT"
 
 # Initial set of LDFLAGS
-LDFLAGS="-lnsl -ldl -lm -lpthread -lrt -rdynamic"
+LDFLAGS="-rdynamic"
 NORDYNAMIC_LDFLAGS="-lnsl -ldl -lm -lpthread -lrt"
 dnl old_LDFLAGS="$LDFLAGS"
 dnl LDFLAGS="$LDFLAGS -rdynamic"
@@ -399,8 +399,8 @@ esac
 # Adding curses lib
 if test "$ARCHOS" = "SPARC_SUN"; then
    LDFLAGS="$LDFLAGS -lcurses"
-else
-   LDFLAGS="$LDFLAGS -lncurses"
+#else
+#   LDFLAGS="$LDFLAGS -lncurses"
 fi
 
 

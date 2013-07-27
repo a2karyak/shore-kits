@@ -530,7 +530,11 @@ ST=$(top_srcdir)/src/tests
 
 shore_kits_SOURCES = $(ST)/shore_kits.cpp
 shore_kits_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
+if SPARC_MACHINE
 shore_kits_LDADD = $(LDADD)
+else
+shore_kits_LDADD = $(LDADD) -lnsl -ldl -lm -lpthread -lrt -lncurses
+endif
 
 debug_%.so: debug_%.cpp
 	$(CXXCOMPILE) -g -shared -fPIC -o $@ $<
