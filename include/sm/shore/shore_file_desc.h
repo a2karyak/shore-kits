@@ -161,7 +161,7 @@ public:
     /* ---------------------- */
 
     const char*   name() const { return _name; }
-    stid_t&       fid() { return (_fid); }
+    inline stid_t& fid() { return (_fid); }
     void          set_fid(stid_t fid) { _fid = fid; }
     vid_t         vid() { return _vid; }   
     stid_t        root_iid() { return _root_iid; }

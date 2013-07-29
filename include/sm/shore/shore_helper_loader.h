@@ -256,8 +256,6 @@ public:
         }
 
         W_DO(_pssm->begin_xct());    
-	for(int i=0; i < _pindex->get_partition_count(); i++)
-	    W_DO(_pindex->find_fid(_pssm, i));
     
         while (true) {
 

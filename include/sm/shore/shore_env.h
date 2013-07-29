@@ -444,6 +444,8 @@ public:
     typedef std::vector<WorkerPtr>           WorkerPool;
     typedef std::vector<WorkerPtr>::iterator WorkerIt;
 
+    class fid_loader_t;
+
 protected:       
 
     ss_m*           _pssm;               // database handle
@@ -572,7 +574,11 @@ public:
     virtual w_rc_t warmup()=0;
     virtual w_rc_t loaddata()=0;
     virtual w_rc_t check_consistency()=0;
-       
+
+    // loads the store ids for each table and index at kits side
+    // needed when an already populated database is being used
+    virtual w_rc_t load_and_register_fids()=0;
+    
     // inline access methods
     inline ss_m* db() { return(_pssm); }
     inline vid_t* vid() { return(_pvid); }

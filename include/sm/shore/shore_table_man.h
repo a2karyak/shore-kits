@@ -251,7 +251,6 @@ public:
     w_rc_t open_scan(ss_m* db) {
         if (!table_iter::_opened) {
             assert (db);
-            W_DO(table_iter::_file->check_fid(db));
             bool bIgnoreLatches = (table_iter::_file->get_pd() & (PD_MRBT_LEAF | PD_MRBT_PART) ? true : false);
             table_iter::_scan = new scan_file_i(table_iter::_file->fid(), 
                                                 ss_m::t_cc_record, 
@@ -356,7 +355,6 @@ public:
             if (index_iter::_lm==NL) cc = ss_m::t_cc_none;
 
             // 2. open the cursor
-            W_DO(index_iter::_file->check_fid(db));
             index_iter::_scan = new scan_index_i(index_iter::_file->fid(pnum), 
                                                  c1, bound1, c2, bound2,
                                                  false, cc, 

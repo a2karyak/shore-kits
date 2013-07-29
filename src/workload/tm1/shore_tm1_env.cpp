@@ -90,6 +90,27 @@ w_rc_t ShoreTM1Env::load_schema()
 }
 
 
+
+/******************************************************************** 
+ *
+ *  @fn:    load_and_register_fids()
+ *
+ *  @brief: loads the store ids for each table and index at kits side
+ *          as well as registering the tables 
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTM1Env::load_and_register_fids()
+{
+    W_DO(_psub_man->load_and_register_fid(db()));
+    W_DO(_pai_man->load_and_register_fid(db()));
+    W_DO(_psf_man->load_and_register_fid(db()));
+    W_DO(_pcf_man->load_and_register_fid(db()));
+    return (RCOK);
+}
+
+
+
 /******************************************************************** 
  *
  *  @fn:    update_partitioning()

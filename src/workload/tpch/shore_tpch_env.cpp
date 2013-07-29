@@ -339,6 +339,22 @@ w_rc_t ShoreTPCHEnv::load_schema()
 }
 
 
+
+w_rc_t ShoreTPCHEnv::load_and_register_fids()
+{
+    W_DO(_pnation_man->load_and_register_fid(db()));
+    W_DO(_pregion_man->load_and_register_fid(db()));
+    W_DO(_ppart_man->load_and_register_fid(db()));
+    W_DO(_psupplier_man->load_and_register_fid(db()));
+    W_DO(_ppartsupp_man->load_and_register_fid(db()));
+    W_DO(_pcustomer_man->load_and_register_fid(db()));
+    W_DO(_porders_man->load_and_register_fid(db()));
+    W_DO(_plineitem_man->load_and_register_fid(db()));
+    return (RCOK);
+}
+
+
+
 #ifdef CFG_QPIPE
 
 /******************************************************************** 

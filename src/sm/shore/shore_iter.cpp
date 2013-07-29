@@ -57,7 +57,6 @@ w_rc_t simple_table_iter_t::open_scan()
 {
     if (!_opened) {
         assert (_db);
-        W_DO(_file->check_fid(_db));
         _scanner = new scan_file_i(_file->fid(), 
                                    ss_m::t_cc_record, 
                                    false, _lm);
@@ -134,7 +133,6 @@ w_rc_t simple_index_iter_t::open_scan(uint pnum,
         if (_lm==NL) cc = ss_m::t_cc_none;
 
         // 2. open the cursor
-        W_DO(_idx->check_fid(_db));
         _scanner = new scan_index_i(_idx->fid(_pnum), 
                                     c1, bound1, c2, bound2,
                                     false, cc, 

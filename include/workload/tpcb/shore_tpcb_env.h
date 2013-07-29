@@ -156,6 +156,7 @@ public:
     class table_builder_t;
     class table_creator_t;
     struct checkpointer_t;
+    class fid_loader_t;
 
 private:
 
@@ -180,6 +181,8 @@ public:
 
     virtual int post_init();
     virtual w_rc_t load_schema();
+
+    virtual w_rc_t load_and_register_fids();    
 
     virtual int conf();
     virtual int start();

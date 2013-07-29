@@ -920,6 +920,34 @@ void table_man_t::register_table_man()
 
 
 
+/*********************************************************************
+ *
+ *  @fn:    load_and_register_fid
+ *  
+ *  @brief: filling fid values of this table and its indexes
+ *          as well as registering it
+ *
+ *********************************************************************/
+
+w_rc_t table_man_t::load_and_register_fid(ss_m* db)
+{
+    assert (_ptable);
+    assert (db);
+    // 1. get the fid of this table and register it
+    _ptable->set_db(db);
+    W_DO(_ptable->check_fid(db));
+    register_table_man();
+    // 2. get the fid of its indexes    
+    index_desc_t* index = _ptable->indexes();
+    while(index) {
+	W_DO(index->check_fid(db));
+	index = index->next();
+    }
+    return (RCOK);
+}
+
+
+
 /********************************************************************* 
  *
  *  @fn:    index_probe
@@ -954,9 +982,6 @@ w_rc_t table_man_t::index_probe(ss_m* db,
         lock_mode   = NL;
         bIgnoreLocks = true;
     }
-
-    // ensure valid index
-    W_DO(pindex->check_fid(db));
 
     // find the tuple in the index
     int key_sz = format_key(pindex, ptuple, *ptuple->_rep);
@@ -1039,9 +1064,6 @@ w_rc_t table_man_t::add_tuple(ss_m* db,
         return (add_plp_tuple(db,ptuple,lock_mode,system_mode,primary_root));
     }
 
-    // find the file
-    W_DO(_ptable->check_fid(db));
-
     // figure out what mode will be used
     bool bIgnoreLocks = false;
     if (lock_mode==NL) bIgnoreLocks = true;
@@ -1068,7 +1090,6 @@ w_rc_t table_man_t::add_tuple(ss_m* db,
         assert (ptuple->_rep->_dest); // if dest == NULL there is invalid key
 
 	int pnum = get_pnum(index, ptuple);
-        W_DO(index->find_fid(db, pnum));
 
         if (index->is_mr()) {
 	    ss_m::RELOCATE_RECORD_CALLBACK_FUNC reloc_func = &relocate_records;
@@ -1136,7 +1157,6 @@ w_rc_t table_man_t::add_index_entry(ss_m* db,
     assert (ptuple->_rep->_dest); // if dest == NULL there is invalid key
     
     int pnum = get_pnum(pindex, ptuple);
-    W_DO(pindex->find_fid(db, pnum));
 
     if (pindex->is_mr()) {
 	ss_m::RELOCATE_RECORD_CALLBACK_FUNC reloc_func = &relocate_records;
@@ -1279,7 +1299,6 @@ w_rc_t table_man_t::relocate_records(vector<rid_t>&    old_rids,
 		if(!pindex->is_primary()) {
 		    found = false;
 		    pnum = my_table_man->get_pnum(pindex, atuple);
-		    W_DO(pindex->find_fid(my_table_man->table()->db(), pnum));
 		    // Update the old rid with the new one
 		    ksz = my_table_man->format_key(pindex, atuple, *atuple->_rep);
 		    assert (atuple->_rep->_dest);
@@ -1310,9 +1329,6 @@ w_rc_t table_man_t::add_plp_tuple(ss_m* db,
 {
     assert (system_mode & (PD_MRBT_PART | PD_MRBT_LEAF));
 
-    // find the file
-    W_DO(_ptable->check_fid(db));
-
     // figure out what lock mode will be used
     bool bIgnoreLocks = false;
     if (lock_mode==NL) bIgnoreLocks = true;
@@ -1327,7 +1343,6 @@ w_rc_t table_man_t::add_plp_tuple(ss_m* db,
     assert (ptuple->_rep_key->_dest);
 
     int pnum = get_pnum(primary_index, ptuple);
-    W_DO(primary_index->find_fid(db, pnum));
 
     ss_m::RELOCATE_RECORD_CALLBACK_FUNC reloc_func = &relocate_records;
     el_filler_part part_filler(sizeof(rid_t),db,this,ptuple,primary_index,bIgnoreLocks);
@@ -1355,7 +1370,6 @@ w_rc_t table_man_t::add_plp_tuple(ss_m* db,
         assert (ptuple->_rep_key->_dest); // if dest == NULL there is invalid key
 
         pnum = get_pnum(index, ptuple);
-        W_DO(index->find_fid(db, pnum));
 
         if (index->is_mr()) {
             el_filler ef;
@@ -1424,7 +1438,6 @@ w_rc_t table_man_t::delete_tuple(ss_m* db,
         assert (ptuple->_rep->_dest); // if NULL invalid key
 
 	int pnum = get_pnum(pindex, ptuple);
-	W_DO(pindex->find_fid(db, pnum));
 
         if (pindex->is_mr()) {
             W_DO(db->destroy_mr_assoc(pindex->fid(pnum),
@@ -1504,7 +1517,6 @@ w_rc_t table_man_t::delete_index_entry(ss_m* db,
     assert (ptuple->_rep->_dest); // if NULL invalid key
 
     int pnum = get_pnum(pindex, ptuple);
-    W_DO(pindex->find_fid(db, pnum));
 
     if (pindex->is_mr()) {
 	W_DO(db->destroy_mr_assoc(pindex->fid(pnum),
@@ -1686,7 +1698,6 @@ w_rc_t table_man_t::fetch_table(ss_m* db, lock_mode_t alm)
     W_DO(db->begin_xct());
 	
     // 1. scan the table
-    W_DO(_ptable->check_fid(db));
     bool bIgnoreLatches = (_ptable->get_pd() & (PD_MRBT_LEAF | PD_MRBT_PART) ? true : false);
     scan_file_i t_scan(_ptable->fid(), ss_m::t_cc_record, false, alm, bIgnoreLatches);
     while(!eof) {
@@ -1699,7 +1710,6 @@ w_rc_t table_man_t::fetch_table(ss_m* db, lock_mode_t alm)
     index_desc_t* index = _ptable->indexes();
     int pnum = 0;
     while (index) {
-	W_DO(index->check_fid(db));
 	for(int pnum = 0; pnum < index->get_partition_count(); pnum++) {
 	    scan_file_i if_scan(index->fid(pnum), ss_m::t_cc_record, false, alm, bIgnoreLatches);
 	    eof = false;

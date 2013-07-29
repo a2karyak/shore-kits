@@ -235,7 +235,6 @@ public:
     char* index_keydesc(index_desc_t* idx);
     int   index_maxkeysize(index_desc_t* index) const; /* max index key size */
 
-
     /* ---------------------------------------------------------------- */
     /* --- for the conversion between disk format and memory format --- */
     /* ---------------------------------------------------------------- */
@@ -251,6 +250,7 @@ public:
     /* ---------- */
     /* --- db --- */
     /* ---------- */
+    void set_db(ss_m* db) { _db = db; }
     ss_m* db() { return (_db); }
 
     /* ----------------- */
@@ -307,6 +307,8 @@ public:
 
     int get_pnum(index_desc_t* pindex, table_tuple const* ptuple) const;
 
+    // loads store id values in fid field for this table and its indexes
+    w_rc_t load_and_register_fid(ss_m* db);
 
     /* ------------------------------ */
     /* --- trash stack operations --- */

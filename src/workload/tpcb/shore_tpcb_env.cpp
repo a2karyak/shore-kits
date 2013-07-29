@@ -95,6 +95,26 @@ w_rc_t ShoreTPCBEnv::load_schema()
 
 /******************************************************************** 
  *
+ *  @fn:    load_and_register_fids()
+ *
+ *  @brief: loads the store ids for each table and index at kits side
+ *          as well as registering the tables 
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCBEnv::load_and_register_fids()
+{
+    W_DO(_pbranch_man->load_and_register_fid(db()));
+    W_DO(_pteller_man->load_and_register_fid(db()));
+    W_DO(_paccount_man->load_and_register_fid(db()));
+    W_DO(_phistory_man->load_and_register_fid(db()));
+    return (RCOK);
+}
+
+
+
+/******************************************************************** 
+ *
  *  @fn:    update_partitioning()
  *
  *  @brief: Applies the baseline partitioning to the TPC-B tables
@@ -692,13 +712,11 @@ w_rc_t ShoreTPCBEnv::_pad_BRANCHES()
     branch_t* br = branch_desc();
     index_desc_t* br_idx = br->indexes();
     int br_idx_count = br->index_count();
-    W_DO(br->find_fid(db));
     stid_t br_fid = br->fid();
 
     // lock the table and index(es) for exclusive access
     W_DO(db->lock(br_fid, EX));
     for(int i=0; i < br_idx_count; i++) {
-	W_DO(br_idx[i].check_fid(db));
 	for(int j=0; j < br_idx[i].get_partition_count(); j++) {
 	    W_DO(db->lock(br_idx[i].fid(j), EX));
         }
@@ -837,13 +855,11 @@ w_rc_t ShoreTPCBEnv::_pad_TELLERS()
     teller_t* te = teller_desc();
     index_desc_t* te_idx = te->indexes();
     int te_idx_count = te->index_count();
-    W_DO(te->find_fid(db));
     stid_t te_fid = te->fid();
 
     // lock the table and index(es) for exclusive access
     W_DO(db->lock(te_fid, EX));
     for(int i=0; i < te_idx_count; i++) {
-	W_DO(te_idx[i].check_fid(db));
 	for(int j=0; j < te_idx[i].get_partition_count(); j++)
 	    W_DO(db->lock(te_idx[i].fid(j), EX));
     }

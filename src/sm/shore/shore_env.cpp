@@ -455,9 +455,13 @@ int ShoreEnv::init()
         return (5);
     }
 
-    // Call the (virtual) post-initialization function
     int clobber = atoi(_sys_opts[SHORE_SYS_OPTIONS[0][0]].c_str());
     if (!clobber) {
+	// Cache fids at the kits side
+	W_COERCE(db()->begin_xct());
+	W_COERCE(load_and_register_fids());
+	W_COERCE(db()->commit_xct());    
+	// Call the (virtual) post-initialization function
         if (int rval = post_init()) {
             TRACE( TRACE_ALWAYS, "Error in Shore post-init\n");
             return (rval);

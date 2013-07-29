@@ -283,6 +283,31 @@ w_rc_t ShoreTPCCEnv::load_schema()
 
 /******************************************************************** 
  *
+ *  @fn:    load_and_register_fids()
+ *
+ *  @brief: loads the store ids for each table and index at kits side
+ *          as well as registering the tables 
+ *
+ ********************************************************************/
+
+w_rc_t ShoreTPCCEnv::load_and_register_fids()
+{
+    W_DO(_pwarehouse_man->load_and_register_fid(db()));
+    W_DO(_pdistrict_man->load_and_register_fid(db()));
+    W_DO(_pstock_man->load_and_register_fid(db()));
+    W_DO(_porder_line_man->load_and_register_fid(db()));
+    W_DO(_pcustomer_man->load_and_register_fid(db()));
+    W_DO(_phistory_man->load_and_register_fid(db()));
+    W_DO(_porder_man->load_and_register_fid(db()));
+    W_DO(_pnew_order_man->load_and_register_fid(db()));
+    W_DO(_pitem_man->load_and_register_fid(db()));
+    return (RCOK);
+}
+
+
+
+/******************************************************************** 
+ *
  *  @fn:    update_partitioning()
  *
  *  @brief: Applies the baseline partitioning to the TPC-C tables
@@ -690,13 +715,11 @@ w_rc_t ShoreTPCCEnv::_post_init_impl()
     warehouse_t* wh = warehouse_desc();
     index_desc_t* idx = wh->indexes();
     int icount = wh->index_count();
-    W_DO(wh->find_fid(db));
     stid_t wh_fid = wh->fid();
 
     // lock the table and index(es) for exclusive access
     W_DO(db->lock(wh_fid, EX));
     for(int i=0; i < icount; i++) {
-	W_DO(idx[i].check_fid(db));
 	for(int j=0; j < idx[i].get_partition_count(); j++)
 	    W_DO(db->lock(idx[i].fid(j), EX));
     }

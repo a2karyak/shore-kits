@@ -388,6 +388,47 @@ w_rc_t ShoreTPCEEnv::load_schema()
 }
 
 
+
+w_rc_t ShoreTPCEEnv::load_and_register_fids()
+{
+    W_DO(_paccount_permission_man->load_and_register_fid(db()));
+    W_DO(_pcustomer_man->load_and_register_fid(db()));
+    W_DO(_pcustomer_account_man->load_and_register_fid(db()));
+    W_DO(_pcustomer_taxrate_man->load_and_register_fid(db()));
+    W_DO(_pholding_man->load_and_register_fid(db()));
+    W_DO(_pholding_history_man->load_and_register_fid(db()));
+    W_DO(_pholding_summary_man->load_and_register_fid(db()));
+    W_DO(_pwatch_item_man->load_and_register_fid(db()));
+    W_DO(_pwatch_list_man->load_and_register_fid(db()));
+    W_DO(_pbroker_man->load_and_register_fid(db()));
+    W_DO(_pcash_transaction_man->load_and_register_fid(db()));
+    W_DO(_pcharge_man->load_and_register_fid(db()));
+    W_DO(_pcommission_rate_man->load_and_register_fid(db()));
+    W_DO(_psettlement_man->load_and_register_fid(db()));
+    W_DO(_ptrade_man->load_and_register_fid(db()));
+    W_DO(_ptrade_history_man->load_and_register_fid(db()));
+    W_DO(_ptrade_request_man->load_and_register_fid(db()));
+    W_DO(_ptrade_type_man->load_and_register_fid(db()));
+    W_DO(_pcompany_man->load_and_register_fid(db()));
+    W_DO(_pcompany_competitor_man->load_and_register_fid(db()));
+    W_DO(_pdaily_market_man->load_and_register_fid(db()));
+    W_DO(_pexchange_man->load_and_register_fid(db()));
+    W_DO(_pfinancial_man->load_and_register_fid(db()));
+    W_DO(_pindustry_man->load_and_register_fid(db()));
+    W_DO(_plast_trade_man->load_and_register_fid(db()));
+    W_DO(_pnews_item_man->load_and_register_fid(db()));
+    W_DO(_pnews_xref_man->load_and_register_fid(db()));
+    W_DO(_psector_man->load_and_register_fid(db()));
+    W_DO(_psecurity_man->load_and_register_fid(db()));
+    W_DO(_paddress_man->load_and_register_fid(db()));
+    W_DO(_pstatus_type_man->load_and_register_fid(db()));
+    W_DO(_ptaxrate_man->load_and_register_fid(db()));
+    W_DO(_pzip_code_man->load_and_register_fid(db()));
+    return (RCOK);
+}
+
+
+
 /******************************************************************** 
  *
  *  @fn:    info()
