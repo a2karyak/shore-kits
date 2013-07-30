@@ -92,7 +92,7 @@ public:
           _down(rhs._down), _key_list(rhs._key_list)
     { assert (0); }
 
-    range_action_impl operator=(const range_action_impl& rhs)
+    range_action_impl &operator=(const range_action_impl& rhs)
     {
         if (this != &rhs) {
             assert (0); // IP: TODO check

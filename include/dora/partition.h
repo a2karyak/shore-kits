@@ -335,7 +335,7 @@ int partition_t<DataType>::enqueue_commit(Action* pAction, const bool bWake)
 template <class DataType>
 inline base_action_t* partition_t<DataType>::dequeue_commit()
 {
-    w_assert2 (_committed_queue->get());
+    w_assert2 (not _committed_queue->is_really_empty());
     return (_committed_queue->pop());
 }
 
