@@ -266,6 +266,13 @@ AC_MSG_RESULT($KITS_HOME)
 # ----------- EOF Root of source tree -------------
 
 
+#AC_MSG_CHECKING([extra library needed for gethostbyname])
+AC_SEARCH_LIBS([gethostbyname],
+        [nsl],
+        [AC_MSG_RESULT([$ac_cv_search])],
+        [AC_MSG_ERROR([$ac_cv_search])])
+                              
+
 
 
 # ----------- Platform-specific code -------------
@@ -286,7 +293,7 @@ CXXFLAGS="-Wall -Wcast-align -Wextra -Wfloat-equal -Wno-return-type \
 
 # Initial set of LDFLAGS
 LDFLAGS="-rdynamic"
-NORDYNAMIC_LDFLAGS="-lnsl -ldl -lm -lpthread -lrt"
+NORDYNAMIC_LDFLAGS="$LIBS -ldl -lm -lpthread -lrt"
 dnl old_LDFLAGS="$LDFLAGS"
 dnl LDFLAGS="$LDFLAGS -rdynamic"
 dnl AC_MSG_CHECKING([If the compiler accepts -rdynamic])
