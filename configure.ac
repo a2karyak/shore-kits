@@ -296,8 +296,8 @@ CXXFLAGS="-Wall -Wcast-align -Wextra -Wfloat-equal -Wno-return-type \
 	 -Wno-invalid-offsetof -Wno-conversion -Wno-system-headers -D_REENTRANT"
 
 # Initial set of LDFLAGS
-LDFLAGS="-rdynamic"
 NORDYNAMIC_LDFLAGS="$LIBS -ldl -lm -lpthread -lrt"
+LDFLAGS="$NORDYNAMIC_LDFLAGS -rdynamic"
 dnl old_LDFLAGS="$LDFLAGS"
 dnl LDFLAGS="$LDFLAGS -rdynamic"
 dnl AC_MSG_CHECKING([If the compiler accepts -rdynamic])

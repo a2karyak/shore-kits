@@ -533,7 +533,7 @@ shore_kits_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 if SPARC_MACHINE
 shore_kits_LDADD = $(LDADD)
 else
-shore_kits_LDADD = $(LDADD) -lnsl -ldl -lm -lpthread -lrt -lncurses
+shore_kits_LDADD = $(LDADD) -lncurses
 endif
 
 debug_%.so: debug_%.cpp
