@@ -36,7 +36,7 @@ VTUNE_INCLUDES = @VTUNE_INCLUDES@
 VTUNE_LIBS = @VTUNE_LIBS@
 
 # GLOBAL includes/ld
-INCLUDES = -I$(top_srcdir)/include $(SHORE_INCLUDES) \
+AM_CPPFLAGS = -I$(top_srcdir)/include $(SHORE_INCLUDES) \
 	$(READLINE_INCLUDES) $(CPUMON_INCLUDES) $(VTUNE_INCLUDES)
 LDADD = $(lib_LIBRARIES) $(SHORE_LDADD) $(READLINE_LIBS) $(CPUMON_LIBS) $(VTUNE_LIBS)
 
@@ -353,7 +353,7 @@ lib_libworkload_a_SOURCES += $(WL_SSB_QPIPE) $(WL_SSB_DBGEN_SHORE) $(WL_SSB_SHOR
 endif
 
 
-lib_libworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/workload $(SHORE_INCLUDES)
+lib_libworkload_a_INCLUDES = $(AM_CPPFLAGS) -I$(top_srcdir)/include/workload $(SHORE_INCLUDES)
 
 
 
@@ -439,7 +439,7 @@ lib_libqpipe_a_SOURCES = \
    $(QPIPE_STAGES) \
    $(QPIPE_COMMON)
 
-lib_libqpipe_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/qpipe $(SHORE_INCLUDES)
+lib_libqpipe_a_INCLUDES = $(AM_CPPFLAGS) -I$(top_srcdir)/include/qpipe $(SHORE_INCLUDES)
 
 endif
 ##### EOF USE_QPIPE ######
@@ -511,7 +511,7 @@ lib_libdoraworkload_a_SOURCES = \
    $(DW_TPCB)
 
 
-lib_libdoraworkload_a_INCLUDES = $(INCLUDES) -I$(top_srcdir)/include/dora $(SHORE_INCLUDES)
+lib_libdoraworkload_a_INCLUDES = $(AM_CPPFLAGS) -I$(top_srcdir)/include/dora $(SHORE_INCLUDES)
 
 
 ##### EOF USE_DORA ######
