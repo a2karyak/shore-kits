@@ -339,7 +339,14 @@ case "$target" in
     CXXFLAGS="$CXXFLAGS -DARCH_LP64 -m64 "
     CPU_FLAGS="-mtune=native -march=native"    
     ;;
-
+    
+  # cygwin on x86_64
+  *x86_64*cygwin*)
+    AC_MSG_RESULT(configuring for cygwin/x86_64)
+    ARCHOS=x86_64_CYGWIN
+    OS=CYGWIN
+    ;;
+    
   # linux on power5
   *ppc*linux*)
     AC_MSG_RESULT(configuring for linux/ppc)
