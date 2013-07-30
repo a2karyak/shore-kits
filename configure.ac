@@ -182,10 +182,14 @@ AC_MSG_RESULT($with_readline)
 AC_ARG_WITH([glibtop],
   [AS_HELP_STRING([--with-glibtop],
                   [Use glibtop-2.0 to report CPU utilization @<:@default=check@:>@])],
-  [PKG_CHECK_MODULES([GTOP], [libgtop-2.0])
-   AC_DEFINE(HAVE_GLIBTOP, [1], [Glibtop available])
-   AC_SUBST([GLIBTOP_INCLUDE], ["$GTOP_CFLAGS"])
-   AC_SUBST([GLIBTOP_LIB], ["$GTOP_LIBS"])
+  [PKG_CHECK_MODULES([GTOP],
+        [libgtop-2.0],
+        [
+                AC_DEFINE(HAVE_GLIBTOP, [1], [Glibtop available])
+                AC_SUBST([GLIBTOP_INCLUDE], ["$GTOP_CFLAGS"])
+                AC_SUBST([GLIBTOP_LIB], ["$GTOP_LIBS"])
+        ],
+        [with_glibtop=no])
    ], [with_glibtop=no]
    )
 AC_MSG_CHECKING(for glibtop)
