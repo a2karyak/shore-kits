@@ -3,6 +3,8 @@ m4_pattern_allow([^AC_PACKAGE])
 # configure.in for shmtclient         -*- sh -*-
 # Process this file with autoconf to produce a configure script. 
 AC_INIT(THIS_IS_SHORE_KITS,2.1)
+AC_CONFIG_MACRO_DIRS([m4])
+
 
 # make sure I have not forgotten to run autoconf
 if test configure -ot configure.in; then
@@ -293,10 +295,15 @@ OPT_FLAGS="-O3 -finline-limit=1200 -fomit-frame-pointer"
 #OPT_DEBUG_FLAGS="-O3 -fno-inline"
 
 CXXFLAGS="-Wall -Wcast-align -Wextra -Wfloat-equal -Wno-return-type \
-	 -Wno-invalid-offsetof -Wno-conversion -Wno-system-headers -D_REENTRANT"
+	 -Wno-invalid-offsetof -Wno-conversion -Wno-system-headers"
 
+AX_PTHREAD
+LIBS="$PTHREAD_LIBS $LIBS"
+CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
+
+         
 # Initial set of LDFLAGS
-NORDYNAMIC_LDFLAGS="$LIBS -ldl -lm -lpthread -lrt"
+NORDYNAMIC_LDFLAGS="$LIBS -ldl -lm -lrt"
 LDFLAGS="$NORDYNAMIC_LDFLAGS -rdynamic"
 dnl old_LDFLAGS="$LDFLAGS"
 dnl LDFLAGS="$LDFLAGS -rdynamic"
