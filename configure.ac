@@ -304,7 +304,8 @@ CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
          
 # Initial set of LDFLAGS
 NORDYNAMIC_LDFLAGS="$LIBS -ldl -lm -lrt"
-LDFLAGS="$NORDYNAMIC_LDFLAGS -rdynamic"
+#LDFLAGS="$NORDYNAMIC_LDFLAGS -rdynamic"
+LDFLAGS="-rdynamic"
 dnl old_LDFLAGS="$LDFLAGS"
 dnl LDFLAGS="$LDFLAGS -rdynamic"
 dnl AC_MSG_CHECKING([If the compiler accepts -rdynamic])
