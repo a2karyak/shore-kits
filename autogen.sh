@@ -1,10 +1,6 @@
 #!/bin/sh
 
-automake -a -f
-libtoolize -f
-aclocal
-autoconf -f
-automake --add-missing --force
+autoreconf --install --force
 
 ## Configuration options
 echo ------------------------------------------------------------
