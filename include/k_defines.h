@@ -37,8 +37,6 @@
 // If we use the x86-ported branch (aka Nancy's branch) then w_defines.h should
 // be included instead of atomic.h
 
-#include "kits-config.h"
-
 #include <w_defines.h>
 #include <atomic_templates.h>
 
@@ -47,6 +45,28 @@ typedef queue_based_lock_t mcs_lock;
 
 #include "block_alloc.h"
 
+#ifdef PACKAGE
+#undef PACKAGE
+#endif
+#ifdef PACKAGE_NAME
+#undef PACKAGE_NAME
+#endif
+#ifdef PACKAGE_STRING
+#undef PACKAGE_STRING
+#endif
+#ifdef PACKAGE_BUGREPORT
+#undef PACKAGE_BUGREPORT
+#endif
+#ifdef PACKAGE_TARNAME
+#undef PACKAGE_TARNAME
+#endif
+#ifdef PACKAGE_VERSION
+#undef PACKAGE_VERSION
+#endif
+#ifdef VERSION
+#undef VERSION
+#endif
+#include "kits-config.h"
 
 #ifdef __SUNPRO_CC
 #include <stdlib.h>
