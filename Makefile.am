@@ -1,5 +1,7 @@
 # -*- makefile -*-
 
+AUTOMAKE_OPTIONS = subdir-objects
+
 # Shore related 
 SHORE_SRC = @SHORE_HOME@/src
 SHORE_CXXFLAGS = -DSOLARIS2 -DSTHREAD_CORE_PTHREAD -DARCH_LP64 -DNO_FASTNEW -DW_LARGEFILE -D_POSIX_PTHREAD_SEMANTICS -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS -w
@@ -23,12 +25,12 @@ READLINE_LIBS = @READLINE_LIB@
 if HAVE_GLIBTOP
 CPUMON_INCLUDES = @GLIBTOP_INCLUDE@
 CPUMON_LIBS = @GLIBTOP_LIB@
-CPUMON_SRC = $(SU)/linux_procstat.cpp $(SU)/topinfo.cpp
+CPUMON_SRC = src/util/linux_procstat.cpp src/util/topinfo.cpp
 else
 if HAVE_PROCFS
 CPUMON_INCLUDES = @PROCFS_INCLUDE@
 CPUMON_LIBS = @PROCFS_LIB@
-CPUMON_SRC = $(SU)/sunos_procstat.cpp $(SU)/prcinfo.cpp
+CPUMON_SRC = src/util/sunos_procstat.cpp src/util/prcinfo.cpp
 endif
 endif
 
@@ -68,33 +70,31 @@ debug-shore.so: debug-shore.cpp
 #
 ################################################################################
 
-SU=$(top_srcdir)/src/util
-
 UTIL = \
-	$(SU)/c_str.cpp \
-	$(SU)/thread.cpp \
-	$(SU)/time_util.cpp \
-	$(SU)/trace.cpp \
-	$(SU)/chomp.cpp \
-        $(SU)/progress.cpp \
-	$(SU)/pool_alloc.cpp \
-        $(SU)/store_string.cpp \
-        $(SU)/history.cpp \
-        $(SU)/countdown.cpp \
-        $(SU)/confparser.cpp \
-        $(SU)/envvar.cpp \
-        $(SU)/stl_pool.cpp \
-        $(SU)/random_input.cpp \
-        $(SU)/shell.cpp \
-        $(SU)/tcp.cpp \
-        $(SU)/w_strlcpy.cpp \
-	$(SU)/procstat.cpp \
-	$(SU)/skewer.cpp \
+	src/util/c_str.cpp \
+	src/util/thread.cpp \
+	src/util/time_util.cpp \
+	src/util/trace.cpp \
+	src/util/chomp.cpp \
+        src/util/progress.cpp \
+	src/util/pool_alloc.cpp \
+        src/util/store_string.cpp \
+        src/util/history.cpp \
+        src/util/countdown.cpp \
+        src/util/confparser.cpp \
+        src/util/envvar.cpp \
+        src/util/stl_pool.cpp \
+        src/util/random_input.cpp \
+        src/util/shell.cpp \
+        src/util/tcp.cpp \
+        src/util/w_strlcpy.cpp \
+	src/util/procstat.cpp \
+	src/util/skewer.cpp \
         $(CPUMON_SRC)
 
 UTIL_CMD = \
-        $(SU)/command/tracer.cpp \
-        $(SU)/command/printer.cpp
+        src/util/command/tracer.cpp \
+        src/util/command/printer.cpp
 
 
 lib_libutil_a_CXXFLAGS = $(AM_CXXFLAGS) 
@@ -111,26 +111,23 @@ lib_libutil_a_SOURCES = \
 #
 ################################################################################
 
-SM=$(top_srcdir)/src/sm
-SMS=$(top_srcdir)/src/sm/shore
-
 SM_SHORE = \
-   $(SMS)/shore_file_desc.cpp \
-   $(SMS)/shore_field.cpp \
-   $(SMS)/shore_table.cpp \
-   $(SMS)/shore_row.cpp \
-   $(SMS)/shore_index.cpp \
-   $(SMS)/shore_asc_sort_buf.cpp \
-   $(SMS)/shore_desc_sort_buf.cpp \
-   $(SMS)/shore_reqs.cpp \
-   $(SMS)/shore_flusher.cpp \
-   $(SMS)/shore_env.cpp \
-   $(SMS)/shore_helper_loader.cpp \
-   $(SMS)/shore_client.cpp \
-   $(SMS)/shore_worker.cpp \
-   $(SMS)/shore_trx_worker.cpp \
-   $(SMS)/shore_iter.cpp \
-   $(SMS)/shore_shell.cpp
+   src/sm/shore/shore_file_desc.cpp \
+   src/sm/shore/shore_field.cpp \
+   src/sm/shore/shore_table.cpp \
+   src/sm/shore/shore_row.cpp \
+   src/sm/shore/shore_index.cpp \
+   src/sm/shore/shore_asc_sort_buf.cpp \
+   src/sm/shore/shore_desc_sort_buf.cpp \
+   src/sm/shore/shore_reqs.cpp \
+   src/sm/shore/shore_flusher.cpp \
+   src/sm/shore/shore_env.cpp \
+   src/sm/shore/shore_helper_loader.cpp \
+   src/sm/shore/shore_client.cpp \
+   src/sm/shore/shore_worker.cpp \
+   src/sm/shore/shore_trx_worker.cpp \
+   src/sm/shore/shore_iter.cpp \
+   src/sm/shore/shore_shell.cpp
 
 lib_libsm_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 
@@ -149,190 +146,188 @@ lib_libsm_a_SOURCES = \
 
 
 
-SW=$(top_srcdir)/src/workload
-
 WL_TPCC_SHORE = \
-   $(SW)/tpcc/tpcc_random.cpp \
-   $(SW)/tpcc/tpcc_input.cpp \
-   $(SW)/tpcc/shore_tpcc_schema.cpp \
-   $(SW)/tpcc/shore_tpcc_schema_man.cpp \
-   $(SW)/tpcc/shore_tpcc_env.cpp \
-   $(SW)/tpcc/shore_tpcc_xct.cpp \
-   $(SW)/tpcc/shore_tpcc_client.cpp
+   src/workload/tpcc/tpcc_random.cpp \
+   src/workload/tpcc/tpcc_input.cpp \
+   src/workload/tpcc/shore_tpcc_schema.cpp \
+   src/workload/tpcc/shore_tpcc_schema_man.cpp \
+   src/workload/tpcc/shore_tpcc_env.cpp \
+   src/workload/tpcc/shore_tpcc_xct.cpp \
+   src/workload/tpcc/shore_tpcc_client.cpp
 
 WL_TM1_SHORE = \
-   $(SW)/tm1/tm1_input.cpp \
-   $(SW)/tm1/shore_tm1_schema.cpp \
-   $(SW)/tm1/shore_tm1_schema_man.cpp \
-   $(SW)/tm1/shore_tm1_env.cpp \
-   $(SW)/tm1/shore_tm1_xct.cpp \
-   $(SW)/tm1/shore_tm1_client.cpp
+   src/workload/tm1/tm1_input.cpp \
+   src/workload/tm1/shore_tm1_schema.cpp \
+   src/workload/tm1/shore_tm1_schema_man.cpp \
+   src/workload/tm1/shore_tm1_env.cpp \
+   src/workload/tm1/shore_tm1_xct.cpp \
+   src/workload/tm1/shore_tm1_client.cpp
 
 WL_TPCB_SHORE = \
-   $(SW)/tpcb/tpcb_input.cpp \
-   $(SW)/tpcb/shore_tpcb_schema.cpp \
-   $(SW)/tpcb/shore_tpcb_schema_man.cpp \
-   $(SW)/tpcb/shore_tpcb_env.cpp \
-   $(SW)/tpcb/shore_tpcb_xct.cpp \
-   $(SW)/tpcb/shore_tpcb_client.cpp
+   src/workload/tpcb/tpcb_input.cpp \
+   src/workload/tpcb/shore_tpcb_schema.cpp \
+   src/workload/tpcb/shore_tpcb_schema_man.cpp \
+   src/workload/tpcb/shore_tpcb_env.cpp \
+   src/workload/tpcb/shore_tpcb_xct.cpp \
+   src/workload/tpcb/shore_tpcb_client.cpp
 
 WL_TPCH_SHORE = \
-   $(SW)/tpch/tpch_random.cpp \
-   $(SW)/tpch/tpch_input.cpp \
-   $(SW)/tpch/tpch_util.cpp \
-   $(SW)/tpch/shore_tpch_schema.cpp \
-   $(SW)/tpch/shore_tpch_schema_man.cpp \
-   $(SW)/tpch/shore_tpch_env.cpp \
-   $(SW)/tpch/shore_tpch_xct.cpp \
-   $(SW)/tpch/shore_tpch_client.cpp
+   src/workload/tpch/tpch_random.cpp \
+   src/workload/tpch/tpch_input.cpp \
+   src/workload/tpch/tpch_util.cpp \
+   src/workload/tpch/shore_tpch_schema.cpp \
+   src/workload/tpch/shore_tpch_schema_man.cpp \
+   src/workload/tpch/shore_tpch_env.cpp \
+   src/workload/tpch/shore_tpch_xct.cpp \
+   src/workload/tpch/shore_tpch_client.cpp
 
 WL_TPCH_DBGEN_SHORE = \
-   $(SW)/tpch/dbgen/build.cpp \
-   $(SW)/tpch/dbgen/driver.cpp \
-   $(SW)/tpch/dbgen/bm_utils.cpp \
-   $(SW)/tpch/dbgen/rnd.cpp \
-   $(SW)/tpch/dbgen/print.cpp \
-   $(SW)/tpch/dbgen/load_stub.cpp \
-   $(SW)/tpch/dbgen/bcd2.cpp \
-   $(SW)/tpch/dbgen/speed_seed.cpp \
-   $(SW)/tpch/dbgen/text.cpp \
-   $(SW)/tpch/dbgen/permute.cpp \
-   $(SW)/tpch/dbgen/rng64.cpp
+   src/workload/tpch/dbgen/build.cpp \
+   src/workload/tpch/dbgen/driver.cpp \
+   src/workload/tpch/dbgen/bm_utils.cpp \
+   src/workload/tpch/dbgen/rnd.cpp \
+   src/workload/tpch/dbgen/print.cpp \
+   src/workload/tpch/dbgen/load_stub.cpp \
+   src/workload/tpch/dbgen/bcd2.cpp \
+   src/workload/tpch/dbgen/speed_seed.cpp \
+   src/workload/tpch/dbgen/text.cpp \
+   src/workload/tpch/dbgen/permute.cpp \
+   src/workload/tpch/dbgen/rng64.cpp
 
 WL_TPCH_QPIPE = \
-   $(SW)/tpch/qpipe_tpch_xct.cpp \
-   $(SW)/tpch/qpipe/qpipe_tpch_qlineitem.cpp \
-   $(SW)/tpch/qpipe/qpipe_tpch_qcustomer.cpp \
-   $(SW)/tpch/qpipe/qpipe_tpch_qnation.cpp \
-   $(SW)/tpch/qpipe/qpipe_tpch_qregion.cpp \
-   $(SW)/tpch/qpipe/qpipe_tpch_qpart.cpp \
-   $(SW)/tpch/qpipe/qpipe_tpch_qpartsupp.cpp \
-   $(SW)/tpch/qpipe/qpipe_tpch_qsupplier.cpp \
-   $(SW)/tpch/qpipe/qpipe_tpch_qorders.cpp \
-   $(SW)/tpch/qpipe/qpipe_q1.cpp \
-   $(SW)/tpch/qpipe/qpipe_q2.cpp \
-   $(SW)/tpch/qpipe/qpipe_q3.cpp \
-   $(SW)/tpch/qpipe/qpipe_q4.cpp \
-   $(SW)/tpch/qpipe/qpipe_q5.cpp \
-   $(SW)/tpch/qpipe/qpipe_q6.cpp \
-   $(SW)/tpch/qpipe/qpipe_q7.cpp \
-   $(SW)/tpch/qpipe/qpipe_q8.cpp \
-   $(SW)/tpch/qpipe/qpipe_q9.cpp \
-   $(SW)/tpch/qpipe/qpipe_q10.cpp \
-   $(SW)/tpch/qpipe/qpipe_q11.cpp \
-   $(SW)/tpch/qpipe/qpipe_q12.cpp \
-   $(SW)/tpch/qpipe/qpipe_q13.cpp \
-   $(SW)/tpch/qpipe/qpipe_q14.cpp \
-   $(SW)/tpch/qpipe/qpipe_q15.cpp \
-   $(SW)/tpch/qpipe/qpipe_q16.cpp \
-   $(SW)/tpch/qpipe/qpipe_q17.cpp \
-   $(SW)/tpch/qpipe/qpipe_q18.cpp \
-   $(SW)/tpch/qpipe/qpipe_q19.cpp \
-   $(SW)/tpch/qpipe/qpipe_q20.cpp \
-   $(SW)/tpch/qpipe/qpipe_q21.cpp \
-   $(SW)/tpch/qpipe/qpipe_q22.cpp
+   src/workload/tpch/qpipe_tpch_xct.cpp \
+   src/workload/tpch/qpipe/qpipe_tpch_qlineitem.cpp \
+   src/workload/tpch/qpipe/qpipe_tpch_qcustomer.cpp \
+   src/workload/tpch/qpipe/qpipe_tpch_qnation.cpp \
+   src/workload/tpch/qpipe/qpipe_tpch_qregion.cpp \
+   src/workload/tpch/qpipe/qpipe_tpch_qpart.cpp \
+   src/workload/tpch/qpipe/qpipe_tpch_qpartsupp.cpp \
+   src/workload/tpch/qpipe/qpipe_tpch_qsupplier.cpp \
+   src/workload/tpch/qpipe/qpipe_tpch_qorders.cpp \
+   src/workload/tpch/qpipe/qpipe_q1.cpp \
+   src/workload/tpch/qpipe/qpipe_q2.cpp \
+   src/workload/tpch/qpipe/qpipe_q3.cpp \
+   src/workload/tpch/qpipe/qpipe_q4.cpp \
+   src/workload/tpch/qpipe/qpipe_q5.cpp \
+   src/workload/tpch/qpipe/qpipe_q6.cpp \
+   src/workload/tpch/qpipe/qpipe_q7.cpp \
+   src/workload/tpch/qpipe/qpipe_q8.cpp \
+   src/workload/tpch/qpipe/qpipe_q9.cpp \
+   src/workload/tpch/qpipe/qpipe_q10.cpp \
+   src/workload/tpch/qpipe/qpipe_q11.cpp \
+   src/workload/tpch/qpipe/qpipe_q12.cpp \
+   src/workload/tpch/qpipe/qpipe_q13.cpp \
+   src/workload/tpch/qpipe/qpipe_q14.cpp \
+   src/workload/tpch/qpipe/qpipe_q15.cpp \
+   src/workload/tpch/qpipe/qpipe_q16.cpp \
+   src/workload/tpch/qpipe/qpipe_q17.cpp \
+   src/workload/tpch/qpipe/qpipe_q18.cpp \
+   src/workload/tpch/qpipe/qpipe_q19.cpp \
+   src/workload/tpch/qpipe/qpipe_q20.cpp \
+   src/workload/tpch/qpipe/qpipe_q21.cpp \
+   src/workload/tpch/qpipe/qpipe_q22.cpp
 
 WL_SSB_SHORE = \
-   $(SW)/ssb/ssb_random.cpp \
-   $(SW)/ssb/ssb_input.cpp \
-   $(SW)/ssb/ssb_util.cpp \
-   $(SW)/ssb/shore_ssb_schema.cpp \
-   $(SW)/ssb/shore_ssb_schema_man.cpp \
-   $(SW)/ssb/shore_ssb_env.cpp \
-   $(SW)/ssb/shore_ssb_xct.cpp \
-   $(SW)/ssb/shore_ssb_client.cpp
+   src/workload/ssb/ssb_random.cpp \
+   src/workload/ssb/ssb_input.cpp \
+   src/workload/ssb/ssb_util.cpp \
+   src/workload/ssb/shore_ssb_schema.cpp \
+   src/workload/ssb/shore_ssb_schema_man.cpp \
+   src/workload/ssb/shore_ssb_env.cpp \
+   src/workload/ssb/shore_ssb_xct.cpp \
+   src/workload/ssb/shore_ssb_client.cpp
 
 WL_SSB_DBGEN_SHORE = \
-   $(SW)/ssb/dbgen/ssb_build.cpp \
-   $(SW)/ssb/dbgen/ssb_driver.cpp \
-   $(SW)/ssb/dbgen/ssb_bm_utils.cpp \
-   $(SW)/ssb/dbgen/ssb_rnd.cpp \
-   $(SW)/ssb/dbgen/ssb_print.cpp \
-   $(SW)/ssb/dbgen/ssb_load_stub.cpp \
-   $(SW)/ssb/dbgen/ssb_bcd2.cpp \
-   $(SW)/ssb/dbgen/ssb_speed_seed.cpp \
-   $(SW)/ssb/dbgen/ssb_text.cpp \
-   $(SW)/ssb/dbgen/ssb_permute.cpp 
+   src/workload/ssb/dbgen/ssb_build.cpp \
+   src/workload/ssb/dbgen/ssb_driver.cpp \
+   src/workload/ssb/dbgen/ssb_bm_utils.cpp \
+   src/workload/ssb/dbgen/ssb_rnd.cpp \
+   src/workload/ssb/dbgen/ssb_print.cpp \
+   src/workload/ssb/dbgen/ssb_load_stub.cpp \
+   src/workload/ssb/dbgen/ssb_bcd2.cpp \
+   src/workload/ssb/dbgen/ssb_speed_seed.cpp \
+   src/workload/ssb/dbgen/ssb_text.cpp \
+   src/workload/ssb/dbgen/ssb_permute.cpp 
 
 WL_SSB_QPIPE = \
-   $(SW)/ssb/qpipe_ssb_xct.cpp \
-   $(SW)/ssb/qpipe/qpipe_q1_1.cpp \
-   $(SW)/ssb/qpipe/qpipe_q1_2.cpp \
-   $(SW)/ssb/qpipe/qpipe_q1_3.cpp \
-   $(SW)/ssb/qpipe/qpipe_q2_1.cpp \
-   $(SW)/ssb/qpipe/qpipe_q2_2.cpp \
-   $(SW)/ssb/qpipe/qpipe_q2_3.cpp \
-   $(SW)/ssb/qpipe/qpipe_q3_1.cpp \
-   $(SW)/ssb/qpipe/qpipe_q3_2.cpp \
-   $(SW)/ssb/qpipe/qpipe_q3_3.cpp \
-   $(SW)/ssb/qpipe/qpipe_q3_4.cpp \
-   $(SW)/ssb/qpipe/qpipe_q4_1.cpp \
-   $(SW)/ssb/qpipe/qpipe_q4_2.cpp \
-   $(SW)/ssb/qpipe/qpipe_q4_3.cpp \
-   $(SW)/ssb/qpipe/qpipe_qdate.cpp \
-   $(SW)/ssb/qpipe/qpipe_qpart.cpp \
-   $(SW)/ssb/qpipe/qpipe_qsupplier.cpp \
-   $(SW)/ssb/qpipe/qpipe_qcustomer.cpp \
-   $(SW)/ssb/qpipe/qpipe_qlineorder.cpp \
-   $(SW)/ssb/qpipe/qpipe_qtest.cpp 
+   src/workload/ssb/qpipe_ssb_xct.cpp \
+   src/workload/ssb/qpipe/qpipe_q1_1.cpp \
+   src/workload/ssb/qpipe/qpipe_q1_2.cpp \
+   src/workload/ssb/qpipe/qpipe_q1_3.cpp \
+   src/workload/ssb/qpipe/qpipe_q2_1.cpp \
+   src/workload/ssb/qpipe/qpipe_q2_2.cpp \
+   src/workload/ssb/qpipe/qpipe_q2_3.cpp \
+   src/workload/ssb/qpipe/qpipe_q3_1.cpp \
+   src/workload/ssb/qpipe/qpipe_q3_2.cpp \
+   src/workload/ssb/qpipe/qpipe_q3_3.cpp \
+   src/workload/ssb/qpipe/qpipe_q3_4.cpp \
+   src/workload/ssb/qpipe/qpipe_q4_1.cpp \
+   src/workload/ssb/qpipe/qpipe_q4_2.cpp \
+   src/workload/ssb/qpipe/qpipe_q4_3.cpp \
+   src/workload/ssb/qpipe/qpipe_qdate.cpp \
+   src/workload/ssb/qpipe/qpipe_qpart.cpp \
+   src/workload/ssb/qpipe/qpipe_qsupplier.cpp \
+   src/workload/ssb/qpipe/qpipe_qcustomer.cpp \
+   src/workload/ssb/qpipe/qpipe_qlineorder.cpp \
+   src/workload/ssb/qpipe/qpipe_qtest.cpp 
 
 WL_TPCE_SHORE = \
-   $(SW)/tpce/tpce_input.cpp \
-   $(SW)/tpce/shore_tpce_schema.cpp \
-   $(SW)/tpce/shore_tpce_schema_man.cpp \
-   $(SW)/tpce/shore_tpce_env.cpp \
-   $(SW)/tpce/shore_tpce_client.cpp
+   src/workload/tpce/tpce_input.cpp \
+   src/workload/tpce/shore_tpce_schema.cpp \
+   src/workload/tpce/shore_tpce_schema_man.cpp \
+   src/workload/tpce/shore_tpce_env.cpp \
+   src/workload/tpce/shore_tpce_client.cpp
 
 WL_TPCE_SHORE_XCTS = \
-   $(SW)/tpce/shore_tpce_xct_populate.cpp \
-   $(SW)/tpce/shore_tpce_xct_trade_order.cpp \
-   $(SW)/tpce/shore_tpce_xct_trade_result.cpp \
-   $(SW)/tpce/shore_tpce_xct_trade_lookup.cpp \
-   $(SW)/tpce/shore_tpce_xct_customer_position.cpp \
-   $(SW)/tpce/shore_tpce_xct_market_feed.cpp \
-   $(SW)/tpce/shore_tpce_xct_trade_cleanup.cpp \
-   $(SW)/tpce/shore_tpce_xct_market_watch.cpp \
-   $(SW)/tpce/shore_tpce_xct_data_maintenance.cpp \
-   $(SW)/tpce/shore_tpce_xct_security_detail.cpp \
-   $(SW)/tpce/shore_tpce_xct_trade_status.cpp \
-   $(SW)/tpce/shore_tpce_xct_broker_volume.cpp \
-   $(SW)/tpce/shore_tpce_xct_trade_update.cpp
+   src/workload/tpce/shore_tpce_xct_populate.cpp \
+   src/workload/tpce/shore_tpce_xct_trade_order.cpp \
+   src/workload/tpce/shore_tpce_xct_trade_result.cpp \
+   src/workload/tpce/shore_tpce_xct_trade_lookup.cpp \
+   src/workload/tpce/shore_tpce_xct_customer_position.cpp \
+   src/workload/tpce/shore_tpce_xct_market_feed.cpp \
+   src/workload/tpce/shore_tpce_xct_trade_cleanup.cpp \
+   src/workload/tpce/shore_tpce_xct_market_watch.cpp \
+   src/workload/tpce/shore_tpce_xct_data_maintenance.cpp \
+   src/workload/tpce/shore_tpce_xct_security_detail.cpp \
+   src/workload/tpce/shore_tpce_xct_trade_status.cpp \
+   src/workload/tpce/shore_tpce_xct_broker_volume.cpp \
+   src/workload/tpce/shore_tpce_xct_trade_update.cpp
 
 WL_TPCE_SHORE_EGEN = \
-   $(SW)/tpce/egen/DateTime.cpp \
-   $(SW)/tpce/egen/error.cpp \
-   $(SW)/tpce/egen/Random.cpp \
-   $(SW)/tpce/egen/Money.cpp \
-   $(SW)/tpce/egen/EGenVersion.cpp \
-   $(SW)/tpce/egen/locking.cpp \
-   $(SW)/tpce/egen/threading.cpp \
-   $(SW)/tpce/egen/BaseLogger.cpp \
-   $(SW)/tpce/egen/EGenLogFormatterTab.cpp \
-   $(SW)/tpce/egen/EGenLoader.cpp \
-   $(SW)/tpce/egen/MEE.cpp \
-   $(SW)/tpce/egen/MEEPriceBoard.cpp \
-   $(SW)/tpce/egen/MEESecurity.cpp \
-   $(SW)/tpce/egen/MEETickerTape.cpp \
-   $(SW)/tpce/egen/MEETradingFloor.cpp \
-   $(SW)/tpce/egen/WheelTime.cpp \
-   $(SW)/tpce/egen/AddressTable.cpp \
-   $(SW)/tpce/egen/CustomerSelection.cpp \
-   $(SW)/tpce/egen/CustomerTable.cpp \
-   $(SW)/tpce/egen/InputFlatFilesStructure.cpp \
-   $(SW)/tpce/egen/Person.cpp \
-   $(SW)/tpce/egen/ReadRowFunctions.cpp \
-   $(SW)/tpce/egen/TradeGen.cpp \
-   $(SW)/tpce/egen/FlatFileLoader.cpp \
-   $(SW)/tpce/egen/CE.cpp \
-   $(SW)/tpce/egen/CETxnInputGenerator.cpp \
-   $(SW)/tpce/egen/CETxnMixGenerator.cpp \
-   $(SW)/tpce/egen/DM.cpp \
-   $(SW)/tpce/egen/EGenGenerateAndLoad.cpp \
-   $(SW)/tpce/egen/EGenValidate.cpp \
-   $(SW)/tpce/egen/strutil.cpp \
-   $(SW)/tpce/egen/progressmeter.cpp \
-   $(SW)/tpce/egen/progressmeterinterface.cpp \
-   $(SW)/tpce/egen/bucketsimulator.cpp
+   src/workload/tpce/egen/DateTime.cpp \
+   src/workload/tpce/egen/error.cpp \
+   src/workload/tpce/egen/Random.cpp \
+   src/workload/tpce/egen/Money.cpp \
+   src/workload/tpce/egen/EGenVersion.cpp \
+   src/workload/tpce/egen/locking.cpp \
+   src/workload/tpce/egen/threading.cpp \
+   src/workload/tpce/egen/BaseLogger.cpp \
+   src/workload/tpce/egen/EGenLogFormatterTab.cpp \
+   src/workload/tpce/egen/EGenLoader.cpp \
+   src/workload/tpce/egen/MEE.cpp \
+   src/workload/tpce/egen/MEEPriceBoard.cpp \
+   src/workload/tpce/egen/MEESecurity.cpp \
+   src/workload/tpce/egen/MEETickerTape.cpp \
+   src/workload/tpce/egen/MEETradingFloor.cpp \
+   src/workload/tpce/egen/WheelTime.cpp \
+   src/workload/tpce/egen/AddressTable.cpp \
+   src/workload/tpce/egen/CustomerSelection.cpp \
+   src/workload/tpce/egen/CustomerTable.cpp \
+   src/workload/tpce/egen/InputFlatFilesStructure.cpp \
+   src/workload/tpce/egen/Person.cpp \
+   src/workload/tpce/egen/ReadRowFunctions.cpp \
+   src/workload/tpce/egen/TradeGen.cpp \
+   src/workload/tpce/egen/FlatFileLoader.cpp \
+   src/workload/tpce/egen/CE.cpp \
+   src/workload/tpce/egen/CETxnInputGenerator.cpp \
+   src/workload/tpce/egen/CETxnMixGenerator.cpp \
+   src/workload/tpce/egen/DM.cpp \
+   src/workload/tpce/egen/EGenGenerateAndLoad.cpp \
+   src/workload/tpce/egen/EGenValidate.cpp \
+   src/workload/tpce/egen/strutil.cpp \
+   src/workload/tpce/egen/progressmeter.cpp \
+   src/workload/tpce/egen/progressmeterinterface.cpp \
+   src/workload/tpce/egen/bucketsimulator.cpp
 
 
 lib_libworkload_a_SOURCES = \
@@ -368,16 +363,16 @@ if USE_QPIPE
 ################################################################################
 
 QPIPE_UTIL = \
-	$(SU)/busy_delay.cpp \
-	$(SU)/rio.cpp \
-	$(SU)/resource_pool.cpp \
-	$(SU)/static_list_node.cpp \
-	$(SU)/static_list.cpp \
-	$(SU)/fileops.cpp \
-	$(SU)/alignedops.cpp \
-	$(SU)/tmpfile.cpp \
-	$(SU)/static_hash_map.cpp \
-	$(SU)/fnv.cpp
+	src/util/busy_delay.cpp \
+	src/util/rio.cpp \
+	src/util/resource_pool.cpp \
+	src/util/static_list_node.cpp \
+	src/util/static_list.cpp \
+	src/util/fileops.cpp \
+	src/util/alignedops.cpp \
+	src/util/tmpfile.cpp \
+	src/util/static_hash_map.cpp \
+	src/util/fnv.cpp
 
 
 lib_libqpipeutil_a_CXXFLAGS = $(AM_CXXFLAGS) 
@@ -394,44 +389,42 @@ lib_libqpipeutil_a_SOURCES = \
 #
 ################################################################################
 
-SQP=$(top_srcdir)/src/qpipe
-
 QPIPE_SCHEDULER = \
-   $(SQP)/scheduler/cpu_set.cpp \
-   $(SQP)/scheduler/cpu.cpp
+   src/qpipe/scheduler/cpu_set.cpp \
+   src/qpipe/scheduler/cpu.cpp
 
 QPIPE_CORE = \
-   $(SQP)/core/tuple_fifo_directory.cpp \
-   $(SQP)/core/stage_container.cpp \
-   $(SQP)/core/dispatcher.cpp \
-   $(SQP)/core/packet.cpp \
-   $(SQP)/core/tuple.cpp \
-   $(SQP)/core/tuple_fifo.cpp
+   src/qpipe/core/tuple_fifo_directory.cpp \
+   src/qpipe/core/stage_container.cpp \
+   src/qpipe/core/dispatcher.cpp \
+   src/qpipe/core/packet.cpp \
+   src/qpipe/core/tuple.cpp \
+   src/qpipe/core/tuple_fifo.cpp
 
 QPIPE_STAGES = \
-   $(SQP)/stages/merge.cpp \
-   $(SQP)/stages/bnl_in.cpp \
-   $(SQP)/stages/hash_join.cpp \
-   $(SQP)/stages/partial_aggregate.cpp \
-   $(SQP)/stages/tscan.cpp \
-   $(SQP)/stages/fdump.cpp \
-   $(SQP)/stages/sieve.cpp \
-   $(SQP)/stages/echo.cpp \
-   $(SQP)/stages/pipe_hash_join.cpp \
-   $(SQP)/stages/aggregate.cpp \
-   $(SQP)/stages/sorted_in.cpp \
-   $(SQP)/stages/func_call.cpp \
-   $(SQP)/stages/sort.cpp \
-   $(SQP)/stages/hash_aggregate.cpp \
-   $(SQP)/stages/delay_writer.cpp \
-   $(SQP)/stages/bnl_join.cpp \
-   $(SQP)/stages/sort_merge_join.cpp \
-   $(SQP)/stages/fscan.cpp \
-   $(SQP)/stages/register_stage_containers.cpp
+   src/qpipe/stages/merge.cpp \
+   src/qpipe/stages/bnl_in.cpp \
+   src/qpipe/stages/hash_join.cpp \
+   src/qpipe/stages/partial_aggregate.cpp \
+   src/qpipe/stages/tscan.cpp \
+   src/qpipe/stages/fdump.cpp \
+   src/qpipe/stages/sieve.cpp \
+   src/qpipe/stages/echo.cpp \
+   src/qpipe/stages/pipe_hash_join.cpp \
+   src/qpipe/stages/aggregate.cpp \
+   src/qpipe/stages/sorted_in.cpp \
+   src/qpipe/stages/func_call.cpp \
+   src/qpipe/stages/sort.cpp \
+   src/qpipe/stages/hash_aggregate.cpp \
+   src/qpipe/stages/delay_writer.cpp \
+   src/qpipe/stages/bnl_join.cpp \
+   src/qpipe/stages/sort_merge_join.cpp \
+   src/qpipe/stages/fscan.cpp \
+   src/qpipe/stages/register_stage_containers.cpp
 
 QPIPE_COMMON = \
-   $(SQP)/common/process_query.cpp \
-   $(SQP)/common/predicates.cpp
+   src/qpipe/common/process_query.cpp \
+   src/qpipe/common/predicates.cpp
 
 lib_libqpipe_a_SOURCES = \
    $(QPIPE_SCHEDULER) \
@@ -454,19 +447,18 @@ endif
 #
 ################################################################################
 
-SD=$(top_srcdir)/src/dora
 DO_BASE = \
-   $(SD)/dkey_ranges_map.cpp \
-   $(SD)/base_action.cpp \
-   $(SD)/rvp.cpp \
-   $(SD)/logical_lock.cpp \
-   $(SD)/base_partition.cpp \
-   $(SD)/partition.cpp \
-   $(SD)/dflusher.cpp \
-   $(SD)/worker.cpp \
-   $(SD)/part_table.cpp \
-   $(SD)/range_part_table.cpp \
-   $(SD)/dora_env.cpp
+   src/dora/dkey_ranges_map.cpp \
+   src/dora/base_action.cpp \
+   src/dora/rvp.cpp \
+   src/dora/logical_lock.cpp \
+   src/dora/base_partition.cpp \
+   src/dora/partition.cpp \
+   src/dora/dflusher.cpp \
+   src/dora/worker.cpp \
+   src/dora/part_table.cpp \
+   src/dora/range_part_table.cpp \
+   src/dora/dora_env.cpp
 
 lib_libdora_a_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 
@@ -481,29 +473,28 @@ lib_libdora_a_SOURCES = \
 #
 ################################################################################
 
-SDW=$(top_srcdir)/src/dora
 DW_TPCC = \
-   $(SDW)/tpcc/dora_payment.cpp \
-   $(SDW)/tpcc/dora_new_order.cpp \
-   $(SDW)/tpcc/dora_order_status.cpp \
-   $(SDW)/tpcc/dora_stock_level.cpp \
-   $(SDW)/tpcc/dora_delivery.cpp \
-   $(SDW)/tpcc/dora_mbench.cpp \
-   $(SDW)/tpcc/dora_tpcc.cpp \
-   $(SDW)/tpcc/dora_tpcc_xct.cpp \
-   $(SDW)/tpcc/dora_tpcc_client.cpp
+   src/dora/tpcc/dora_payment.cpp \
+   src/dora/tpcc/dora_new_order.cpp \
+   src/dora/tpcc/dora_order_status.cpp \
+   src/dora/tpcc/dora_stock_level.cpp \
+   src/dora/tpcc/dora_delivery.cpp \
+   src/dora/tpcc/dora_mbench.cpp \
+   src/dora/tpcc/dora_tpcc.cpp \
+   src/dora/tpcc/dora_tpcc_xct.cpp \
+   src/dora/tpcc/dora_tpcc_client.cpp
 
 DW_TM1 = \
-   $(SDW)/tm1/dora_tm1_impl.cpp \
-   $(SDW)/tm1/dora_tm1.cpp \
-   $(SDW)/tm1/dora_tm1_xct.cpp \
-   $(SDW)/tm1/dora_tm1_client.cpp
+   src/dora/tm1/dora_tm1_impl.cpp \
+   src/dora/tm1/dora_tm1.cpp \
+   src/dora/tm1/dora_tm1_xct.cpp \
+   src/dora/tm1/dora_tm1_client.cpp
 
 DW_TPCB = \
-   $(SDW)/tpcb/dora_tpcb_impl.cpp \
-   $(SDW)/tpcb/dora_tpcb.cpp \
-   $(SDW)/tpcb/dora_tpcb_xct.cpp \
-   $(SDW)/tpcb/dora_tpcb_client.cpp
+   src/dora/tpcb/dora_tpcb_impl.cpp \
+   src/dora/tpcb/dora_tpcb.cpp \
+   src/dora/tpcb/dora_tpcb_xct.cpp \
+   src/dora/tpcb/dora_tpcb_client.cpp
 
 lib_libdoraworkload_a_SOURCES = \
    $(DW_TPCC) \
@@ -526,9 +517,7 @@ lib_libdoraworkload_a_INCLUDES = $(AM_CPPFLAGS) -I$(top_srcdir)/include/dora $(S
 #
 ################################################################################
 
-ST=$(top_srcdir)/src/tests
-
-shore_kits_SOURCES = $(ST)/shore_kits.cpp
+shore_kits_SOURCES = src/tests/shore_kits.cpp
 shore_kits_CXXFLAGS = $(AM_CXXFLAGS) $(SHORE_INCLUDES)
 if SPARC_MACHINE
 shore_kits_LDADD = $(LDADD)
