@@ -193,12 +193,6 @@ public:
 
 
     /**
-     *  @brief Returns a pseudo-random integer between 0 and RAND_MAX.
-     */
-    void reset_rand();
-
-
-    /**
      *  @brief Returns pointer to thread_t's randgen_t object.
      */
     randgen_t* randgen() {

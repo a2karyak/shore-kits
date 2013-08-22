@@ -113,21 +113,6 @@ thread_t::thread_t(const c_str &name)
 }
 
 
-void thread_t::reset_rand() {
-
-    /* generate new seed */
-    unsigned int new_seed;
-    int fd = ::open("/dev/urandom", O_RDONLY);
-    assert(fd != -1);
-    int read_size = ::read(fd, &new_seed, sizeof(new_seed));
-    assert(read_size == sizeof(new_seed));
-    ::close(fd);
-
-    /* reset _randgen using new seed */
-    _randgen.reset(new_seed);
-}
-
-
 #ifdef USE_SMTHREAD_AS_BASE
 
 
@@ -167,7 +152,6 @@ void thread_t::setupthr()
     // pieces of thread-specific storage.
     THREAD_KEY_SELF = this;
     THREAD_POOL     = _ppool;
-    reset_rand();    
 }
 #endif
 
@@ -470,7 +454,6 @@ static void setup_thread(thread_args* args)
     // pieces of thread-specific storage.
     THREAD_KEY_SELF = thread;
     THREAD_POOL     = pool;
-    thread->reset_rand();
 }
 
 
