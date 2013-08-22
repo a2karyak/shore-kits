@@ -78,7 +78,6 @@
 #include "util/hash_functions.h"
 #include "util/acounter.h"
 #include "util/static_list.h"
-#include "util/alignedops.h"
 #include "util/rio.h"
 #include "util/fnv.h"
 #include "util/tmpfile.h"

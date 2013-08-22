@@ -30,6 +30,19 @@
 
 ENTER_NAMESPACE(qpipe);
 
+static char *aligned_alloc(size_t sz, size_t alignment) {
+    void *rval;
+#ifdef HAVE_POSIX_MEMALIGN
+    if (posix_memalign(&rval, alignment, sz))
+        rval = 0;
+#elif defined(HAVE_MEMALIGN)
+    rval = memalign(alignment, sz);
+#else
+#error No memalign?
+#endif
+    return (char*) rval;
+}
+
 
 
 malloc_page_pool malloc_page_pool::_instance;
@@ -52,10 +65,8 @@ size_t get_default_page_size() { return default_page_size; }
 bool page::read_full_page(int fd) {
     
     /* create an aligned array of bytes we can read into */
-    void* aligned_base;
-    guard<char> ptr =
-        (char*)aligned_alloc(page_size(), 512, &aligned_base);
-    assert(ptr != NULL);
+    guard<char> aligned_base = aligned_alloc(page_size(), 512);
+    assert(aligned_base != NULL);
 
 
     /* read bytes over 'this' */
@@ -102,10 +113,8 @@ bool page::read_full_page(int fd) {
 void page::write_full_page(int fd) {
 
     /* create an aligned copy of ourselves */
-    void* aligned_base;
-    guard<char> ptr =
-        (char*)aligned_alloc(page_size(), 512, &aligned_base);
-    assert(ptr != NULL);
+    guard<char> aligned_base = aligned_alloc(page_size(), 512);
+    assert(aligned_base != NULL);
     memcpy(aligned_base, this, page_size());
 
 

@@ -369,7 +369,6 @@ QPIPE_UTIL = \
 	src/util/static_list_node.cpp \
 	src/util/static_list.cpp \
 	src/util/fileops.cpp \
-	src/util/alignedops.cpp \
 	src/util/tmpfile.cpp \
 	src/util/static_hash_map.cpp \
 	src/util/fnv.cpp
