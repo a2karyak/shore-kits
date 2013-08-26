@@ -185,7 +185,7 @@ w_rc_t ShoreTM1Env::run_one_xct(Request* prequest)
 
     // if BASELINE TM1 MIX
     if (prequest->type() == XCT_TM1_MIX) {        
-        prequest->set_type(random_tm1_xct_type(abs(smthread_t::me()->rand()%100)));
+        prequest->set_type(random_tm1_xct_type(smthread_t::rand()%100));
     }
     
     switch (prequest->type()) {
