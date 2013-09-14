@@ -1099,7 +1099,7 @@ w_rc_t table_man_t::add_tuple(ss_m* db,
                                      vec_t(ptuple->_rep->_dest, ksz),
                                      ef,
                                      bIgnoreLocks,
-                                     index->is_latchless(),
+                                     bIgnoreLocks && index->is_latchless(),
                                      reloc_func,
                                      (index->is_primary() ? primary_root : lpid_t::null)
                                      ));
@@ -1240,7 +1240,7 @@ rc_t el_filler_part::fill_el(vec_t& el, const lpid_t& leaf)
                                                  vec_t(_ptuple->_rep->_dest, tsz),
                                                  _ptuple->_rid,
                                                  _bIgnoreLocks,
-                                                 true);
+                                                 _bIgnoreLocks);
     el.put(vec_t(&(_ptuple->_rid), sizeof(rid_t)));
     
     return rc;
@@ -1350,7 +1350,7 @@ w_rc_t table_man_t::add_plp_tuple(ss_m* db,
                              vec_t(ptuple->_rep_key->_dest, ksz), // VEC_T OF INDEX ENTRY
                              part_filler,
                              bIgnoreLocks,
-                             primary_index->is_latchless(),
+                             bIgnoreLocks && primary_index->is_latchless(),
                              reloc_func,
                              primary_root));
 
@@ -1358,10 +1358,9 @@ w_rc_t table_man_t::add_plp_tuple(ss_m* db,
     index_desc_t* index = _ptable->indexes();
     while (index) {
 
-        // Skip it is the primary, because the record entry has already been 
-        // inserted there
+        // Skip it is the primary,
+        // since the record entry has already been inserted there
         if (index->is_primary()) {
-            // move to next index
             index = index->next();
             continue;
         }        
@@ -1378,7 +1377,7 @@ w_rc_t table_man_t::add_plp_tuple(ss_m* db,
                                      vec_t(ptuple->_rep_key->_dest, ksz),
                                      ef,
                                      bIgnoreLocks,
-                                     false, //index->is_latchless(),
+                                     bIgnoreLocks && index->is_latchless(),
                                      NULL, // No relocation
                                      lpid_t::null));
         }
@@ -1608,16 +1607,13 @@ w_rc_t table_man_t::update_tuple(ss_m* /* db */,
         W_DO(rc);
     }
 
-
+    
     // b. else, simply update
     if (no_heap_latch) {
         rc = pin.update_mrbt_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0, 
-                                 bIgnoreLocks, 
-                                 true);
-    }
-    else {
-        rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0,
-                            bIgnoreLocks);
+                                 bIgnoreLocks, true);
+    } else {
+        rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0, bIgnoreLocks);
     }
 
     if (rc.is_error()) TRACE( TRACE_DEBUG, "Error updating record\n");
@@ -1698,8 +1694,7 @@ w_rc_t table_man_t::fetch_table(ss_m* db, lock_mode_t alm)
     W_DO(db->begin_xct());
 	
     // 1. scan the table
-    bool bIgnoreLatches = (_ptable->get_pd() & (PD_MRBT_LEAF | PD_MRBT_PART) ? true : false);
-    scan_file_i t_scan(_ptable->fid(), ss_m::t_cc_record, false, alm, bIgnoreLatches);
+    scan_file_i t_scan(_ptable->fid(), ss_m::t_cc_record, false, alm);
     while(!eof) {
 	W_DO(t_scan.next_page(handle, 0, eof));
 	counter++;
@@ -1711,7 +1706,7 @@ w_rc_t table_man_t::fetch_table(ss_m* db, lock_mode_t alm)
     int pnum = 0;
     while (index) {
 	for(int pnum = 0; pnum < index->get_partition_count(); pnum++) {
-	    scan_file_i if_scan(index->fid(pnum), ss_m::t_cc_record, false, alm, bIgnoreLatches);
+	    scan_file_i if_scan(index->fid(pnum), ss_m::t_cc_record, false, alm);
 	    eof = false;
 	    counter = -1;
 	    while(!eof) {
