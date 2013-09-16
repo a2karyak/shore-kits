@@ -1017,7 +1017,7 @@ w_rc_t table_man_t::index_probe(ss_m* db,
     // read the tuple
     pin_i pin;
     latch_mode_t heap_latch_mode = LATCH_SH;
-    if (system_mode & (PD_MRBT_PART | PD_MRBT_LEAF)) heap_latch_mode = LATCH_NL;
+    if (system_mode & (PD_MRBT_PART | PD_MRBT_LEAF)) heap_latch_mode = LATCH_NLS;
     W_DO(pin.pin(ptuple->rid(), 0, lock_mode, heap_latch_mode));
 
     if (!load(ptuple, pin.body())) {
@@ -1574,7 +1574,7 @@ w_rc_t table_man_t::update_tuple(ss_m* /* db */,
     latch_mode_t heap_latch_mode = LATCH_EX;
     if (system_mode & ( PD_MRBT_LEAF | PD_MRBT_PART) ) {
         no_heap_latch = true;
-        heap_latch_mode = LATCH_NL;
+        heap_latch_mode = LATCH_NLX;
     }
 
     // pin record
@@ -1610,10 +1610,10 @@ w_rc_t table_man_t::update_tuple(ss_m* /* db */,
     
     // b. else, simply update
     if (no_heap_latch) {
-        rc = pin.update_mrbt_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0, 
+        rc = pin.update_mrbt_rec(0, vec_t(ptuple->_rep->_dest, tsz),
                                  bIgnoreLocks, true);
     } else {
-        rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), 0, bIgnoreLocks);
+        rc = pin.update_rec(0, vec_t(ptuple->_rep->_dest, tsz), bIgnoreLocks);
     }
 
     if (rc.is_error()) TRACE( TRACE_DEBUG, "Error updating record\n");
@@ -1649,7 +1649,7 @@ w_rc_t table_man_t::read_tuple(table_tuple* ptuple,
 
     uint4_t system_mode = _ptable->get_pd();
     if (system_mode & ( PD_MRBT_LEAF | PD_MRBT_PART) ) {
-        heap_latch_mode = LATCH_NL;
+        heap_latch_mode = LATCH_NLS;
 	lock_mode = NL;
     }
 
